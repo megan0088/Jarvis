@@ -53,7 +53,15 @@ private final class GatedBrain: Brain, @unchecked Sendable {
         for chunk in chunks { continuations[n - 1].yield(chunk) }
         continuations[n - 1].finish()
     }
+
+    /// Fails the Nth (1-based) call's stream with an error, without yielding chunks.
+    func throwStream(_ n: Int) {
+        guard continuations.indices.contains(n - 1) else { return }
+        continuations[n - 1].finish(throwing: StubStreamError())
+    }
 }
+
+private struct StubStreamError: Error {}
 
 struct ChatStoreTests {
     @MainActor @Test func sendAppendsUserAndStreamedAssistantMessage() async {
@@ -123,6 +131,52 @@ struct ChatStoreTests {
         brain.finishStream(2, with: ["OK"])
         await secondSend.value
 
+        #expect(store.messages[2].text == "OK")
+        #expect(store.isStreaming == false)
+    }
+
+    /// Regression test for round 2: `finalizeInterruptedAssistant()` can
+    /// remove a message, shifting every later index down by one. If a stale
+    /// (superseded) stream's `catch` block writes to its captured `index`
+    /// without checking generation, that write now lands on whatever
+    /// message slid into that slot — here, the NEWER user's own message —
+    /// instead of being silently discarded. The catch block must be gated
+    /// by the same generation check as the success path.
+    @MainActor @Test func staleStreamErrorAfterSupersessionDoesNotCorruptNewerMessage() async {
+        let brain = GatedBrain(kind: .ollama)
+        let store = ChatStore(brains: [.ollama: brain])
+        store.activeBrain = .ollama
+
+        let firstSend = Task { await store.send("pertama") }
+        await brain.waitUntilStreamStarted(1)
+
+        let secondSend = Task { await store.send("kedua") }
+        await brain.waitUntilStreamStarted(2)
+
+        // messages == [user "pertama", user "kedua", assistant ""].
+        // Stream 1's captured index (1) now points at the "kedua" user
+        // message because finalizeInterruptedAssistant() removed stream 1's
+        // own placeholder and shifted everything after it down by one.
+        #expect(store.messages[1].role == .user)
+        #expect(store.messages[1].text == "kedua")
+
+        // Let the stale (superseded) first stream fail now.
+        brain.throwStream(1)
+        await firstSend.value
+
+        // The catch block must be generation-gated: stream 1's error must
+        // NOT land on messages[1], which is now the "kedua" user message.
+        #expect(store.messages[1].role == .user)
+        #expect(store.messages[1].text == "kedua")
+
+        // isStreaming must still reflect only the newest (second) stream.
+        #expect(store.isStreaming == true)
+
+        // Finish the second stream normally; it should complete cleanly.
+        brain.finishStream(2, with: ["OK"])
+        await secondSend.value
+
+        #expect(store.messages[1].text == "kedua")
         #expect(store.messages[2].text == "OK")
         #expect(store.isStreaming == false)
     }

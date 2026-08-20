@@ -64,7 +64,7 @@ final class ChatStore {
                     if messages.indices.contains(index) { messages[index] = assistant }
                 }
             } catch {
-                if messages.indices.contains(index) {
+                if generation == self.streamGeneration, messages.indices.contains(index) {
                     messages[index].text += (messages[index].text.isEmpty ? "" : "\n\n") + "⚠️ Koneksi terputus."
                 }
             }
