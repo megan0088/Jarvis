@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Platform: macOS 26 (Tahoe)+, Apple Silicon. iOS di luar scope — jangan sentuh `ContentView` iOS.
-- Bahasa string UI: **Bahasa Indonesia**.
+- UI copy: **English** for ALL user-facing strings (labels, titles, buttons, chat placeholders, notice/error messages, persona prompts, reminder titles). Changed 2026-08-21 (was Bahasa Indonesia). Developer-facing doc comments may stay as-is.
 - Test framework: **Swift Testing** (`import Testing`, `@Test`, `#expect`). Module: `Jarvis`. Scheme: `Jarvis`.
 - Perintah test: `xcodebuild test -scheme Jarvis -destination 'platform=macOS' -only-testing:JarvisTests`
 - Perintah build: `xcodebuild build -scheme Jarvis -destination 'platform=macOS'`
@@ -1178,3 +1178,46 @@ git commit -m "feat(chat): natural-language 'buat pengingat' → PetStore custom
 - **Target membership** adalah friksi utama: tiap file baru harus masuk target `Jarvis` (sumber) / `JarvisTests` (test). Kalau pakai Xcode, drag file ke grup yang benar & centang target. Kalau otomatis, edit `project.pbxproj` (grup `Jarvis/Shared/...`).
 - Task 1–4 & 7-parser adalah unit-testable murni; Task 5–6 verifikasi manual (UI).
 - Task 4 (AppleBrain) & Task 5 warna/kontrol mengandalkan API OS terbaru — finalisasi lewat kompilasi di mesin dev.
+
+---
+
+## Architecture Revision — 2026-08-21 (pragmatic Clean Architecture + feature-based + Atomic Design)
+
+Per requirement user. Struktur target:
+
+```
+Jarvis/
+├── App/                              # entry + composition root (DI) — JarvisApp.swift (dari Shared/)
+├── Core/
+│   ├── DesignSystem/                 # ATOMIC DESIGN (reusable, macOS-only → #if os(macOS))
+│   │   ├── Tokens/                   # AppColor (HIG semantic), Spacing, AppFont
+│   │   ├── Atoms/                    # AppButton, StatusDot, AvatarBadge, RingGauge, ProgressTrack
+│   │   └── Molecules/                # MetricRow, ReminderRow, MessageBubble, QuickActionPill, BrainSegmentedPicker
+│   ├── Domain/                       # Clean Arch inti (pure Swift, no SwiftUI/AppKit)
+│   │   ├── Entities/                 # BrainTypes (BrainKind, Persona, BrainAvailability, ChatMessage)
+│   │   ├── Interfaces/               # Brain (protocol)
+│   │   └── Services/                 # ReminderIntent (parser murni teks→entity)
+│   └── Data/
+│       └── LLM/                      # OllamaBrain, OllamaWire, AppleBrain
+├── Features/
+│   ├── Chat/Presentation/{ViewModel(ChatStore),Organisms(ChatPanel),Pages(ChatPage)}
+│   ├── Dashboard/Presentation/{Organisms,Templates(DashboardTemplate),Pages(HomePage)}
+│   └── Settings/Presentation/Pages(SettingsPage)
+└── Shared/                           # LEGACY (PetStore, SpriteKit, ContentView) — migrasi bertahap
+```
+
+Aturan layer (pragmatis): Presentation → Domain ← Data. Domain tak impor SwiftUI/AppKit. Tanpa UseCase/Interactor per aksi — ViewModel memanggil interface Domain langsung. Semua file UI macOS-only dibungkus `#if os(macOS)`.
+
+Inventori Atomic Design (untuk Task 5/6):
+- Atoms: AppButton, StatusDot, AvatarBadge, RingGauge, ProgressTrack, BrandGreeting
+- Molecules: MetricRow (label+progress), ReminderRow (icon+judul+waktu+aksi), MessageBubble (role-styled), QuickActionPill, BrainSegmentedPicker
+- Organisms: SidebarView, WellnessCard, CharacterCard, RemindersCard, ScreenTimeCard, ChatPanel
+- Templates: DashboardTemplate (NavigationSplitView shell)
+- Pages: HomePage, ChatPage, SettingsPage
+
+Remap path task tersisa:
+- Task 4 AppleBrain → `Jarvis/Core/Data/LLM/AppleBrain.swift`
+- Task 5 dashboard → dibedah per Atomic Design (Core/DesignSystem/* + Features/Dashboard/Presentation/*); pindahkan `JarvisApp.swift` → `Jarvis/App/`
+- Task 6 ChatView → `Features/Chat/Presentation/{Organisms/ChatPanel.swift, Pages/ChatPage.swift}`
+- Task 7 ReminderIntent → `Jarvis/Core/Domain/Services/ReminderIntent.swift`; PetStore tetap di Shared (legacy) + `addCustomSchedule`
+- STATUS: Task 1-3 selesai & direorg. Lanjut Task 4.
