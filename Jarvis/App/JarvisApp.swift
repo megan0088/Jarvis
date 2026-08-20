@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct JarvisApp: App {
     @State private var store = PetStore()
+    @State private var chat = ChatStore(brains: [.ollama: OllamaBrain(), .apple: AppleBrain()])
     @Environment(\.scenePhase) private var scenePhase
     @State var isBuddyMode = false
 
@@ -39,8 +40,9 @@ struct JarvisApp: App {
     @ViewBuilder
     private var rootView: some View {
 #if os(macOS)
-        ContentView(
+        DashboardTemplate(
             store: store,
+            chat: chat,
             onBuddyMode: toggleBuddyMode,
             isBuddyModeActive: isBuddyMode
         )
