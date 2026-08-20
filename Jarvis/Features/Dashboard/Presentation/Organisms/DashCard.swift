@@ -27,8 +27,8 @@ struct DashCard<Content: View>: View {
 }
 
 #Preview {
-    DashCard(title: "Contoh", systemImage: "target") {
-        Text("Konten kartu di sini.")
+    DashCard(title: "Example", systemImage: "target") {
+        Text("Card content goes here.")
             .font(.subheadline)
             .foregroundStyle(.secondary)
     }

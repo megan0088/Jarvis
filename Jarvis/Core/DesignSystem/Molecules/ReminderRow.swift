@@ -37,7 +37,7 @@ struct ReminderRow: View {
                 Image(systemName: "checkmark.circle.fill")
             }
             .buttonStyle(.plain)
-            .foregroundStyle(.green)
+            .foregroundStyle(AppColor.online)
 
             Button(action: onSkip) {
                 Image(systemName: "xmark.circle")
@@ -50,7 +50,7 @@ struct ReminderRow: View {
 
 #Preview {
     VStack(spacing: Spacing.sm) {
-        ReminderRow(icon: "drop.fill", title: "Minum air", timeLabel: "09.00", onDone: {}, onSkip: {})
+        ReminderRow(icon: "drop.fill", title: "Drink water", timeLabel: "09.00", onDone: {}, onSkip: {})
         ReminderRow(icon: "figure.cooldown", title: "Stretch break", timeLabel: "09.45", onDone: {}, onSkip: {})
     }
     .padding()

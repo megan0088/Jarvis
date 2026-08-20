@@ -31,9 +31,9 @@ struct MetricRow: View {
 
 #Preview {
     VStack(spacing: Spacing.md) {
-        MetricRow(title: "Minum air", value: 3, goal: 6, tint: AppColor.water)
+        MetricRow(title: "Water", value: 3, goal: 6, tint: AppColor.water)
         MetricRow(title: "Stretch", value: 6, goal: 6, tint: AppColor.stretch)
-        MetricRow(title: "Makan", value: 0, goal: 3, tint: AppColor.meal)
+        MetricRow(title: "Meals", value: 0, goal: 3, tint: AppColor.meal)
     }
     .padding()
     .frame(width: 280)

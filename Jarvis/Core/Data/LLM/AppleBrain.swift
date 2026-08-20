@@ -24,17 +24,17 @@ struct AppleBrain: Brain {
             case .available:
                 return .ready
             case .unavailable(.appleIntelligenceNotEnabled):
-                return .unavailable("Aktifkan Apple Intelligence di System Settings.")
+                return .unavailable("Enable Apple Intelligence in System Settings.")
             case .unavailable(.modelNotReady):
-                return .needsSetup("Model on-device sedang diunduh. Coba lagi nanti.")
+                return .needsSetup("The on-device model is downloading. Try again later.")
             case .unavailable:
-                return .unavailable("Apple Intelligence tidak tersedia di perangkat ini.")
+                return .unavailable("Apple Intelligence isn't available on this device.")
             }
         } else {
-            return .unavailable("Butuh macOS 26 atau lebih baru.")
+            return .unavailable("Requires macOS 26 or later.")
         }
         #else
-        return .unavailable("FoundationModels tidak tersedia di build ini.")
+        return .unavailable("FoundationModels isn't available in this build.")
         #endif
     }
 
@@ -60,7 +60,7 @@ struct AppleBrain: Brain {
             }
             #endif
             continuation.finish(throwing: NSError(domain: "AppleBrain", code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Apple Intelligence tidak tersedia."]))
+                userInfo: [NSLocalizedDescriptionKey: "Apple Intelligence isn't available."]))
         }
     }
 }

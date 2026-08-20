@@ -15,7 +15,7 @@ struct ScreenTimeCard: View {
         let secs = store.screenTimeHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.duration ?? 0
         let h = Int(secs) / 3600
         let m = (Int(secs) % 3600) / 60
-        return "\(h)j \(m)m"
+        return "\(h)h \(m)m"
     }
 
     var body: some View {

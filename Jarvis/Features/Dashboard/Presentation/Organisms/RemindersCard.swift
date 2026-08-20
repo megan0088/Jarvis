@@ -22,10 +22,10 @@ struct RemindersCard: View {
     }
 
     var body: some View {
-        DashCard(title: "Pengingat", systemImage: "bell") {
+        DashCard(title: "Reminders", systemImage: "bell") {
             VStack(spacing: Spacing.sm) {
                 if upcoming.isEmpty {
-                    Text("Tidak ada pengingat lagi hari ini.")
+                    Text("No more reminders today.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {

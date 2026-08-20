@@ -12,11 +12,11 @@ struct WellnessCard: View {
     @Bindable var store: PetStore
 
     var body: some View {
-        DashCard(title: "Wellness hari ini", systemImage: "target") {
+        DashCard(title: "Today's wellness", systemImage: "target") {
             VStack(spacing: Spacing.md) {
-                MetricRow(title: "Minum air", value: store.goalProgress.water, goal: 6, tint: AppColor.water)
+                MetricRow(title: "Water", value: store.goalProgress.water, goal: 6, tint: AppColor.water)
                 MetricRow(title: "Stretch", value: store.goalProgress.stretch, goal: 6, tint: AppColor.stretch)
-                MetricRow(title: "Makan", value: store.goalProgress.meal, goal: 3, tint: AppColor.meal)
+                MetricRow(title: "Meals", value: store.goalProgress.meal, goal: 3, tint: AppColor.meal)
             }
         }
     }

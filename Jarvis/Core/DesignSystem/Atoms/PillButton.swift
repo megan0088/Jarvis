@@ -31,7 +31,7 @@ struct PillButton: View {
 
 #Preview {
     HStack(spacing: Spacing.sm) {
-        PillButton(title: "Tanya Jarvis", systemImage: "sparkles", isPrimary: true) {}
+        PillButton(title: "Ask Jarvis", systemImage: "sparkles", isPrimary: true) {}
         PillButton(title: "Buddy Mode", systemImage: "figure.walk") {}
     }
     .padding()

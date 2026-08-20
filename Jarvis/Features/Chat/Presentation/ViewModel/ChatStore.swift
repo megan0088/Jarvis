@@ -31,11 +31,11 @@ final class ChatStore {
         }
         for (kind, brain) in brains where kind != activeBrain {
             if await brain.availability() == .ready {
-                noticeMessage = "\(activeBrain.displayName) belum siap — memakai \(brain.displayName)."
+                noticeMessage = "\(activeBrain.displayName) isn't ready yet — using \(brain.displayName) instead."
                 return brain
             }
         }
-        noticeMessage = "Belum ada otak yang siap. Cek Ollama atau Apple Intelligence di Setelan."
+        noticeMessage = "No brain is ready yet. Check Ollama or Apple Intelligence in Settings."
         return nil
     }
 
@@ -65,7 +65,7 @@ final class ChatStore {
                 }
             } catch {
                 if generation == self.streamGeneration, messages.indices.contains(index) {
-                    messages[index].text += (messages[index].text.isEmpty ? "" : "\n\n") + "⚠️ Koneksi terputus."
+                    messages[index].text += (messages[index].text.isEmpty ? "" : "\n\n") + "⚠️ Connection lost."
                 }
             }
             guard generation == self.streamGeneration else { return }
@@ -84,7 +84,7 @@ final class ChatStore {
         if messages[last].text.isEmpty {
             messages.remove(at: last)
         } else {
-            messages[last].text += " (dibatalkan)"
+            messages[last].text += " (cancelled)"
         }
         isStreaming = false
     }

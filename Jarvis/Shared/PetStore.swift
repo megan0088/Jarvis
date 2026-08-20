@@ -44,11 +44,11 @@ final class PetStore {
         var researchNote: String {
             switch self {
             case .water:
-                "NHS menyarankan sekitar 6-8 gelas cairan per hari. Default Jarvis: pengingat tiap 2 jam."
+                "NHS recommends about 6-8 glasses of fluid a day. Jarvis default: a reminder every 2 hours."
             case .stretch:
-                "AHA menyarankan bergerak setidaknya tiap 30 menit saat banyak duduk. Default Jarvis: pengingat tiap 45 menit."
+                "AHA recommends moving at least every 30 minutes when sitting a lot. Jarvis default: a reminder every 45 minutes."
             case .meal:
-                "Panduan gizi jantung menganjurkan pola makan teratur sepanjang hari. Default Jarvis: sarapan, makan siang, makan malam."
+                "Heart-healthy nutrition guidelines recommend regular meals throughout the day. Jarvis default: breakfast, lunch, dinner."
             }
         }
     }
@@ -207,36 +207,36 @@ final class PetStore {
 
     var reminderSchedules: [ReminderSchedule] {
         [
-            schedule(.water, 9, 0, "Minum air", "Ambil jeda dan minum segelas air."),
-            schedule(.water, 11, 0, "Hydration break", "Saatnya minum lagi supaya tetap terhidrasi."),
-            schedule(.water, 13, 0, "Refill air", "Isi ulang cairan tubuh setelah setengah hari bekerja."),
-            schedule(.water, 15, 0, "Minum sebentar", "Bangun, tarik napas, lalu minum air."),
-            schedule(.water, 17, 0, "Hydration check", "Pastikan asupan cairan tetap jalan."),
-            schedule(.water, 19, 0, "Last water break", "Tambahkan satu gelas air sebelum malam."),
-            schedule(.stretch, 9, 45, "Stretch break", "Berdiri 2-3 menit dan regangkan bahu, leher, serta punggung."),
-            schedule(.stretch, 10, 30, "Move a bit", "Lepas duduk terlalu lama dengan stretch singkat."),
-            schedule(.stretch, 11, 15, "Posture reset", "Goyangkan bahu dan buka dada sebentar."),
-            schedule(.stretch, 14, 0, "Stretching", "Setelah makan siang, berdiri dan gerakkan tubuh."),
-            schedule(.stretch, 15, 0, "Mobility break", "Istirahat sebentar untuk kaki, punggung, dan leher."),
-            schedule(.stretch, 16, 0, "Desk break", "Lepas posisi duduk dan jalan singkat."),
-            schedule(.meal, 8, 0, "Sarapan", "Mulai hari dengan sarapan yang seimbang."),
-            schedule(.meal, 13, 0, "Makan siang", "Saatnya makan siang, jangan cuma kopi."),
-            schedule(.meal, 19, 0, "Makan malam", "Atur makan malam yang cukup dan tidak terlalu larut.")
+            schedule(.water, 9, 0, "Drink water", "Take a break and drink a glass of water."),
+            schedule(.water, 11, 0, "Hydration break", "Time to drink again to stay hydrated."),
+            schedule(.water, 13, 0, "Refill water", "Top up your fluids after half a day of work."),
+            schedule(.water, 15, 0, "Quick water break", "Stand up, take a breath, then drink some water."),
+            schedule(.water, 17, 0, "Hydration check", "Make sure you're keeping up your fluid intake."),
+            schedule(.water, 19, 0, "Last water break", "Add one more glass of water before evening."),
+            schedule(.stretch, 9, 45, "Stretch break", "Stand up for 2-3 minutes and stretch your shoulders, neck, and back."),
+            schedule(.stretch, 10, 30, "Move a bit", "Break up long sitting with a quick stretch."),
+            schedule(.stretch, 11, 15, "Posture reset", "Roll your shoulders and open up your chest for a moment."),
+            schedule(.stretch, 14, 0, "Stretching", "After lunch, stand up and move your body."),
+            schedule(.stretch, 15, 0, "Mobility break", "Take a short break for your legs, back, and neck."),
+            schedule(.stretch, 16, 0, "Desk break", "Get up from your desk and take a short walk."),
+            schedule(.meal, 8, 0, "Breakfast", "Start the day with a balanced breakfast."),
+            schedule(.meal, 13, 0, "Lunch", "Time for lunch, don't just have coffee."),
+            schedule(.meal, 19, 0, "Dinner", "Have a proper dinner, and not too late.")
         ]
     }
 
     var statusMessage: String {
         switch mood {
         case .hungry:
-            "Butuh makan (terakhir \(lastFed.formatted(date: .abbreviated, time: .shortened)))"
+            "Needs food (last fed \(lastFed.formatted(date: .abbreviated, time: .shortened)))"
         case .sleepy where energy < 30:
-            "Mengantuk, beri waktu istirahat."
+            "Sleepy, give it some time to rest."
         case .angry:
-            "Sedang kesal, ajak bermain sebentar."
+            "Feeling grumpy, play with it for a bit."
         case .happy:
-            "Lagi tertawa. Keep it fun."
+            "Laughing right now. Keep it fun."
         default:
-            affection < 30 ? "Merasa sepi, butuh dipet." : "Siap jadi coding buddy."
+            affection < 30 ? "Feeling lonely, needs some petting." : "Ready to be your coding buddy."
         }
     }
 
@@ -376,7 +376,7 @@ final class PetStore {
                 id: reminder.key + ".done",
                 kind: reminder.schedule.kind,
                 date: date,
-                message: "\(reminder.schedule.title): selesai",
+                message: "\(reminder.schedule.title): done",
                 wasCompleted: true
             )
         )
@@ -454,11 +454,11 @@ final class PetStore {
     private func fallbackSchedule(for kind: ReminderKind) -> ReminderSchedule {
         switch kind {
         case .water:
-            schedule(.water, 9, 0, "Minum air", "Ambil jeda dan minum segelas air.")
+            schedule(.water, 9, 0, "Drink water", "Take a break and drink a glass of water.")
         case .stretch:
-            schedule(.stretch, 9, 45, "Stretch break", "Berdiri 2-3 menit dan regangkan bahu, leher, serta punggung.")
+            schedule(.stretch, 9, 45, "Stretch break", "Stand up for 2-3 minutes and stretch your shoulders, neck, and back.")
         case .meal:
-            schedule(.meal, 13, 0, "Makan siang", "Saatnya makan siang, jangan cuma kopi.")
+            schedule(.meal, 13, 0, "Lunch", "Time for lunch, don't just have coffee.")
         }
     }
 

@@ -27,8 +27,8 @@ struct MessageBubble: View {
 
 #Preview {
     VStack(spacing: Spacing.sm) {
-        MessageBubble(message: ChatMessage(id: UUID(), role: .user, text: "Halo Jarvis!", date: .now))
-        MessageBubble(message: ChatMessage(id: UUID(), role: .assistant, text: "Halo Ega, ada yang bisa aku bantu?", date: .now))
+        MessageBubble(message: ChatMessage(id: UUID(), role: .user, text: "Hello Jarvis!", date: .now))
+        MessageBubble(message: ChatMessage(id: UUID(), role: .assistant, text: "Hi Ega, how can I help?", date: .now))
     }
     .padding()
     .frame(width: 320)

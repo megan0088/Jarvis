@@ -49,9 +49,9 @@ struct OllamaBrain: Brain {
         do {
             let (_, resp) = try await URLSession.shared.data(for: req)
             if let http = resp as? HTTPURLResponse, http.statusCode == 200 { return .ready }
-            return .needsSetup("Ollama tidak merespons di \(host.host ?? "localhost").")
+            return .needsSetup("Ollama isn't responding at \(host.host ?? "localhost").")
         } catch {
-            return .needsSetup("Ollama tidak berjalan. Jalankan `ollama serve` lalu coba lagi.")
+            return .needsSetup("Ollama isn't running. Run `ollama serve` and try again.")
         }
     }
 
@@ -73,7 +73,7 @@ struct OllamaBrain: Brain {
                         var body = ""
                         for try await line in bytes.lines { body += line }
                         let message = OllamaWire.errorMessage(from: body)
-                            ?? "Ollama merespons dengan status \(http.statusCode)."
+                            ?? "Ollama responded with status \(http.statusCode)."
                         throw NSError(domain: "OllamaBrain", code: http.statusCode,
                                       userInfo: [NSLocalizedDescriptionKey: message])
                     }

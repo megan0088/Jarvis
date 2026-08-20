@@ -9,11 +9,11 @@
 import SwiftUI
 
 enum DashboardSection: String, CaseIterable, Identifiable {
-    case home = "Beranda"
+    case home = "Home"
     case chat = "Jarvis AI"
     case wellness = "Wellness"
-    case history = "Riwayat"
-    case settings = "Setelan"
+    case history = "History"
+    case settings = "Settings"
 
     var id: String { rawValue }
 
@@ -40,7 +40,7 @@ struct SidebarView: View {
 
             Section {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Label("Otak aktif", systemImage: "bolt").font(.caption)
+                    Label("Active brain", systemImage: "bolt").font(.caption)
                     BrainSegmentedPicker(selection: $chat.activeBrain)
                 }
             }

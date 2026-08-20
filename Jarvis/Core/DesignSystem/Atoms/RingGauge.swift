@@ -43,9 +43,9 @@ struct RingGauge: View {
 
 #Preview {
     HStack(spacing: Spacing.lg) {
-        RingGauge(value: 3, total: 6, tint: AppColor.water, caption: "Minum")
+        RingGauge(value: 3, total: 6, tint: AppColor.water, caption: "Water")
         RingGauge(value: 6, total: 6, tint: AppColor.stretch, caption: "Stretch")
-        RingGauge(value: 0, total: 3, tint: AppColor.meal, caption: "Makan")
+        RingGauge(value: 0, total: 3, tint: AppColor.meal, caption: "Meals")
     }
     .padding()
 }
