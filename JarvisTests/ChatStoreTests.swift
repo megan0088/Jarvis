@@ -180,4 +180,26 @@ struct ChatStoreTests {
         #expect(store.messages[2].text == "OK")
         #expect(store.isStreaming == false)
     }
+
+    /// Natural-language reminder requests must be handled locally: no brain
+    /// is consulted (brains: [:]), the closure fires exactly once with the
+    /// parsed schedule, and exactly one user + one assistant confirmation
+    /// message is appended.
+    @MainActor @Test func sendCreatesReminderWithoutCallingBrain() async {
+        let store = ChatStore(brains: [:])
+        var created: [PetStore.ReminderSchedule] = []
+        store.onCreateReminder = { created.append($0) }
+
+        await store.send("remind me to drink water at 3pm")
+
+        #expect(created.count == 1)
+        #expect(created.first?.kind == .water)
+        #expect(created.first?.hour == 15)
+        #expect(store.messages.count == 2)
+        #expect(store.messages[0].role == .user)
+        #expect(store.messages[0].text == "remind me to drink water at 3pm")
+        #expect(store.messages[1].role == .assistant)
+        #expect(store.messages[1].text.contains("Drink water"))
+        #expect(store.isStreaming == false)
+    }
 }

@@ -13,6 +13,8 @@ final class ChatStore {
         didSet { UserDefaults.standard.set(activeBrain.rawValue, forKey: "jarvis.activeBrain") }
     }
 
+    var onCreateReminder: ((PetStore.ReminderSchedule) -> Void)?
+
     private let brains: [BrainKind: Brain]
     private var streamTask: Task<Void, Never>?
     private var streamGeneration = 0
@@ -45,6 +47,14 @@ final class ChatStore {
         streamTask?.cancel()
         finalizeInterruptedAssistant()
         messages.append(ChatMessage(id: UUID(), role: .user, text: trimmed, date: .now))
+
+        if let schedule = ReminderIntent.parse(trimmed) {
+            onCreateReminder?(schedule)
+            messages.append(ChatMessage(id: UUID(), role: .assistant,
+                text: "Done — I set a reminder: \(schedule.title) at \(schedule.timeLabel).", date: .now))
+            persistRecent()
+            return
+        }
 
         guard let brain = await resolveBrain() else { return }
 

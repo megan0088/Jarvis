@@ -157,6 +157,7 @@ final class PetStore {
     var remindersEnabled: Bool
     var goalProgress: WellnessGoalProgress
     var snoozedReminders: [SnoozedReminder]
+    var customSchedules: [ReminderSchedule] = []
 
     init() {
         mood = Mood(rawValue: defaults.string(forKey: Keys.mood) ?? "calm") ?? .calm
@@ -206,6 +207,10 @@ final class PetStore {
     }
 
     var reminderSchedules: [ReminderSchedule] {
+        baseReminderSchedules + customSchedules
+    }
+
+    private var baseReminderSchedules: [ReminderSchedule] {
         [
             schedule(.water, 9, 0, "Drink water", "Take a break and drink a glass of water."),
             schedule(.water, 11, 0, "Hydration break", "Time to drink again to stay hydrated."),
@@ -342,6 +347,12 @@ final class PetStore {
     func scheduleReminders() async {
         guard remindersEnabled else { return }
         await WellnessNotificationCenter.shared.schedule(reminderSchedules)
+    }
+
+    func addCustomSchedule(_ schedule: ReminderSchedule) {
+        guard !customSchedules.contains(where: { $0.id == schedule.id }) else { return }
+        customSchedules.append(schedule)
+        Task { await scheduleReminders() }
     }
 
     func syncReminderHistory() async {

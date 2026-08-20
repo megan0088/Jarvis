@@ -21,7 +21,10 @@ struct JarvisApp: App {
     var body: some Scene {
         WindowGroup {
             rootView
-                .task { await store.prepareWellness() }
+                .task {
+                    chat.onCreateReminder = { [store] schedule in store.addCustomSchedule(schedule) }
+                    await store.prepareWellness()
+                }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
