@@ -138,6 +138,7 @@ final class PetStore {
         static let remindersEnabled = "wellness.remindersEnabled"
         static let goalProgress = "wellness.goalProgress"
         static let snoozedReminders = "wellness.snoozedReminders"
+        static let customSchedules = "pet.customSchedules"
     }
 
     private let encoder = JSONEncoder()
@@ -157,7 +158,7 @@ final class PetStore {
     var remindersEnabled: Bool
     var goalProgress: WellnessGoalProgress
     var snoozedReminders: [SnoozedReminder]
-    var customSchedules: [ReminderSchedule] = []
+    var customSchedules: [ReminderSchedule]
 
     init() {
         mood = Mood(rawValue: defaults.string(forKey: Keys.mood) ?? "calm") ?? .calm
@@ -172,6 +173,7 @@ final class PetStore {
         goalProgress = Self.decode(WellnessGoalProgress.self, from: defaults.data(forKey: Keys.goalProgress))
             ?? WellnessGoalProgress(date: .now, water: 0, stretch: 0, meal: 0)
         snoozedReminders = Self.decode([SnoozedReminder].self, from: defaults.data(forKey: Keys.snoozedReminders)) ?? []
+        customSchedules = Self.decode([ReminderSchedule].self, from: defaults.data(forKey: Keys.customSchedules)) ?? []
 
         if hunger == 0 { hunger = 45 }
         if energy == 0 { energy = 70 }
@@ -352,6 +354,7 @@ final class PetStore {
     func addCustomSchedule(_ schedule: ReminderSchedule) {
         guard !customSchedules.contains(where: { $0.id == schedule.id }) else { return }
         customSchedules.append(schedule)
+        saveWellness()
         Task { await scheduleReminders() }
     }
 
@@ -538,6 +541,7 @@ final class PetStore {
         defaults.set(remindersEnabled, forKey: Keys.remindersEnabled)
         defaults.set(try? encoder.encode(goalProgress), forKey: Keys.goalProgress)
         defaults.set(try? encoder.encode(snoozedReminders), forKey: Keys.snoozedReminders)
+        defaults.set(try? encoder.encode(customSchedules), forKey: Keys.customSchedules)
     }
 
     private func syncFromCloudIfAvailable() {

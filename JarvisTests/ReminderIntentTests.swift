@@ -24,4 +24,8 @@ struct ReminderIntentTests {
     @Test func nilWhenNoKind() {
         #expect(ReminderIntent.parse("remind me at 3pm") == nil)
     }
+    @Test func parses12amToMidnight() {
+        let s = ReminderIntent.parse("remind me to drink water at 12am")
+        #expect(s?.hour == 0); #expect(s?.minute == 0)
+    }
 }
