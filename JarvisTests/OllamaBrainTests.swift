@@ -27,4 +27,13 @@ struct OllamaBrainTests {
     @Test func kindIsOllama() {
         #expect(OllamaBrain().kind == .ollama)
     }
+
+    @Test func errorMessageParsesOllamaError() {
+        #expect(OllamaWire.errorMessage(from: #"{"error":"model 'x' not found"}"#) == "model 'x' not found")
+    }
+
+    @Test func errorMessageNilForNonError() {
+        #expect(OllamaWire.errorMessage(from: #"{"message":{"content":"hi"},"done":false}"#) == nil)
+        #expect(OllamaWire.errorMessage(from: "garbage") == nil)
+    }
 }

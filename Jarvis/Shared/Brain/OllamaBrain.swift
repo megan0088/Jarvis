@@ -28,6 +28,14 @@ enum OllamaWire {
         }
         return out
     }
+
+    /// Ekstrak pesan error dari body JSON Ollama {"error":"..."} — nil kalau bukan error.
+    static func errorMessage(from body: String) -> String? {
+        guard let data = body.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let err = obj["error"] as? String, !err.isEmpty else { return nil }
+        return err
+    }
 }
 
 struct OllamaBrain: Brain {
@@ -60,7 +68,15 @@ struct OllamaBrain: Brain {
                     req.setValue("application/json", forHTTPHeaderField: "Content-Type")
                     req.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-                    let (bytes, _) = try await URLSession.shared.bytes(for: req)
+                    let (bytes, resp) = try await URLSession.shared.bytes(for: req)
+                    if let http = resp as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                        var body = ""
+                        for try await line in bytes.lines { body += line }
+                        let message = OllamaWire.errorMessage(from: body)
+                            ?? "Ollama merespons dengan status \(http.statusCode)."
+                        throw NSError(domain: "OllamaBrain", code: http.statusCode,
+                                      userInfo: [NSLocalizedDescriptionKey: message])
+                    }
                     var acc = ""
                     for try await line in bytes.lines {
                         if Task.isCancelled { break }
