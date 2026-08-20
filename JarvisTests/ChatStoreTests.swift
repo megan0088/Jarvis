@@ -65,6 +65,7 @@ private struct StubStreamError: Error {}
 
 struct ChatStoreTests {
     @MainActor @Test func sendAppendsUserAndStreamedAssistantMessage() async {
+        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         let store = ChatStore(brains: [.ollama: StubBrain(kind: .ollama, chunks: ["A", "AB", "ABC"])])
         store.activeBrain = .ollama
         await store.send("halo")
@@ -76,6 +77,7 @@ struct ChatStoreTests {
     }
 
     @MainActor @Test func fallsBackWhenActiveBrainUnavailable() async {
+        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         let apple = StubBrain(kind: .apple, chunks: ["X"], available: .unavailable("nope"))
         let ollama = StubBrain(kind: .ollama, chunks: ["dari ollama"], available: .ready)
         let store = ChatStore(brains: [.apple: apple, .ollama: ollama])
@@ -95,6 +97,7 @@ struct ChatStoreTests {
     ///   started — it must NOT flip `isStreaming` back to false or persist
     ///   a stale snapshot while the newer stream is still active.
     @MainActor @Test func overlappingSendFinalizesStalePlaceholderAndIgnoresStaleCleanup() async {
+        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         let brain = GatedBrain(kind: .ollama)
         let store = ChatStore(brains: [.ollama: brain])
         store.activeBrain = .ollama
@@ -143,6 +146,7 @@ struct ChatStoreTests {
     /// instead of being silently discarded. The catch block must be gated
     /// by the same generation check as the success path.
     @MainActor @Test func staleStreamErrorAfterSupersessionDoesNotCorruptNewerMessage() async {
+        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         let brain = GatedBrain(kind: .ollama)
         let store = ChatStore(brains: [.ollama: brain])
         store.activeBrain = .ollama
@@ -184,11 +188,15 @@ struct ChatStoreTests {
     /// Natural-language reminder requests must be handled locally: no brain
     /// is consulted (brains: [:]), the closure fires exactly once with the
     /// parsed schedule, and exactly one user + one assistant confirmation
-    /// message is appended.
+    /// message is appended. Also covers the reminder path clearing any
+    /// stale `noticeMessage` (e.g. a leftover "brain not ready" banner)
+    /// so it doesn't linger over a successful local reminder confirmation.
     @MainActor @Test func sendCreatesReminderWithoutCallingBrain() async {
+        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         let store = ChatStore(brains: [:])
         var created: [PetStore.ReminderSchedule] = []
         store.onCreateReminder = { created.append($0) }
+        store.noticeMessage = "stale banner"
 
         await store.send("remind me to drink water at 3pm")
 
@@ -201,5 +209,6 @@ struct ChatStoreTests {
         #expect(store.messages[1].role == .assistant)
         #expect(store.messages[1].text.contains("Drink water"))
         #expect(store.isStreaming == false)
+        #expect(store.noticeMessage == nil)
     }
 }

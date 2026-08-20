@@ -23,6 +23,10 @@ final class ChatStore {
         self.brains = brains
         let saved = UserDefaults.standard.string(forKey: "jarvis.activeBrain")
         self.activeBrain = saved.flatMap(BrainKind.init(rawValue:)) ?? .ollama
+        if let data = UserDefaults.standard.data(forKey: "jarvis.chat.recent"),
+           let restored = try? JSONDecoder().decode([ChatMessage].self, from: data) {
+            messages = restored
+        }
     }
 
     /// Pilih otak aktif kalau siap, jika tidak fallback ke otak lain yang siap.
@@ -49,6 +53,8 @@ final class ChatStore {
         messages.append(ChatMessage(id: UUID(), role: .user, text: trimmed, date: .now))
 
         if let schedule = ReminderIntent.parse(trimmed) {
+            noticeMessage = nil
+            streamGeneration += 1
             onCreateReminder?(schedule)
             messages.append(ChatMessage(id: UUID(), role: .assistant,
                 text: "Done — I set a reminder: \(schedule.title) at \(schedule.timeLabel).", date: .now))
