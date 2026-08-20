@@ -6,6 +6,17 @@ import FoundationModels
 struct AppleBrain: Brain {
     var kind: BrainKind { .apple }
 
+    /// Gabungkan riwayat percakapan menjadi satu prompt untuk Foundation Models
+    /// (streamResponse menerima satu String; persona sudah di-set via instructions).
+    /// Meniru perilaku multi-turn OllamaBrain yang meneruskan seluruh history.
+    static func buildPrompt(from history: [ChatMessage]) -> String {
+        let turns = history.map { msg in
+            let who = msg.role == .user ? "User" : "Jarvis"
+            return "\(who): \(msg.text)"
+        }
+        return (turns + ["Jarvis:"]).joined(separator: "\n")
+    }
+
     func availability() async -> BrainAvailability {
         #if canImport(FoundationModels)
         if #available(macOS 26.0, *) {
@@ -34,7 +45,7 @@ struct AppleBrain: Brain {
                 let task = Task {
                     do {
                         let session = LanguageModelSession(instructions: persona.systemPrompt)
-                        let prompt = history.last(where: { $0.role == .user })?.text ?? ""
+                        let prompt = AppleBrain.buildPrompt(from: history)
                         for try await partial in session.streamResponse(to: prompt) {
                             if Task.isCancelled { break }
                             continuation.yield(partial.content) // snapshot kumulatif
