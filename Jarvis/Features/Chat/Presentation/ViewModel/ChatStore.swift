@@ -15,6 +15,7 @@ final class ChatStore {
 
     private let brains: [BrainKind: Brain]
     private var streamTask: Task<Void, Never>?
+    private var streamGeneration = 0
 
     init(brains: [BrainKind: Brain]) {
         self.brains = brains
@@ -42,6 +43,7 @@ final class ChatStore {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         streamTask?.cancel()
+        finalizeInterruptedAssistant()
         messages.append(ChatMessage(id: UUID(), role: .user, text: trimmed, date: .now))
 
         guard let brain = await resolveBrain() else { return }
@@ -50,9 +52,11 @@ final class ChatStore {
         var assistant = ChatMessage(id: UUID(), role: .assistant, text: "", date: .now)
         messages.append(assistant)
         let index = messages.count - 1
+        streamGeneration += 1
+        let generation = streamGeneration
         isStreaming = true
 
-        let task = Task { @MainActor in
+        let task = Task {
             do {
                 for try await cumulative in brain.reply(to: history, persona: persona) {
                     if Task.isCancelled { break }
@@ -64,11 +68,25 @@ final class ChatStore {
                     messages[index].text += (messages[index].text.isEmpty ? "" : "\n\n") + "⚠️ Koneksi terputus."
                 }
             }
+            guard generation == self.streamGeneration else { return }
             isStreaming = false
             persistRecent()
         }
         streamTask = task
         await task.value
+    }
+
+    /// Kalau stream sebelumnya diputus di tengah jalan, rapikan bubble asisten-nya
+    /// supaya tidak nyangkut di UI dan tidak ikut ke history berikutnya.
+    private func finalizeInterruptedAssistant() {
+        guard isStreaming, let last = messages.indices.last,
+              messages[last].role == .assistant else { return }
+        if messages[last].text.isEmpty {
+            messages.remove(at: last)
+        } else {
+            messages[last].text += " (dibatalkan)"
+        }
+        isStreaming = false
     }
 
     private func persistRecent() {
