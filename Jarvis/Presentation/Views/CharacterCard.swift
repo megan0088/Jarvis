@@ -14,7 +14,7 @@ struct CharacterCard: View {
     var body: some View {
         DashCard(title: "Jarvis", systemImage: "face.smiling") {
             HStack(spacing: Spacing.md) {
-                RobotCharacterView(size: 90)
+                AvatarBadge(systemImage: "sparkles")
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(store.statusMessage)
                         .font(.subheadline)

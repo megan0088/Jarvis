@@ -9,6 +9,7 @@
 #if os(macOS)
 import AppKit
 import SpriteKit
+import SwiftUI
 
 private final class BuddyOverlayView: SKView {
     var shouldHandlePoint: ((CGPoint) -> Bool)?
@@ -28,6 +29,7 @@ final class JarvisBuddyWindowController: NSWindowController {
     static let shared = JarvisBuddyWindowController()
 
     private var walkingScene: WalkingJarvisScene?
+    private var robotHostingView: NSView?
     private var skView: BuddyOverlayView?
     private var dismissHandler: (() -> Void)?
     private let smallButton = NSButton(title: "Small", target: nil, action: nil)
@@ -112,24 +114,26 @@ final class JarvisBuddyWindowController: NSWindowController {
         let totalFrame = JarvisBuddyWindowController.totalScreenFrame()
         window.setFrame(totalFrame, display: false)
 
-        let scene = WalkingJarvisScene(size: totalFrame.size, store: store)
-        // When Escape is pressed inside the scene, also notify the App to sync state.
-        scene.onDismiss = { [weak self] in
-            self?.stopBuddyMode()
-            onDismiss?()
-        }
-        walkingScene = scene
-        skView.shouldHandlePoint = { [weak self, weak scene] point in
-            guard let self, let scene else { return false }
-            if self.controlStack.frame.insetBy(dx: -8, dy: -8).contains(point) {
-                return true
-            }
-            let scenePoint = scene.convertPoint(fromView: point)
-            return scene.containsInteractiveContent(at: scenePoint)
+        skView.frame = CGRect(origin: .zero, size: totalFrame.size)
+        skView.presentScene(nil) // no SpriteKit character — 3D robot instead
+
+        // Floating 3D robot (Robot.usdz) at the bottom-right of the desktop.
+        robotHostingView?.removeFromSuperview()
+        let robotSize: CGFloat = 260
+        let host = NSHostingView(rootView: RobotCharacterView(size: robotSize))
+        host.frame = CGRect(x: totalFrame.width - robotSize - 40,
+                            y: 40,
+                            width: robotSize, height: robotSize)
+        host.autoresizingMask = [.minXMargin, .maxYMargin]
+        skView.addSubview(host)
+        robotHostingView = host
+
+        // Only the control buttons are interactive; the rest stays click-through.
+        skView.shouldHandlePoint = { [weak self] point in
+            guard let self else { return false }
+            return self.controlStack.frame.insetBy(dx: -8, dy: -8).contains(point)
         }
 
-        skView.frame = CGRect(origin: .zero, size: totalFrame.size)
-        skView.presentScene(scene)
         skView.addSubview(controlStack, positioned: .above, relativeTo: nil)
         startHoverMonitoring()
 
@@ -139,6 +143,9 @@ final class JarvisBuddyWindowController: NSWindowController {
     func stopBuddyMode() {
         walkingScene?.stopWalking()
         walkingScene = nil
+        robotHostingView?.removeFromSuperview()
+        robotHostingView = nil
+        skView?.presentScene(nil)
         hoverTimer?.invalidate()
         hoverTimer = nil
         skView?.shouldHandlePoint = nil
