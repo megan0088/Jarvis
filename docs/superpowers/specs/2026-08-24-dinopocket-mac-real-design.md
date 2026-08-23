@@ -202,6 +202,24 @@ DinoPocket/
 └── docs/superpowers/
 ```
 
+### `SharedCore` adalah folder, BUKAN framework target
+
+Diverifikasi langsung di Taggo: target yang ada hanya `TaggoMain`, `TaggoClip`,
+`TaggoTests`, `TaggoUITests` — **tidak ada target `SharedCore`** — dan
+`grep "public " SharedCore/` mengembalikan **nol hasil**.
+
+SharedCore adalah folder yang file-nya menjadi anggota target aplikasi lewat
+`sources:`. Semua tipe tetap `internal`.
+
+**Kenapa penting:** menjadikannya framework akan memaksa setiap tipe, init, dan member
+yang dipakai lintas modul ditandai `public` — perubahan mekanis besar di 7 file, plus
+friksi `@Observable` dan sintesis `Codable`. Tidak ada manfaat yang sepadan untuk dua
+target di satu repo.
+
+**Konsekuensi yang harus diterima:** batas modul **tidak ditegakkan compiler**. File di
+`SharedCore/` yang mengimpor AppKit tetap akan ter-compile sebagai bagian target Mac.
+Karena itu skrip verifikasi di bawah bukan pelengkap — **ia satu-satunya penegak batas**.
+
 **Aturan penegak `SharedCore`** — bisa diuji, bukan sekadar niat:
 
 1. Tidak boleh `import SwiftUI`, `import AppKit`, `import UIKit`
@@ -353,26 +371,26 @@ struct AppDependencies {
 Ini yang membuat companion iPhone v1.1 bisa dicolok tanpa menyentuh dashboard.
 
 ```swift
-public protocol WellnessSourcing: Sendable {
+protocol WellnessSourcing: Sendable {
     var provenance: WellnessProvenance { get }        // .manual | .iPhoneHealth
     func snapshot(for day: Date) async throws -> WellnessSnapshot
 }
 
-public struct WellnessSnapshot: Sendable, Codable, Equatable {
-    public let day: Date
-    public let deskTime: TimeInterval           // Mac tahu ini
-    public let water:     Measured<Int>?
-    public let stretch:   Measured<Int>?
-    public let meals:     Measured<Int>?
-    public let steps:     Measured<Int>?        // nil di v1
-    public let sleep:     Measured<TimeInterval>?   // nil di v1
-    public let heartRate: Measured<Double>?     // nil di v1
+struct WellnessSnapshot: Sendable, Codable, Equatable {
+    let day: Date
+    let deskTime: TimeInterval           // Mac tahu ini
+    let water:     Measured<Int>?
+    let stretch:   Measured<Int>?
+    let meals:     Measured<Int>?
+    let steps:     Measured<Int>?        // nil di v1
+    let sleep:     Measured<TimeInterval>?   // nil di v1
+    let heartRate: Measured<Double>?     // nil di v1
 }
 
-public struct Measured<T: Sendable & Codable & Equatable>: Sendable, Codable, Equatable {
-    public let value: T
-    public let provenance: WellnessProvenance   // untuk label "manual" / "dari iPhone"
-    public let recordedAt: Date
+struct Measured<T: Sendable & Codable & Equatable>: Sendable, Codable, Equatable {
+    let value: T
+    let provenance: WellnessProvenance   // untuk label "manual" / "dari iPhone"
+    let recordedAt: Date
 }
 ```
 

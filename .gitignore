@@ -1,0 +1,18 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+**/xcuserdata/
+
+# XcodeGen menghasilkan ini dari project.yml
+DinoPocket.xcodeproj/
+
+# macOS
+.DS_Store
+
+# Scratch
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
