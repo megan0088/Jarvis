@@ -28,18 +28,10 @@ final class JarvisBuddyWindowController: NSWindowController {
 
     static let shared = JarvisBuddyWindowController()
 
-    private var walkingScene: WalkingJarvisScene?
     private var robotHostingView: NSView?
     private var skView: BuddyOverlayView?
     private var dismissHandler: (() -> Void)?
-    private let smallButton = NSButton(title: "Small", target: nil, action: nil)
     private let stopButton = NSButton(title: "Stop Buddy", target: nil, action: nil)
-    private let waterButton = NSButton(title: "Minum", target: nil, action: nil)
-    private let stretchButton = NSButton(title: "Stretch", target: nil, action: nil)
-    private let mealButton = NSButton(title: "Makan", target: nil, action: nil)
-    private let resetWaterButton = NSButton(title: "Reset Water", target: nil, action: nil)
-    private let resetStretchButton = NSButton(title: "Reset Stretch", target: nil, action: nil)
-    private let resetMealButton = NSButton(title: "Reset Meal", target: nil, action: nil)
     private let controlStack = NSStackView()
     private var hoverTimer: Timer?
 
@@ -79,20 +71,13 @@ final class JarvisBuddyWindowController: NSWindowController {
         stopButton.translatesAutoresizingMaskIntoConstraints = false
         stopButton.setButtonType(.momentaryPushIn)
 
-        configureTriggerButton(smallButton, title: "Small", action: #selector(makeCharacterSmall))
-        configureTriggerButton(waterButton, title: "Minum", action: #selector(triggerWaterReminder))
-        configureTriggerButton(stretchButton, title: "Stretch", action: #selector(triggerStretchReminder))
-        configureTriggerButton(mealButton, title: "Makan", action: #selector(triggerMealReminder))
-        configureTriggerButton(resetWaterButton, title: "Reset Water", action: #selector(resetWaterGoal))
-        configureTriggerButton(resetStretchButton, title: "Reset Stretch", action: #selector(resetStretchGoal))
-        configureTriggerButton(resetMealButton, title: "Reset Meal", action: #selector(resetMealGoal))
 
         controlStack.orientation = .horizontal
         controlStack.spacing = 10
         controlStack.alignment = .centerY
         controlStack.edgeInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
         controlStack.translatesAutoresizingMaskIntoConstraints = false
-        [smallButton, waterButton, stretchButton, mealButton, resetWaterButton, resetStretchButton, resetMealButton, stopButton].forEach(controlStack.addArrangedSubview)
+        [stopButton].forEach(controlStack.addArrangedSubview)
 
         view.addSubview(controlStack)
         NSLayoutConstraint.activate([
@@ -146,8 +131,6 @@ final class JarvisBuddyWindowController: NSWindowController {
     }
 
     func stopBuddyMode() {
-        walkingScene?.stopWalking()
-        walkingScene = nil
         robotHostingView?.removeFromSuperview()
         robotHostingView = nil
         skView?.presentScene(nil)
@@ -164,40 +147,12 @@ final class JarvisBuddyWindowController: NSWindowController {
         dismissHandler?()
     }
 
-    @objc
-    private func makeCharacterSmall() {
-        walkingScene?.minimizeCharacter()
-    }
 
-    @objc
-    private func triggerWaterReminder() {
-        walkingScene?.triggerDemoReminder(.water)
-    }
 
-    @objc
-    private func triggerStretchReminder() {
-        walkingScene?.triggerDemoReminder(.stretch)
-    }
 
-    @objc
-    private func triggerMealReminder() {
-        walkingScene?.triggerDemoReminder(.meal)
-    }
 
-    @objc
-    private func resetWaterGoal() {
-        walkingScene?.resetGoal(.water)
-    }
 
-    @objc
-    private func resetStretchGoal() {
-        walkingScene?.resetGoal(.stretch)
-    }
 
-    @objc
-    private func resetMealGoal() {
-        walkingScene?.resetGoal(.meal)
-    }
 
     // MARK: - Helpers
 
@@ -218,13 +173,5 @@ final class JarvisBuddyWindowController: NSWindowController {
         }
     }
 
-    private func configureTriggerButton(_ button: NSButton, title: String, action: Selector) {
-        button.title = title
-        button.bezelStyle = .rounded
-        button.controlSize = .large
-        button.target = self
-        button.action = action
-        button.translatesAutoresizingMaskIntoConstraints = false
-    }
 }
 #endif
