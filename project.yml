@@ -1,0 +1,89 @@
+name: DinoPocket
+
+options:
+  bundleIdPrefix: com.Jarvis
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "26.2"
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES
+    DEVELOPMENT_TEAM: R93K2HFM78
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_PREVIEWS: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+targets:
+  DinoPocketMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: Jarvis
+        excludes:
+          - "Presentation/Views/ContentView.swift"
+          - "Presentation/Views/ContentView+iOS.swift"
+          # Extension dari ContentView (UI retro), bukan file produk macOS —
+          # jalur macOS memakai DashboardTemplate. Ikut dibekukan.
+          - "Presentation/Views/ContentView+macOS.swift"
+          - "Presentation/Views/PetActivityWidgets.swift"
+          - "Presentation/Views/PetWidgetsBundle.swift"
+          - "Infrastructure/Services/Haptics.swift"
+          - "DEMO_NOTES.md"
+          - "DinoPocket.entitlements"
+    settings:
+      base:
+        # PRODUCT_NAME sengaja TIDAK disetel: XcodeGen menurunkan TEST_HOST dari
+        # nama target, sehingga PRODUCT_NAME yang berbeda membuat bundle test host
+        # tidak ketemu. Nama produk mengikuti nama target selama Wave 0 dan ikut
+        # daftar rename terpusat (spec §14).
+        #
+        # Nama modul SENGAJA dipertahankan sebagai Jarvis sepanjang Wave 0.
+        # Keenam file test memakai `@testable import Jarvis`; mengubah nama modul
+        # akan mematahkan 28 test sekaligus — justru jaring pengaman yang dipakai
+        # setiap task — dan membuat Jarvis.xcodeproj lama tidak bisa lagi
+        # mengompilasi test-nya, sehingga properti "dua project sama-sama hijau"
+        # yang menjadi jalan mundur ikut hilang.
+        # Nama modul masuk daftar rename terpusat (spec §14), bukan Wave 0.
+        PRODUCT_MODULE_NAME: Jarvis
+        PRODUCT_BUNDLE_IDENTIFIER: com.Jarvis.Ega
+        GENERATE_INFOPLIST_FILE: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        ENABLE_OUTGOING_NETWORK_CONNECTIONS: NO
+        ENABLE_INCOMING_NETWORK_CONNECTIONS: NO
+        ENABLE_USER_SELECTED_FILES: readwrite
+        COMBINE_HIDPI_IMAGES: YES
+
+  DinoPocketTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: JarvisTests
+    dependencies:
+      - target: DinoPocketMac
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  DinoPocketMac:
+    build:
+      targets:
+        DinoPocketMac: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - DinoPocketTests
+    archive:
+      config: Release
