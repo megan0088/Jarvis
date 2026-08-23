@@ -6,7 +6,20 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C459A0552F7D59BB002A17EE /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C459A0542F7D59BB002A17EE /* WidgetKit.framework */; };
+		C459A0572F7D59BB002A17EE /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C459A0562F7D59BB002A17EE /* SwiftUI.framework */; };
+		C459A0682F7D59BB002A17EE /* JarvisWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C459A0522F7D59BB002A17EE /* JarvisWidgetExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		C459A0662F7D59BB002A17EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C4A51A822F63C0D8009106BB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C459A0512F7D59BB002A17EE;
+			remoteInfo = JarvisWidgetExtension;
+		};
 		C4A51A9A2F63C0D9009106BB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C4A51A822F63C0D8009106BB /* Project object */;
@@ -23,13 +36,48 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		C459A06D2F7D59BB002A17EE /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C459A0682F7D59BB002A17EE /* JarvisWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		C459A0522F7D59BB002A17EE /* JarvisWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = JarvisWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C459A0542F7D59BB002A17EE /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		C459A0562F7D59BB002A17EE /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		C4A51A8A2F63C0D8009106BB /* Jarvis.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jarvis.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4A51A992F63C0D9009106BB /* JarvisTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JarvisTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4A51AA32F63C0D9009106BB /* JarvisUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JarvisUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C459A0692F7D59BB002A17EE /* Exceptions for "JarvisWidget" folder in "JarvisWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C459A0512F7D59BB002A17EE /* JarvisWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C459A0582F7D59BB002A17EE /* JarvisWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C459A0692F7D59BB002A17EE /* Exceptions for "JarvisWidget" folder in "JarvisWidgetExtension" target */,
+			);
+			path = JarvisWidget;
+			sourceTree = "<group>";
+		};
 		C4A51A8C2F63C0D8009106BB /* Jarvis */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Jarvis;
@@ -48,6 +96,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C459A04F2F7D59BB002A17EE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C459A0572F7D59BB002A17EE /* SwiftUI.framework in Frameworks */,
+				C459A0552F7D59BB002A17EE /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C4A51A872F63C0D8009106BB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -72,12 +129,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C459A0532F7D59BB002A17EE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C459A0542F7D59BB002A17EE /* WidgetKit.framework */,
+				C459A0562F7D59BB002A17EE /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		C4A51A812F63C0D8009106BB = {
 			isa = PBXGroup;
 			children = (
 				C4A51A8C2F63C0D8009106BB /* Jarvis */,
 				C4A51A9C2F63C0D9009106BB /* JarvisTests */,
 				C4A51AA62F63C0D9009106BB /* JarvisUITests */,
+				C459A0582F7D59BB002A17EE /* JarvisWidget */,
+				C459A0532F7D59BB002A17EE /* Frameworks */,
 				C4A51A8B2F63C0D8009106BB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +156,7 @@
 				C4A51A8A2F63C0D8009106BB /* Jarvis.app */,
 				C4A51A992F63C0D9009106BB /* JarvisTests.xctest */,
 				C4A51AA32F63C0D9009106BB /* JarvisUITests.xctest */,
+				C459A0522F7D59BB002A17EE /* JarvisWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,6 +164,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		C459A0512F7D59BB002A17EE /* JarvisWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C459A06A2F7D59BB002A17EE /* Build configuration list for PBXNativeTarget "JarvisWidgetExtension" */;
+			buildPhases = (
+				C459A04E2F7D59BB002A17EE /* Sources */,
+				C459A04F2F7D59BB002A17EE /* Frameworks */,
+				C459A0502F7D59BB002A17EE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C459A0582F7D59BB002A17EE /* JarvisWidget */,
+			);
+			name = JarvisWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = JarvisWidgetExtension;
+			productReference = C459A0522F7D59BB002A17EE /* JarvisWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		C4A51A892F63C0D8009106BB /* Jarvis */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C4A51AAD2F63C0D9009106BB /* Build configuration list for PBXNativeTarget "Jarvis" */;
@@ -102,10 +193,12 @@
 				C4A51A862F63C0D8009106BB /* Sources */,
 				C4A51A872F63C0D8009106BB /* Frameworks */,
 				C4A51A882F63C0D8009106BB /* Resources */,
+				C459A06D2F7D59BB002A17EE /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C459A0672F7D59BB002A17EE /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C4A51A8C2F63C0D8009106BB /* Jarvis */,
@@ -170,9 +263,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2630;
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
+					C459A0512F7D59BB002A17EE = {
+						CreatedOnToolsVersion = 26.4;
+					};
 					C4A51A892F63C0D8009106BB = {
 						CreatedOnToolsVersion = 26.3;
 					};
@@ -203,11 +299,19 @@
 				C4A51A892F63C0D8009106BB /* Jarvis */,
 				C4A51A982F63C0D9009106BB /* JarvisTests */,
 				C4A51AA22F63C0D9009106BB /* JarvisUITests */,
+				C459A0512F7D59BB002A17EE /* JarvisWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C459A0502F7D59BB002A17EE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C4A51A882F63C0D8009106BB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -232,6 +336,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C459A04E2F7D59BB002A17EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C4A51A862F63C0D8009106BB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -256,6 +367,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		C459A0672F7D59BB002A17EE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = C459A0512F7D59BB002A17EE /* JarvisWidgetExtension */;
+			targetProxy = C459A0662F7D59BB002A17EE /* PBXContainerItemProxy */;
+		};
 		C4A51A9B2F63C0D9009106BB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C4A51A892F63C0D8009106BB /* Jarvis */;
@@ -269,6 +386,71 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		C459A06B2F7D59BB002A17EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R93K2HFM78;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JarvisWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = JarvisWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Jarvis.Ega.JarvisWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C459A06C2F7D59BB002A17EE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R93K2HFM78;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JarvisWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = JarvisWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Jarvis.Ega.JarvisWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		C4A51AAB2F63C0D9009106BB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -431,7 +613,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Jarvis;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Jarvis.Ega;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -489,7 +671,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Jarvis;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Jarvis.Ega;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -614,6 +796,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C459A06A2F7D59BB002A17EE /* Build configuration list for PBXNativeTarget "JarvisWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C459A06B2F7D59BB002A17EE /* Debug */,
+				C459A06C2F7D59BB002A17EE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C4A51A852F63C0D8009106BB /* Build configuration list for PBXProject "Jarvis" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

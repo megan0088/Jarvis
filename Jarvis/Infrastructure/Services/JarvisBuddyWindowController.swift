@@ -138,6 +138,11 @@ final class JarvisBuddyWindowController: NSWindowController {
         startHoverMonitoring()
 
         window.orderFrontRegardless()
+
+        print("[JARVIS-DIAG] totalFrame=\(totalFrame)")
+        print("[JARVIS-DIAG] window.frame=\(window.frame) opaque=\(window.isOpaque) alpha=\(window.alphaValue) bg=\(String(describing: window.backgroundColor))")
+        print("[JARVIS-DIAG] skView.frame=\(skView.frame) allowsTransparency=\(skView.allowsTransparency) scene=\(String(describing: skView.scene)) layerBG=\(String(describing: skView.layer?.backgroundColor))")
+        print("[JARVIS-DIAG] host.frame=\(host.frame) isOpaque=\(host.isOpaque) layerBG=\(String(describing: host.layer?.backgroundColor))")
     }
 
     func stopBuddyMode() {
