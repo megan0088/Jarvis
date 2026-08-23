@@ -123,6 +123,52 @@ yang sedang dipakai adalah pengawasan yang tidak dibutuhkan tujuan wellness. Rit
 sepenuhnya bisa disimpulkan dari idle time — tahu *kapan* user di meja tanpa tahu *apa* yang
 dikerjakan. Manfaat penuh, nol biaya privasi, satu pertanyaan App Review yang tidak perlu dijawab.
 
+### 3.5 Baseline build & test
+
+`xcodebuild test -project Jarvis.xcodeproj -scheme Jarvis -destination 'platform=macOS,arch=arm64'`
+→ **`Test run with 28 tests in 6 suites passed` · `** TEST SUCCEEDED **`** (2026-08-24).
+
+Ini jaring pengaman gelombang 0, dan sudah dijalankan — bukan angka yang diwariskan dari
+dokumen lama.
+
+### 3.6 Entitlements memakai build setting, bukan file
+
+`grep CODE_SIGN_ENTITLEMENTS project.pbxproj` → **0 hasil**. Project memakai entitlement
+berbasis build setting gaya Xcode modern:
+
+```
+ENABLE_APP_SANDBOX = YES
+ENABLE_HARDENED_RUNTIME = YES
+ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO      ← keputusan all-Apple sudah ditegakkan di sini
+ENABLE_INCOMING_NETWORK_CONNECTIONS = NO
+ENABLE_USER_SELECTED_FILES = readwrite
+ENABLE_RESOURCE_ACCESS_* = NO                 (kamera, mikrofon, kontak, lokasi, dll.)
+```
+
+**Konsekuensi:** `Jarvis/DinoPocket.entitlements` dan `JarvisIOS.entitlements` adalah file
+**yatim** — tidak direferensikan project, sehingga app group `group.com.Jarvis` dan iCloud
+kvstore di dalamnya **tidak aktif**. Companion iPhone v1.1 yang mengandalkan sinkronisasi
+iCloud harus mengaktifkannya secara eksplisit; jangan berasumsi sudah menyala.
+
+`ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO` berarti item DoD "tanpa `network.client`"
+sudah terpenuhi di level build setting.
+
+**Build settings yang harus direplikasi `project.yml`:**
+
+| Setting | Nilai |
+|---|---|
+| `SWIFT_VERSION` | `5.0` (naik ke `6.0` di gelombang 2) |
+| `MACOSX_DEPLOYMENT_TARGET` | `26.2` |
+| `PRODUCT_BUNDLE_IDENTIFIER` | `com.Jarvis.Ega` (diganti, §14) |
+| `DEVELOPMENT_TEAM` | `R93K2HFM78` |
+| `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` | `1.0` / `1` |
+| `GENERATE_INFOPLIST_FILE` | `YES` |
+| `ASSETCATALOG_COMPILER_APPICON_NAME` | `AppIcon` |
+| `SWIFT_APPROACHABLE_CONCURRENCY` | `YES` |
+| `SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY` | `YES` |
+| `ENABLE_PREVIEWS` | `YES` |
+| `CODE_SIGN_STYLE` | `Automatic` |
+
 ---
 
 ## 4. Arsitektur target
@@ -174,7 +220,7 @@ target iOS nanti = 3 baris, bukan diff pbxproj 3.000 baris.
 
 Klasifikasi berdasarkan guard dan import yang benar-benar ada di tiap file.
 
-### 5.1 → `SharedCore/` (8 file, pindah apa adanya)
+### 5.1 → `SharedCore/` (7 file, pindah apa adanya)
 
 | Tujuan | File |
 |---|---|
@@ -186,11 +232,12 @@ Klasifikasi berdasarkan guard dan import yang benar-benar ada di tiap file.
 ketersediaan framework, bukan percabangan platform. FoundationModels ada di macOS 26
 *dan* iOS 26, jadi companion iPhone nanti memakai otak yang sama tanpa duplikasi.
 
-### 5.2 → `DinoPocketMac/` (26 file, guard dihapus saat pindah)
+### 5.2 → `DinoPocketMac/` (27 file, guard dihapus saat pindah)
 
 `JarvisApp.swift` + `JarvisApp+macOS.swift` (digabung jadi satu entry point),
-`JarvisBuddyWindowController.swift`, `ChatStore.swift`, dan seluruh
-`Presentation/Views/*` bertanda `#if os(macOS)` **kecuali** tiga file karakter 2D (§5.3).
+`JarvisBuddyWindowController.swift`, `ChatStore.swift`, dan 23 file
+`Presentation/Views/*` — seluruhnya kecuali tiga file karakter 2D (§5.3) dan
+empat file jalur iOS (§5.4).
 
 Guard `#if os(macOS)` **dihapus** — keanggotaan target yang menggantikan perannya.
 
@@ -202,23 +249,40 @@ Efek samping menguntungkan: `typealias PlatformColor` hidup di dua file ini, jad
 `#if os(macOS) … NSColor #else … UIColor #endif` keluar sepenuhnya dari build. Target Mac
 memakai `NSColor` langsung.
 
-### 5.6 Rekonsiliasi hitungan
+### 5.4 → dibekukan untuk spec iPhone (5 file)
 
-`8 (SharedCore) + 26 (Mac) + 3 (Legacy) + 4 (dibekukan) + 1 (larut) = 42` ✓
+`Haptics.swift`, `ContentView+iOS.swift`, `ContentView.swift`, `PetActivityWidgets.swift`,
+`PetWidgetsBundle.swift`.
 
-### 5.4 → dibekukan untuk spec iPhone (4 file)
-
-`Haptics.swift`, `ContentView+iOS.swift`, `PetActivityWidgets.swift`, `PetWidgetsBundle.swift`.
+**Koreksi atas asumsi awal:** `ContentView.swift` bukan shell percabangan tipis. Ia
+**934 baris view iOS bergaya retro** (`RetroCardView`, `RetroProgressBar`, `ScanlineOverlay`,
+`SpeakerGrille`). Jalur macOS tidak pernah menyentuhnya — `JarvisApp.rootView` mengarah ke
+`DashboardTemplate` untuk macOS dan ke `ContentView` hanya untuk iOS. Karena itu file ini
+**dibekukan bersama jalur iOS**, bukan dilarutkan.
 
 **Catatan:** `PetWidgetsBundle.swift` ada di `Presentation/Views/` sementara ada folder
-target `JarvisWidget/` yang **belum ter-commit** (untracked di git). Duplikasi ini harus
-diselesaikan di gelombang 0 — pilih satu sumber kebenaran.
+target `JarvisWidget/` (kini ter-commit di `65fc0f8`). Duplikasi ini harus diselesaikan
+di gelombang 0 — pilih satu sumber kebenaran.
 
-### 5.5 Larut, tidak pindah ke mana pun
+### 5.5 Rekonsiliasi hitungan
 
-`ContentView.swift` — 9 guard yang kerjanya hanya memilih antara `ContentView+iOS` dan
-`ContentView+macOS`. Dengan target terpisah, pekerjaan itu tidak ada lagi.
-`JarvisApp.swift` pecah jadi entry point milik masing-masing target.
+`7 (SharedCore) + 27 (Mac) + 3 (Legacy) + 5 (dibekukan) = 42` ✓
+
+Tidak ada file yang "larut". `JarvisApp.swift` dan `JarvisApp+macOS.swift` digabung jadi
+satu entry point macOS, dihitung di §5.2.
+
+### 5.6 Kode mati yang ditemukan saat verifikasi
+
+`JarvisBuddyWindowController.startBuddyMode` memanggil `skView.presentScene(nil)` dan
+**tidak pernah meng-assign `walkingScene`**. Ketujuh tombol demo (`Small`, `Minum`,
+`Stretch`, `Makan`, `Reset ×3`) memanggil `walkingScene?.…` pada optional yang selalu `nil`
+— **semuanya sudah no-op**. Hanya `Stop Buddy` yang berfungsi.
+
+Konsekuensi: membuang tombol demo dan mengarantina karakter 2D nyaris tanpa risiko
+perilaku. Referensi eksternal ke tiga file 2D hanya dua, keduanya ikut hilang:
+`walkingScene` di controller, dan `JarvisScene` di `ContentView.swift:75` (file yang
+dibekukan). `RobotStyle`, `PlatformColor`, dan `RobotChargeKind` punya **nol** referensi
+eksternal.
 
 ---
 
