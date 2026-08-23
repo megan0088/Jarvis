@@ -116,7 +116,26 @@ Diuji di mesin dev, semuanya mengembalikan nilai nyata:
 | Sumber daya + baterai | `IOPSCopyPowerSourcesInfo` | `Battery Power, 65%` |
 | Uptime | `ProcessInfo.systemUptime` | `4664 s` |
 
-**Wajib diverifikasi ulang di build ber-sandbox** (gelombang 0) — probe berjalan tanpa sandbox.
+**Terverifikasi di build ber-sandbox** (Wave 0, Task 9, 2026-08-24). Probe dijalankan
+dari dalam `DinoPocketMac.app` yang ber-entitlement `com.apple.security.app-sandbox`,
+bukan CLI:
+
+| Sinyal | Hasil di sandbox | Status |
+|---|---|---|
+| `CGEventSource.secondsSinceLastEventType` | `1227.41` | ✅ selamat |
+| `ProcessInfo.thermalState` | `0` | ✅ selamat |
+| `ProcessInfo.isLowPowerModeEnabled` | `false` | ✅ selamat |
+| `ProcessInfo.systemUptime` | `7370.83` | ✅ selamat |
+| `IOPSCopyPowerSourcesInfo` | `1 sumber · AC Power · 70%` | ✅ selamat |
+
+**Kelima sinyal lolos sandbox tanpa entitlement tambahan.** Tidak ada yang perlu
+dipetakan jadi `nil` karena diblokir — `IdleTimeProviding` dan `SystemStatusProviding`
+di Wave 1 bisa mengandalkan semuanya.
+
+Catatan pelaksanaan: `print` ke stdout **ter-buffer** saat diredirect ke file, sehingga
+probe pertama tampak tidak menghasilkan apa-apa padahal berjalan. Probe diubah menulis
+ke `FileHandle.standardError` yang tidak di-buffer. Relevan bila kelak ada diagnostik
+serupa.
 
 **Sengaja tidak dipakai:** `NSWorkspace.frontmostApplication` berfungsi, tetapi melacak app
 yang sedang dipakai adalah pengawasan yang tidak dibutuhkan tujuan wellness. Ritme istirahat
