@@ -5,7 +5,6 @@
 //  Molecule: an icon chip + title/time + done/skip actions for one reminder.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct ReminderRow: View {
@@ -56,4 +55,3 @@ struct ReminderRow: View {
     .padding()
     .frame(width: 300)
 }
-#endif

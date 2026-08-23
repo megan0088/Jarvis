@@ -5,7 +5,6 @@
 //  Page: dashboard home — greeting, quick actions, and the metric card grid.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct HomePage: View {
@@ -73,4 +72,3 @@ struct HomePage: View {
         HomePage(store: PetStore(), chat: ChatStore(brains: [:]), onBuddyMode: nil, showChat: .constant(false))
     }
 }
-#endif

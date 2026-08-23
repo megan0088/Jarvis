@@ -6,7 +6,6 @@
 //  detail pages, and the chat sheet reachable from anywhere in the dashboard.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct DashboardTemplate: View {
@@ -54,4 +53,3 @@ struct DashboardTemplate: View {
 #Preview {
     DashboardTemplate(store: PetStore(), chat: ChatStore(brains: [:]))
 }
-#endif

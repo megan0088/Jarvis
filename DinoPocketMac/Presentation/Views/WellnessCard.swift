@@ -5,7 +5,6 @@
 //  Organism: today's wellness metrics (water/stretch/meal) from PetStore.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct WellnessCard: View {
@@ -27,4 +26,3 @@ struct WellnessCard: View {
         .frame(width: 300)
         .padding()
 }
-#endif

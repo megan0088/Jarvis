@@ -5,7 +5,6 @@
 //  Organism: today's total screen time from PetStore, formatted "Xj Ym".
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct ScreenTimeCard: View {
@@ -31,4 +30,3 @@ struct ScreenTimeCard: View {
         .frame(width: 300)
         .padding()
 }
-#endif

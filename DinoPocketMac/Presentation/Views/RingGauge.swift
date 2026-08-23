@@ -5,7 +5,6 @@
 //  Atom: circular progress ring with a centered "value/total" readout.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct RingGauge: View {
@@ -49,4 +48,3 @@ struct RingGauge: View {
     }
     .padding()
 }
-#endif

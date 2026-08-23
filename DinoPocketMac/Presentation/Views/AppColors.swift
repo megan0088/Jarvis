@@ -5,7 +5,6 @@
 //  Semantic HIG color tokens for the macOS dashboard design system.
 //
 
-#if os(macOS)
 import SwiftUI
 
 /// Semantic color namespace. No hardcoded hex — everything resolves to a
@@ -23,4 +22,3 @@ enum AppColor {
 
     static let online = Color.green
 }
-#endif

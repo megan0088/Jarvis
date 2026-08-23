@@ -5,7 +5,6 @@
 //  Semantic spacing scale for the macOS dashboard design system.
 //
 
-#if os(macOS)
 import Foundation
 import CoreGraphics
 
@@ -16,4 +15,3 @@ enum Spacing {
     static let lg: CGFloat = 16
     static let xl: CGFloat = 24
 }
-#endif

@@ -5,7 +5,6 @@
 //  Organism: dashboard navigation sidebar + active-brain switcher.
 //
 
-#if os(macOS)
 import SwiftUI
 
 enum DashboardSection: String, CaseIterable, Identifiable {
@@ -53,4 +52,3 @@ struct SidebarView: View {
     SidebarView(selection: .constant(.home), chat: ChatStore(brains: [:]))
         .frame(width: 220, height: 400)
 }
-#endif

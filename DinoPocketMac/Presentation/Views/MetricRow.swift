@@ -5,7 +5,6 @@
 //  Molecule: a title + "value/goal" readout + tinted progress bar.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct MetricRow: View {
@@ -38,4 +37,3 @@ struct MetricRow: View {
     .padding()
     .frame(width: 280)
 }
-#endif

@@ -6,7 +6,6 @@
 //  a streaming-aware input row wired to ChatStore.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct ChatPage: View {
@@ -88,4 +87,3 @@ struct ChatPage: View {
         ChatPage(chat: ChatStore(brains: [:]))
     }
 }
-#endif

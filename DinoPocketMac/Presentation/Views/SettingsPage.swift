@@ -5,7 +5,6 @@
 //  Page: brain + persona preferences for the chat experience.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct SettingsPage: View {
@@ -34,4 +33,3 @@ struct SettingsPage: View {
         SettingsPage(chat: ChatStore(brains: [:]))
     }
 }
-#endif

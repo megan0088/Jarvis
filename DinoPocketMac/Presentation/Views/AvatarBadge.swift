@@ -5,7 +5,6 @@
 //  Atom: circular tinted avatar badge with a centered SF Symbol.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct AvatarBadge: View {
@@ -30,4 +29,3 @@ struct AvatarBadge: View {
     }
     .padding()
 }
-#endif

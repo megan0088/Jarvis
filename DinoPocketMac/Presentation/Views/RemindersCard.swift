@@ -5,7 +5,6 @@
 //  Organism: up to 3 upcoming reminders for the rest of today, from PetStore.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct RemindersCard: View {
@@ -49,4 +48,3 @@ struct RemindersCard: View {
         .frame(width: 300)
         .padding()
 }
-#endif

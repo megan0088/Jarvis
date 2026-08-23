@@ -3,7 +3,6 @@
 //  Jarvis
 //
 
-#if os(macOS)
 import AppKit
 
 extension JarvisApp {
@@ -28,4 +27,3 @@ extension JarvisApp {
         }
     }
 }
-#endif

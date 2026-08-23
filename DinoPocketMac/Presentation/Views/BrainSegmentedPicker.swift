@@ -5,7 +5,6 @@
 //  Molecule: segmented picker over the available brain backends.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct BrainSegmentedPicker: View {
@@ -27,4 +26,3 @@ struct BrainSegmentedPicker: View {
         .padding()
         .frame(width: 260)
 }
-#endif

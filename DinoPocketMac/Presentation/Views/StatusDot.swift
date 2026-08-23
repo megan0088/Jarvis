@@ -5,7 +5,6 @@
 //  Atom: small filled status indicator dot.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct StatusDot: View {
@@ -26,4 +25,3 @@ struct StatusDot: View {
     }
     .padding()
 }
-#endif

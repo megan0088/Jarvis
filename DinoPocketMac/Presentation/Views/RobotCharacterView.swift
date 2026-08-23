@@ -6,7 +6,6 @@
 //  idle animation ("Take_001"). Rendered via RealityKit's SwiftUI RealityView.
 //
 
-#if os(macOS)
 import SwiftUI
 import RealityKit
 
@@ -61,4 +60,3 @@ struct RobotCharacterView: View {
         .frame(width: 160, height: 160)
         .padding()
 }
-#endif

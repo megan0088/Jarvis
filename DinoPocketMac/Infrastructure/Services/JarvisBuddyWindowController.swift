@@ -6,7 +6,6 @@
 //  roam freely across the desktop (and across multiple displays).
 //
 
-#if os(macOS)
 import AppKit
 import SpriteKit
 import SwiftUI
@@ -174,4 +173,3 @@ final class JarvisBuddyWindowController: NSWindowController {
     }
 
 }
-#endif

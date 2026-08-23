@@ -5,7 +5,6 @@
 //  Atom: capsule-shaped labeled button, primary or secondary.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct PillButton: View {
@@ -36,4 +35,3 @@ struct PillButton: View {
     }
     .padding()
 }
-#endif

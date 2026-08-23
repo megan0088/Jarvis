@@ -6,7 +6,6 @@
 //  accent tint; assistant messages align leading on the card background.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct MessageBubble: View {
@@ -33,4 +32,3 @@ struct MessageBubble: View {
     .padding()
     .frame(width: 320)
 }
-#endif

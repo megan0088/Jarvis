@@ -6,7 +6,6 @@
 //  used by all dashboard cards.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct DashCard<Content: View>: View {
@@ -35,4 +34,3 @@ struct DashCard<Content: View>: View {
     .frame(width: 300)
     .padding()
 }
-#endif

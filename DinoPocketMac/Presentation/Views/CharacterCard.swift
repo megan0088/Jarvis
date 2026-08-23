@@ -5,7 +5,6 @@
 //  Organism: Jarvis status + energy level from PetStore.
 //
 
-#if os(macOS)
 import SwiftUI
 
 struct CharacterCard: View {
@@ -34,4 +33,3 @@ struct CharacterCard: View {
         .frame(width: 300)
         .padding()
 }
-#endif
