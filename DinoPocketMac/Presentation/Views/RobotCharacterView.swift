@@ -14,22 +14,15 @@ struct RobotCharacterView: View {
 
     var body: some View {
         RealityView { content in
-            guard let robot = try? await Entity(named: "Robot", in: Bundle.main) else {
-                print("[JARVIS-DIAG] ❌ Entity(named:\"Robot\") FAILED to load")
-                return
-            }
-            print("[JARVIS-DIAG] ✅ entity loaded, name=\(robot.name) children=\(robot.children.count) scale=\(robot.scale) anims=\(robot.availableAnimations.count)")
+            guard let robot = try? await Entity(named: "Robot", in: Bundle.main) else { return }
 
             // Normalize to a consistent on-screen size and recenter on origin.
             let bounds = robot.visualBounds(relativeTo: nil)
-            print("[JARVIS-DIAG] bounds.extents=\(bounds.extents) center=\(bounds.center)")
             let maxDim = max(bounds.extents.x, bounds.extents.y, bounds.extents.z, 0.0001)
             let target: Float = 0.35
             let factor = target / maxDim
-            print("[JARVIS-DIAG] maxDim=\(maxDim) factor=\(factor)")
             robot.scale = SIMD3<Float>(repeating: factor)
             robot.position = -bounds.center * factor
-            print("[JARVIS-DIAG] after: scale=\(robot.scale) pos=\(robot.position) newBounds=\(robot.visualBounds(relativeTo: nil).extents)")
 
             content.add(robot)
 

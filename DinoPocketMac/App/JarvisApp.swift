@@ -24,10 +24,6 @@ struct JarvisApp: App {
                 .task {
                     chat.onCreateReminder = { [store] schedule in store.addCustomSchedule(schedule) }
                     await store.prepareWellness()
-                    // Temporary diagnostic hook: JARVIS_AUTO_BUDDY=1 opens Buddy Mode on launch.
-                    if ProcessInfo.processInfo.environment["JARVIS_AUTO_BUDDY"] == "1" {
-                        isBuddyMode = true
-                    }
                 }
         }
         .onChange(of: scenePhase) { _, phase in

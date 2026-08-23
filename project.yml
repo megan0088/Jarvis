@@ -33,11 +33,9 @@ targets:
           # jalur macOS memakai DashboardTemplate. Ikut dibekukan.
           - "Presentation/Views/ContentView+macOS.swift"
           - "Presentation/Views/PetActivityWidgets.swift"
-          - "Presentation/Views/PetWidgetsBundle.swift"
           - "Infrastructure/Services/Haptics.swift"
           # Karakter SpriteKit 2D, dikarantina — lihat DinoPocketMac/Legacy/README.md
           - "Legacy/**"
-          - "DEMO_NOTES.md"
           - "DinoPocket.entitlements"
     settings:
       base:
