@@ -24,7 +24,7 @@ targets:
     type: application
     platform: macOS
     sources:
-      - path: Jarvis
+      - path: DinoPocketMac
         excludes:
           - "Presentation/Views/ContentView.swift"
           - "Presentation/Views/ContentView+iOS.swift"
@@ -67,7 +67,7 @@ targets:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - path: JarvisTests
+      - path: DinoPocketTests
     dependencies:
       - target: DinoPocketMac
     settings:
