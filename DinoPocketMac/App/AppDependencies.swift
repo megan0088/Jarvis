@@ -27,11 +27,26 @@ struct AppDependencies {
     /// software eksternal berisiko ditolak App Review.
     let brains: [BrainKind: Brain]
 
+    /// Didaftarkan eksplisit supaya penghapusan akun tidak melewatkannya.
+    let erasableStores: [any LocallyErasable]
+
     static func live() -> AppDependencies {
+        // Transcript dipersist supaya percakapan bertahan lintas peluncuran —
+        // inti dari "asisten yang ingat kemarin".
+        let apple: Brain
+        var erasable: [any LocallyErasable] = []
+        if #available(macOS 26.0, *) {
+            let sessionStore = FileChatSessionStore()
+            apple = AppleBrain(sessionStore: sessionStore)
+            erasable.append(sessionStore)
+        } else {
+            apple = AppleBrain()
+        }
+
         #if DEBUG
-        let brains: [BrainKind: Brain] = [.apple: AppleBrain(), .ollama: OllamaBrain()]
+        let brains: [BrainKind: Brain] = [.apple: apple, .ollama: OllamaBrain()]
         #else
-        let brains: [BrainKind: Brain] = [.apple: AppleBrain()]
+        let brains: [BrainKind: Brain] = [.apple: apple]
         #endif
 
         return AppDependencies(
@@ -40,7 +55,8 @@ struct AppDependencies {
             launchAtLogin: LaunchAtLoginService(),
             buddySettings: BuddySettingsStore(),
             account: AccountStore(),
-            brains: brains
+            brains: brains,
+            erasableStores: erasable
         )
     }
 

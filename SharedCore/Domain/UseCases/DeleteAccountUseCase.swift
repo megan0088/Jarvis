@@ -25,8 +25,12 @@
 import Foundation
 
 /// Apa pun yang menyimpan data pribadi dan harus ikut musnah bersama akun.
+///
+/// Tidak mensyaratkan `AnyObject`: transcript percakapan disimpan oleh sebuah
+/// struct berbasis berkas, dan ia HARUS bisa ikut dimusnahkan. Celah ketiga di
+/// jalur ini muncul persis karena penyimpanan baru lupa didaftarkan.
 @MainActor
-protocol LocallyErasable: AnyObject {
+protocol LocallyErasable {
     func eraseAllStoredData()
 }
 

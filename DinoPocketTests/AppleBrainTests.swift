@@ -17,7 +17,7 @@ struct AppleBrainTests {
         #expect(AppleBrain.buildPrompt(from: []) == "Jarvis:")
     }
 
-    @Test func kindIsApple() {
+    @MainActor @Test func kindIsApple() {
         #expect(AppleBrain().kind == .apple)
     }
 }

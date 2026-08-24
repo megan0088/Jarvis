@@ -13,6 +13,7 @@ struct DashboardTemplate: View {
     @Bindable var chat: ChatStore
     @Bindable var buddySettings: BuddySettingsStore
     @Bindable var account: AccountStore
+    var extraErasableStores: [any LocallyErasable] = []
     var onBuddyMode: (() -> Void)? = nil
     var isBuddyModeActive: Bool = false
 
@@ -38,7 +39,8 @@ struct DashboardTemplate: View {
             case .history:
                 HistoryPage(wellness: wellness)
             case .settings:
-                SettingsPage(chat: chat, wellness: wellness, buddySettings: buddySettings, account: account)
+                SettingsPage(chat: chat, wellness: wellness, buddySettings: buddySettings, account: account,
+                             extraErasableStores: extraErasableStores)
             }
         }
         .frame(minWidth: 720, minHeight: 520)

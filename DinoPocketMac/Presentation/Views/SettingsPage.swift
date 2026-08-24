@@ -12,6 +12,8 @@ struct SettingsPage: View {
     let wellness: WellnessViewModel
     @Bindable var buddySettings: BuddySettingsStore
     @Bindable var account: AccountStore
+    /// Penyimpanan tambahan dari composition root (mis. transcript percakapan).
+    var extraErasableStores: [any LocallyErasable] = []
 
     @State private var appleAvailability: BrainAvailability?
     @State private var showDeleteConfirm = false
@@ -180,7 +182,7 @@ struct SettingsPage: View {
                 // Tiap penyimpanan memusnahkan miliknya sendiri; UseCase ini
                 // tidak tahu satu pun nama kunci atau suite.
                 DeleteAccountUseCase(
-                    stores: [account, wellness.erasableStore, chat],
+                    stores: [account, wellness.erasableStore, chat] + extraErasableStores,
                     signOut: { account.signOut() }
                 ).execute()
             }

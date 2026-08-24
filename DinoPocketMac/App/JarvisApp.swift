@@ -68,6 +68,7 @@ struct JarvisApp: App {
             chat: chat,
             buddySettings: buddySettings,
             account: account,
+            extraErasableStores: Self.deps.erasableStores,
             onBuddyMode: toggleBuddyMode,
             isBuddyModeActive: isBuddyMode
         )
