@@ -159,14 +159,19 @@ struct SettingsPage: View {
                 // Lisensi Sketchfab Standard mewajibkan kredit pencipta. Baris ini
                 // hilang sendiri begitu aset diganti model buatan sendiri, karena
                 // atribusinya ikut ke `CharacterAsset` (Wave 1).
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Acknowledgements").font(.callout.weight(.medium))
-                    Text("3D character by l0wpoly (sketchfab.com/l0wpoly) — Sketchfab Standard License")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
+                // Kredit dibaca dari aset. Saat model diganti dengan buatan
+                // sendiri, `attribution` menjadi nil dan seluruh bagian ini
+                // lenyap tanpa ada yang perlu ingat menghapusnya.
+                if let attribution = CharacterAsset.robot.attribution {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Acknowledgements").font(.callout.weight(.medium))
+                        Text(attribution.displayText)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+                    .padding(.vertical, 2)
                 }
-                .padding(.vertical, 2)
 
                 Text("DinoPocket runs entirely on this Mac. No account data, wellness "
                      + "history, or conversation ever leaves the device.")

@@ -48,7 +48,7 @@ struct HomePage: View {
                     WellnessCard(wellness: wellness)
                     CharacterCard(wellness: wellness)
                     RemindersCard(wellness: wellness)
-                    ScreenTimeCard(wellness: wellness)
+                    DeskTimeCard(wellness: wellness)
                 }
             }
             .padding()

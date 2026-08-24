@@ -74,6 +74,7 @@ struct AppDependencies {
     /// kebenaran wellness di dalam satu app.
     func makeWellnessViewModel(store: WellnessStore? = nil) -> WellnessViewModel {
         WellnessViewModel(store: store ?? WellnessStore(),
-                          notifications: WellnessNotificationCenter.shared)
+                          notifications: WellnessNotificationCenter.shared,
+                          idle: IdleTimeService())
     }
 }

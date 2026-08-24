@@ -1,13 +1,19 @@
 //
-//  ScreenTimeCard.swift
+//  DeskTimeCard.swift
 //  Jarvis
 //
-//  Organism: today's total screen time from WellnessStore, formatted "Xj Ym".
+//  Organism: waktu hadir di depan Mac hari ini.
+//
+//  Dulu bernama ScreenTimeCard. Diganti karena namanya menjanjikan sesuatu yang
+//  mustahil: FamilyControls.AuthorizationCenter dan DeviceActivityCenter
+//  keduanya @available(macOS, unavailable), jadi screen time per-aplikasi tidak
+//  bisa diketahui di Mac (spec §3.2). Yang benar-benar diukur adalah durasi
+//  kehadiran di depan Mac ini — dan itulah yang sekarang dijanjikan namanya.
 //
 
 import SwiftUI
 
-struct ScreenTimeCard: View {
+struct DeskTimeCard: View {
     let wellness: WellnessViewModel
 
     private var todayLabel: String {
@@ -26,7 +32,7 @@ struct ScreenTimeCard: View {
 }
 
 #Preview {
-    ScreenTimeCard(wellness: .preview)
+    DeskTimeCard(wellness: .preview)
         .frame(width: 300)
         .padding()
 }

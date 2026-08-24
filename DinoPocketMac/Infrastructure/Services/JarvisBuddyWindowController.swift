@@ -358,9 +358,19 @@ struct BuddyCharacterHost: View {
     let mood: SystemMood
     let greeting: String?
 
+    /// Mood mesin dipetakan ke perilaku karakter di sini, bukan di dalam view
+    /// aset — pemilihan klip animasi adalah urusan aset, penerjemahan kondisi
+    /// sistem adalah urusan buddy.
+    private var behavior: CharacterBehavior {
+        switch mood {
+        case .hot, .lowBattery: .sleepy
+        case .busy, .normal:    greeting == nil ? .idle : .greet
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
-            RobotCharacterView(size: size)
+            USDZCharacterView(size: size, asset: .robot, behavior: behavior)
                 // Saat mesin panas atau baterai menipis, karakter meredup dan
                 // sedikit menunduk — isyarat yang terbaca tanpa perlu teks.
                 .opacity(mood == .hot || mood == .lowBattery ? 0.75 : 1.0)

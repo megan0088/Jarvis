@@ -23,10 +23,15 @@ final class WellnessViewModel {
 
     private let store: WellnessStore
     private let notifications: NotificationScheduling
+    private let focus: TrackFocusSessionUseCase
+    private var idleCheckTimer: Timer?
 
-    init(store: WellnessStore, notifications: NotificationScheduling) {
+    init(store: WellnessStore,
+         notifications: NotificationScheduling,
+         idle: IdleTimeProviding = IdleTimeService()) {
         self.store = store
         self.notifications = notifications
+        self.focus = TrackFocusSessionUseCase(store: store, idle: idle)
     }
 
     // MARK: - Bacaan untuk kartu
@@ -73,11 +78,28 @@ final class WellnessViewModel {
     }
 
     func resumeSession() {
-        store.resumeScreenTime()
+        focus.handle(.becameActive)
+        startIdleWatch()
     }
 
     func pauseSession() {
-        store.pauseScreenTime()
+        focus.handle(.becameInactive)
+        stopIdleWatch()
+    }
+
+    /// Ambang idle di `TrackFocusSessionUseCase` hanya berarti kalau ada yang
+    /// memeriksanya. `scenePhase` tidak cukup: app yang dibiarkan terbuka
+    /// semalaman tetap `.active` dan tidak pernah memicu apa pun.
+    private func startIdleWatch() {
+        stopIdleWatch()
+        idleCheckTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.focus.handle(.periodicCheck) }
+        }
+    }
+
+    private func stopIdleWatch() {
+        idleCheckTimer?.invalidate()
+        idleCheckTimer = nil
     }
 
     func tick() {
