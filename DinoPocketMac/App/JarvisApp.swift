@@ -13,6 +13,7 @@ struct JarvisApp: App {
     @State private var chat = ChatStore(brains: [.ollama: OllamaBrain(), .apple: AppleBrain()])
     @Environment(\.scenePhase) private var scenePhase
     @State var isBuddyMode = false
+    @State private var buddySettings = BuddySettingsStore()
 
     init() {
         WellnessNotificationCenter.shared.configure()
@@ -45,13 +46,19 @@ struct JarvisApp: App {
         DashboardTemplate(
             store: store,
             chat: chat,
+            buddySettings: buddySettings,
             onBuddyMode: toggleBuddyMode,
             isBuddyModeActive: isBuddyMode
         )
+        .onChange(of: buddySettings.size) { _, newSize in
+            guard isBuddyMode else { return }
+            JarvisBuddyWindowController.shared.updateCharacterSize(CGFloat(newSize))
+        }
         .onChange(of: isBuddyMode) { _, active in
             if active {
                 JarvisBuddyWindowController.shared.startBuddyMode(
                     store: store,
+                    size: CGFloat(buddySettings.size),
                     onDismiss: { dismissFromBuddy() }
                 )
                 hidePrimaryWindows()

@@ -33,6 +33,7 @@ final class JarvisBuddyWindowController: NSWindowController {
     private let stopButton = NSButton(title: "Stop Buddy", target: nil, action: nil)
     private let controlStack = NSStackView()
     private var hoverTimer: Timer?
+    private var characterSize: CGFloat = CGFloat(BuddySettingsStore.defaultSize)
 
     private init() {
         // Build a borderless, transparent window that covers all screens.
@@ -91,9 +92,12 @@ final class JarvisBuddyWindowController: NSWindowController {
 
     // MARK: - Public API
 
-    func startBuddyMode(store: PetStore, onDismiss: (() -> Void)? = nil) {
+    func startBuddyMode(store: PetStore,
+                        size: CGFloat = CGFloat(BuddySettingsStore.defaultSize),
+                        onDismiss: (() -> Void)? = nil) {
         guard let window, let skView else { return }
         dismissHandler = onDismiss
+        characterSize = size
 
         let totalFrame = JarvisBuddyWindowController.totalScreenFrame()
         window.setFrame(totalFrame, display: false)
@@ -103,12 +107,17 @@ final class JarvisBuddyWindowController: NSWindowController {
 
         // Floating 3D robot (Robot.usdz) at the bottom-right of the desktop.
         robotHostingView?.removeFromSuperview()
-        let robotSize: CGFloat = 260
-        let host = NSHostingView(rootView: RobotCharacterView(size: robotSize))
-        host.frame = CGRect(x: totalFrame.width - robotSize - 40,
-                            y: 40,
-                            width: robotSize, height: robotSize)
+        let host = NSHostingView(rootView: RobotCharacterView(size: size))
+        host.frame = Self.characterFrame(size: size, in: totalFrame)
         host.autoresizingMask = [.minXMargin, .maxYMargin]
+
+        // Bagian dari rantai transparansi: NSHostingView menggambar latarnya
+        // sendiri, jadi ARView yang sudah bening pun tetap tertutup kotak buram
+        // kalau baris-baris ini dilewat.
+        host.wantsLayer = true
+        host.layer?.isOpaque = false
+        host.layer?.backgroundColor = NSColor.clear.cgColor
+
         skView.addSubview(host)
         robotHostingView = host
 
@@ -150,6 +159,23 @@ final class JarvisBuddyWindowController: NSWindowController {
 
 
     // MARK: - Helpers
+
+    /// Perubahan ukuran diterapkan langsung tanpa memulai ulang Buddy Mode,
+    /// supaya slider di Settings terasa hidup saat digeser.
+    func updateCharacterSize(_ size: CGFloat) {
+        characterSize = size
+        guard let skView, let host = robotHostingView as? NSHostingView<RobotCharacterView> else { return }
+        host.rootView = RobotCharacterView(size: size)
+        host.frame = Self.characterFrame(size: size, in: CGRect(origin: .zero, size: skView.frame.size))
+    }
+
+    /// Karakter berdiri di pojok kanan bawah dengan margin tetap.
+    private static func characterFrame(size: CGFloat, in container: CGRect) -> CGRect {
+        let margin: CGFloat = 40
+        return CGRect(x: container.width - size - margin,
+                      y: margin,
+                      width: size, height: size)
+    }
 
     /// Returns the union rect of all connected screens (handles multi-display).
     static func totalScreenFrame() -> CGRect {

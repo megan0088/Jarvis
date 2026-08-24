@@ -11,6 +11,7 @@ import SwiftUI
 struct DashboardTemplate: View {
     @Bindable var store: PetStore
     @Bindable var chat: ChatStore
+    @Bindable var buddySettings: BuddySettingsStore
     var onBuddyMode: (() -> Void)? = nil
     var isBuddyModeActive: Bool = false
 
@@ -38,7 +39,7 @@ struct DashboardTemplate: View {
                     .foregroundStyle(.secondary)
                     .navigationTitle("History")
             case .settings:
-                SettingsPage(chat: chat)
+                SettingsPage(chat: chat, buddySettings: buddySettings)
             }
         }
         .sheet(isPresented: $showChat) {
@@ -51,5 +52,5 @@ struct DashboardTemplate: View {
 }
 
 #Preview {
-    DashboardTemplate(store: PetStore(), chat: ChatStore(brains: [:]))
+    DashboardTemplate(store: PetStore(), chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore())
 }
