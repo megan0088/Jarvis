@@ -194,15 +194,23 @@ struct ChatStoreTests {
     @MainActor @Test func sendCreatesReminderWithoutCallingBrain() async {
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         let store = ChatStore(brains: [:])
-        var created: [ReminderSchedule] = []
-        store.onCreateReminder = { created.append($0) }
+        let wellness = FakeWellnessStore()
+        let notifications = FakeNotificationScheduler()
+        store.createReminder = CreateReminderFromTextUseCase(
+            parser: ReminderIntentParser(),
+            store: wellness,
+            notifications: notifications
+        )
         store.noticeMessage = "stale banner"
 
         await store.send("remind me to drink water at 3pm")
 
-        #expect(created.count == 1)
-        #expect(created.first?.kind == .water)
-        #expect(created.first?.hour == 15)
+        #expect(wellness.added.count == 1)
+        #expect(wellness.added.first?.kind == .water)
+        #expect(wellness.added.first?.hour == 15)
+        // Bukti pengingat benar-benar DIJADWALKAN, bukan sekadar disimpan —
+        // pemisahan itu persis yang dulu membuatnya bisa senyap.
+        #expect(notifications.scheduleCallCount == 1)
         #expect(store.messages.count == 2)
         #expect(store.messages[0].role == .user)
         #expect(store.messages[0].text == "remind me to drink water at 3pm")
@@ -211,4 +219,38 @@ struct ChatStoreTests {
         #expect(store.isStreaming == false)
         #expect(store.noticeMessage == nil)
     }
+}
+
+// MARK: - Fakes
+
+@MainActor
+final class FakeWellnessStore: WellnessStoring {
+    private(set) var added: [ReminderSchedule] = []
+
+    var goalProgress = WellnessGoalProgress(date: .now, water: 0, stretch: 0, meal: 0)
+    var energy = 0
+    var statusMessage = ""
+    var todayScreenTime: TimeInterval = 0
+    var screenTimeHistory: [ScreenTimeEntry] = []
+    var recentScreenTimeHistory: [ScreenTimeEntry] = []
+    var recentReminderHistory: [ReminderEvent] = []
+    var reminderSchedules: [ReminderSchedule] { added }
+
+    func addCustomSchedule(_ schedule: ReminderSchedule) { added.append(schedule) }
+    func resumeScreenTime(at date: Date) {}
+    func pauseScreenTime(at date: Date) {}
+    func tick() {}
+    func prepareWellness() async {}
+    func syncReminderHistory() async {}
+}
+
+final class FakeNotificationScheduler: NotificationScheduling, @unchecked Sendable {
+    private(set) var scheduleCallCount = 0
+    private(set) var lastScheduled: [ReminderSchedule] = []
+
+    func schedule(_ reminders: [ReminderSchedule]) async {
+        scheduleCallCount += 1
+        lastScheduled = reminders
+    }
+    func requestAuthorization() async -> Bool { true }
 }

@@ -10,17 +10,17 @@
 import SwiftUI
 
 struct HistoryPage: View {
-    @Bindable var store: WellnessStore
+    let wellness: WellnessViewModel
 
     var body: some View {
         Group {
-            if store.recentReminderHistory.isEmpty && store.recentScreenTimeHistory.isEmpty {
+            if wellness.recentReminderHistory.isEmpty && wellness.recentScreenTimeHistory.isEmpty {
                 emptyState
             } else {
                 List {
-                    if !store.recentScreenTimeHistory.isEmpty {
+                    if !wellness.recentScreenTimeHistory.isEmpty {
                         Section("Desk time") {
-                            ForEach(store.recentScreenTimeHistory) { entry in
+                            ForEach(wellness.recentScreenTimeHistory) { entry in
                                 LabeledContent(entry.date.formatted(date: .abbreviated, time: .omitted)) {
                                     Text(Self.durationText(entry.duration))
                                         .font(.body.monospacedDigit())
@@ -30,9 +30,9 @@ struct HistoryPage: View {
                         }
                     }
 
-                    if !store.recentReminderHistory.isEmpty {
+                    if !wellness.recentReminderHistory.isEmpty {
                         Section("Reminders") {
-                            ForEach(store.recentReminderHistory) { event in
+                            ForEach(wellness.recentReminderHistory) { event in
                                 HStack(spacing: 10) {
                                     Image(systemName: event.wasCompleted
                                           ? "checkmark.circle.fill" : "circle.dashed")
@@ -76,6 +76,6 @@ struct HistoryPage: View {
 
 #Preview {
     NavigationStack {
-        HistoryPage(store: WellnessStore())
+        HistoryPage(wellness: .preview)
     }
 }

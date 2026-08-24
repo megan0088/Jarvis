@@ -32,7 +32,13 @@ final class ChatStore {
         didSet { UserDefaults.standard.set(activeBrain.rawValue, forKey: "jarvis.activeBrain") }
     }
 
-    var onCreateReminder: ((ReminderSchedule) -> Void)?
+    /// Pembuatan pengingat, disuntikkan sebagai UseCase.
+    ///
+    /// Dulu berupa closure `onCreateReminder` yang hanya menyimpan jadwal —
+    /// pendaftaran notifikasi terjadi di tempat lain, sehingga apakah pengingat
+    /// benar-benar berbunyi bergantung pada siapa yang memasang closure itu.
+    /// UseCase menyatukan parse, simpan, dan jadwalkan jadi satu tanggung jawab.
+    var createReminder: CreateReminderFromTextUseCase?
 
     private let brains: [BrainKind: Brain]
     private var streamTask: Task<Void, Never>?
@@ -80,12 +86,11 @@ final class ChatStore {
         finalizeInterruptedAssistant()
         messages.append(ChatMessage(id: UUID(), role: .user, text: trimmed, date: .now))
 
-        if let schedule = ReminderIntent.parse(trimmed) {
+        if let createReminder, let result = await createReminder.execute(text: trimmed) {
             noticeMessage = nil
             streamGeneration += 1
-            onCreateReminder?(schedule)
             messages.append(ChatMessage(id: UUID(), role: .assistant,
-                text: "Done — I set a reminder: \(schedule.title) at \(schedule.timeLabel).", date: .now))
+                text: result.confirmation, date: .now))
             persistRecent()
             return
         }

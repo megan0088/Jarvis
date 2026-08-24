@@ -8,27 +8,13 @@
 import SwiftUI
 
 struct HomePage: View {
-    @Bindable var store: WellnessStore
+    let wellness: WellnessViewModel
     @Bindable var chat: ChatStore
     var onBuddyMode: (() -> Void)?
     @Binding var showChat: Bool
 
     private let columns = [GridItem(.adaptive(minimum: 260), spacing: Spacing.md)]
 
-    /// Angka hari ini disisipkan ke prompt supaya model MERANGKAI data nyata,
-    /// bukan mengarang. Model on-device kecil kuat pada tugas seperti ini dan
-    /// lemah pada pengetahuan dunia, jadi ringkasan yang di-ground begini adalah
-    /// pemakaian terbaiknya.
-    private var summaryPrompt: String {
-        let desk = HistoryPage.durationText(store.todayScreenTime)
-        let g = store.goalProgress
-        return """
-        Summarize my day so far in two or three warm sentences. \
-        Here is what I actually did: \(desk) at my desk, \(g.water) glasses of water, \
-        \(g.stretch) stretch breaks, \(g.meal) meals. \
-        Only use these numbers; do not invent anything else.
-        """
-    }
 
     var body: some View {
         ScrollView {
@@ -49,7 +35,7 @@ struct HomePage: View {
                         onBuddyMode?()
                     }
                     PillButton(title: "Summarize my day", systemImage: "text.alignleft") {
-                        chat.pendingPrompt = summaryPrompt
+                        chat.pendingPrompt = wellness.summaryPrompt
                         showChat = true
                     }
                     PillButton(title: "Set a reminder", systemImage: "bell.badge") {
@@ -59,10 +45,10 @@ struct HomePage: View {
                 }
 
                 LazyVGrid(columns: columns, spacing: Spacing.md) {
-                    WellnessCard(store: store)
-                    CharacterCard(store: store)
-                    RemindersCard(store: store)
-                    ScreenTimeCard(store: store)
+                    WellnessCard(wellness: wellness)
+                    CharacterCard(wellness: wellness)
+                    RemindersCard(wellness: wellness)
+                    ScreenTimeCard(wellness: wellness)
                 }
             }
             .padding()
@@ -86,6 +72,6 @@ struct HomePage: View {
 
 #Preview {
     NavigationStack {
-        HomePage(store: WellnessStore(), chat: ChatStore(brains: [:]), onBuddyMode: nil, showChat: .constant(false))
+        HomePage(wellness: .preview, chat: ChatStore(brains: [:]), onBuddyMode: nil, showChat: .constant(false))
     }
 }

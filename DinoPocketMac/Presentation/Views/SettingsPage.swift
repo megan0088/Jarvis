@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SettingsPage: View {
     @Bindable var chat: ChatStore
-    @Bindable var store: WellnessStore
+    let wellness: WellnessViewModel
     @Bindable var buddySettings: BuddySettingsStore
     @Bindable var account: AccountStore
 
@@ -180,7 +180,7 @@ struct SettingsPage: View {
                 // Tiap penyimpanan memusnahkan miliknya sendiri; UseCase ini
                 // tidak tahu satu pun nama kunci atau suite.
                 DeleteAccountUseCase(
-                    stores: [account, store, chat],
+                    stores: [account, wellness.erasableStore, chat],
                     signOut: { account.signOut() }
                 ).execute()
             }
@@ -201,6 +201,6 @@ struct SettingsPage: View {
 
 #Preview {
     NavigationStack {
-        SettingsPage(chat: ChatStore(brains: [:]), store: WellnessStore(), buddySettings: BuddySettingsStore(), account: AccountStore())
+        SettingsPage(chat: ChatStore(brains: [:]), wellness: .preview, buddySettings: BuddySettingsStore(), account: AccountStore())
     }
 }

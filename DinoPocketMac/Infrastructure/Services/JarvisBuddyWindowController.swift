@@ -91,8 +91,11 @@ final class JarvisBuddyWindowController: NSWindowController {
 
     // MARK: - Public API
 
-    func startBuddyMode(store: WellnessStore,
-                        settings: BuddySettingsStore,
+    /// Tidak menerima store: sejak Buddy Mode dibersihkan, karakter tidak lagi
+    /// menampilkan statistik apa pun. Parameter `store` yang sempat bertahan
+    /// hanyalah sisa era demo, dan membiarkannya memaksa pemanggil membuat
+    /// instance WellnessStore kedua — dua sumber kebenaran untuk data yang sama.
+    func startBuddyMode(settings: BuddySettingsStore,
                         onDismiss: (() -> Void)? = nil) {
         guard let window, let overlay else { return }
 

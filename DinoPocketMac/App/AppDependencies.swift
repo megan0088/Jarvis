@@ -53,4 +53,11 @@ struct AppDependencies {
     func makeWellnessStore() -> WellnessStore {
         WellnessStore()
     }
+
+    /// View model dibuat dari store yang sama supaya tidak ada dua sumber
+    /// kebenaran wellness di dalam satu app.
+    func makeWellnessViewModel(store: WellnessStore? = nil) -> WellnessViewModel {
+        WellnessViewModel(store: store ?? WellnessStore(),
+                          notifications: WellnessNotificationCenter.shared)
+    }
 }

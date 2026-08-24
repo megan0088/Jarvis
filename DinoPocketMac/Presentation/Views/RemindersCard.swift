@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct RemindersCard: View {
-    @Bindable var store: WellnessStore
+    let wellness: WellnessViewModel
 
     private var upcoming: [ReminderSchedule] {
         let now = Calendar.current.dateComponents([.hour, .minute], from: .now)
         let minutesNow = (now.hour ?? 0) * 60 + (now.minute ?? 0)
-        return store.reminderSchedules
+        return wellness.reminderSchedules
             .filter { ($0.hour * 60 + $0.minute) >= minutesNow }
             .sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
             .prefix(3)
@@ -44,7 +44,7 @@ struct RemindersCard: View {
 }
 
 #Preview {
-    RemindersCard(store: WellnessStore())
+    RemindersCard(wellness: .preview)
         .frame(width: 300)
         .padding()
 }

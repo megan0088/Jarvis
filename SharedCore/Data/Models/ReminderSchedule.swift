@@ -5,7 +5,7 @@
 
 import Foundation
 
-struct ReminderSchedule: Codable, Identifiable {
+struct ReminderSchedule: Codable, Equatable, Identifiable {
     var id: String
     var kind: ReminderKind
     var hour: Int

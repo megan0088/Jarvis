@@ -5,7 +5,7 @@
 
 import Foundation
 
-struct ScreenTimeEntry: Codable, Identifiable {
+struct ScreenTimeEntry: Codable, Equatable, Identifiable {
     var date: Date
     var duration: TimeInterval
 

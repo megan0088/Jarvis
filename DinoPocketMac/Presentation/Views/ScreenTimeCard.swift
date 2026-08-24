@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct ScreenTimeCard: View {
-    @Bindable var store: WellnessStore
+    let wellness: WellnessViewModel
 
     private var todayLabel: String {
-        let secs = store.screenTimeHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.duration ?? 0
+        let secs = wellness.screenTimeHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.duration ?? 0
         let h = Int(secs) / 3600
         let m = (Int(secs) % 3600) / 60
         return "\(h)h \(m)m"
@@ -26,7 +26,7 @@ struct ScreenTimeCard: View {
 }
 
 #Preview {
-    ScreenTimeCard(store: WellnessStore())
+    ScreenTimeCard(wellness: .preview)
         .frame(width: 300)
         .padding()
 }

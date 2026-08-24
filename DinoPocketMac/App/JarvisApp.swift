@@ -12,7 +12,7 @@ struct JarvisApp: App {
     /// Satu-satunya tempat implementasi konkret dipilih.
     private static let deps = AppDependencies.live()
 
-    @State private var store = deps.makeWellnessStore()
+    @State private var wellness = deps.makeWellnessViewModel()
     @State private var chat = deps.makeChatStore()
     @State private var buddySettings = deps.buddySettings
     @State private var account = deps.account
@@ -28,8 +28,8 @@ struct JarvisApp: App {
         WindowGroup {
             rootView
                 .task {
-                    chat.onCreateReminder = { [store] schedule in store.addCustomSchedule(schedule) }
-                    await store.prepareWellness()
+                    chat.createReminder = wellness.makeCreateReminderUseCase()
+                    await wellness.prepare()
                     await account.refreshCredentialState()
                 }
         }
@@ -41,11 +41,11 @@ struct JarvisApp: App {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
-                store.resumeScreenTime()
-                Task { await store.syncReminderHistory() }
+                wellness.resumeSession()
+                Task { await wellness.syncReminderHistory() }
             case .inactive, .background:
-                store.pauseScreenTime()
-                if phase == .background { store.tick() }
+                wellness.pauseSession()
+                if phase == .background { wellness.tick() }
             @unknown default:
                 break
             }
@@ -64,7 +64,7 @@ struct JarvisApp: App {
     @ViewBuilder
     private var dashboard: some View {
         DashboardTemplate(
-            store: store,
+            wellness: wellness,
             chat: chat,
             buddySettings: buddySettings,
             account: account,
@@ -92,7 +92,6 @@ struct JarvisApp: App {
         .onChange(of: isBuddyMode) { _, active in
             if active {
                 JarvisBuddyWindowController.shared.startBuddyMode(
-                    store: store,
                     settings: buddySettings,
                     onDismiss: { dismissFromBuddy() }
                 )

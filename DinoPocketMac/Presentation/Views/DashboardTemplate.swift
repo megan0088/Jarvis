@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct DashboardTemplate: View {
-    @Bindable var store: WellnessStore
+    let wellness: WellnessViewModel
     @Bindable var chat: ChatStore
     @Bindable var buddySettings: BuddySettingsStore
     @Bindable var account: AccountStore
@@ -26,19 +26,19 @@ struct DashboardTemplate: View {
         } detail: {
             switch selection {
             case .home:
-                HomePage(store: store, chat: chat, onBuddyMode: onBuddyMode, showChat: $showChat)
+                HomePage(wellness: wellness, chat: chat, onBuddyMode: onBuddyMode, showChat: $showChat)
             case .chat:
                 ChatPage(chat: chat)
             case .wellness:
                 ScrollView {
-                    WellnessCard(store: store)
+                    WellnessCard(wellness: wellness)
                         .padding()
                 }
                 .navigationTitle("Wellness")
             case .history:
-                HistoryPage(store: store)
+                HistoryPage(wellness: wellness)
             case .settings:
-                SettingsPage(chat: chat, store: store, buddySettings: buddySettings, account: account)
+                SettingsPage(chat: chat, wellness: wellness, buddySettings: buddySettings, account: account)
             }
         }
         .frame(minWidth: 720, minHeight: 520)
@@ -52,5 +52,5 @@ struct DashboardTemplate: View {
 }
 
 #Preview {
-    DashboardTemplate(store: WellnessStore(), chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), account: AccountStore())
+    DashboardTemplate(wellness: .preview, chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), account: AccountStore())
 }

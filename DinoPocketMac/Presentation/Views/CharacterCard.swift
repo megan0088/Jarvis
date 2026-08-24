@@ -8,17 +8,17 @@
 import SwiftUI
 
 struct CharacterCard: View {
-    @Bindable var store: WellnessStore
+    let wellness: WellnessViewModel
 
     var body: some View {
         DashCard(title: "Jarvis", systemImage: "face.smiling") {
             HStack(spacing: Spacing.md) {
                 AvatarBadge(systemImage: "sparkles")
                 VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text(store.statusMessage)
+                    Text(wellness.statusMessage)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    ProgressView(value: Double(store.energy), total: 100) {
+                    ProgressView(value: Double(wellness.energy), total: 100) {
                         Text("Energy").font(.caption)
                     }
                     .tint(AppColor.accent)
@@ -29,7 +29,7 @@ struct CharacterCard: View {
 }
 
 #Preview {
-    CharacterCard(store: WellnessStore())
+    CharacterCard(wellness: .preview)
         .frame(width: 300)
         .padding()
 }
