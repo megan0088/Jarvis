@@ -61,17 +61,11 @@ final class WellnessNotificationCenter: NSObject, UNUserNotificationCenterDelega
     }
 
     func fetchDeliveredEvents() async -> [ReminderEvent] {
-        let notifications = await deliveredNotifications()
-        let events = notifications.compactMap(event(from:))
-        let identifiers = notifications
-            .map(\.request.identifier)
-            .filter { $0.hasPrefix(reminderPrefix) }
-
-        if !identifiers.isEmpty {
-            center.removeDeliveredNotifications(withIdentifiers: identifiers)
+        let payload = await deliveredReminderPayload()
+        if !payload.identifiers.isEmpty {
+            center.removeDeliveredNotifications(withIdentifiers: payload.identifiers)
         }
-
-        return events
+        return payload.events
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
@@ -86,22 +80,36 @@ final class WellnessNotificationCenter: NSObject, UNUserNotificationCenterDelega
         }
     }
 
-    private func deliveredNotifications() async -> [UNNotification] {
-        await withCheckedContinuation { continuation in
-            center.getDeliveredNotifications { continuation.resume(returning: $0) }
+    /// Mengembalikan hasil yang sudah dipetakan, bukan `[UNNotification]`.
+    ///
+    /// `UNNotification` bukan `Sendable`; menyeberangkannya keluar dari
+    /// completion handler adalah satu-satunya pelanggaran Swift 6 di seluruh
+    /// basis kode ini. Pemetaan dipindah ke dalam handler sehingga yang
+    /// menyeberang hanya `ReminderEvent` dan `String`.
+    private func deliveredReminderPayload() async -> (events: [ReminderEvent], identifiers: [String]) {
+        let prefix = reminderPrefix
+        return await withCheckedContinuation { continuation in
+            center.getDeliveredNotifications { notifications in
+                let events = notifications.compactMap(Self.event(from:))
+                let identifiers = notifications
+                    .map(\.request.identifier)
+                    .filter { $0.hasPrefix(prefix) }
+                continuation.resume(returning: (events, identifiers))
+            }
         }
     }
 
     private func clearDeliveredReminders() async {
-        let identifiers = await deliveredNotifications()
-            .map(\.request.identifier)
-            .filter { $0.hasPrefix(reminderPrefix) }
+        let identifiers = await deliveredReminderPayload().identifiers
         if !identifiers.isEmpty {
             center.removeDeliveredNotifications(withIdentifiers: identifiers)
         }
     }
 
-    private func event(from notification: UNNotification) -> ReminderEvent? {
+    /// Fungsi murni dan `nonisolated`: dipanggil DI DALAM completion handler,
+    /// bukan setelahnya, supaya `UNNotification` — yang bukan `Sendable` —
+    /// tidak pernah menyeberangi batas isolasi.
+    nonisolated private static func event(from notification: UNNotification) -> ReminderEvent? {
         let userInfo = notification.request.content.userInfo
         guard
             let rawKind = userInfo["wellnessKind"] as? String,

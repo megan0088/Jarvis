@@ -121,13 +121,13 @@ final class WellnessViewModel {
     var erasableStore: any LocallyErasable { store }
 }
 
-#if DEBUG
 extension WellnessViewModel {
-    /// Untuk #Preview saja. Memakai store sungguhan karena WellnessStore
-    /// membaca UserDefaults dan tidak menyentuh jaringan atau perangkat keras.
+    /// Untuk `#Preview`. SENGAJA tidak dibungkus `#if DEBUG`: blok `#Preview`
+    /// ikut dikompilasi pada konfigurasi Release, sehingga menyembunyikannya di
+    /// balik DEBUG membuat build Debug hijau sementara archive Release patah —
+    /// kegagalan yang baru muncul di langkah paling akhir sebelum submit.
     static var preview: WellnessViewModel {
         WellnessViewModel(store: WellnessStore(),
                           notifications: WellnessNotificationCenter.shared)
     }
 }
-#endif

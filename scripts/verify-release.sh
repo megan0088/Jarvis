@@ -47,5 +47,18 @@ for f in DinoPocketMac/Resources/PrivacyInfo.xcprivacy DinoPocketMac/Resources/R
   [ -f "$f" ] && echo "  ✅ $f" || { echo "  ❌ $f hilang"; fail=1; }
 done
 
+echo "Kompilasi Release:"
+# Test suite berjalan pada konfigurasi Debug, jadi simbol yang tersembunyi di
+# balik #if DEBUG lolos begitu saja — sampai archive. Itu pernah terjadi: helper
+# .preview dibungkus #if DEBUG padahal blok #Preview ikut dikompilasi di Release.
+# Kompilasi Release di sini menangkapnya sebelum langkah submit.
+if xcodebuild build -project "${PROJECT}.xcodeproj" -scheme "$TARGET" \
+     -configuration Release -derivedDataPath /tmp/dp-verify-release 2>&1 \
+     | grep -q "BUILD SUCCEEDED"; then
+  echo "  ✅ konfigurasi Release terkompilasi"
+else
+  echo "  ❌ konfigurasi Release GAGAL dikompilasi"; fail=1
+fi
+
 [ "$fail" -eq 0 ] && echo "✅ konfigurasi Release siap" || echo "❌ ada yang perlu diperbaiki"
 exit "$fail"

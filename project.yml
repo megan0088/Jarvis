@@ -9,7 +9,11 @@ options:
 
 settings:
   base:
-    SWIFT_VERSION: "5.0"
+    # Wave 2. Migrasi 5.0 -> 6.0 hanya menghasilkan SATU pelanggaran di seluruh
+    # basis kode (UNNotification bukan Sendable, di WellnessNotificationCenter).
+    # SWIFT_APPROACHABLE_CONCURRENCY yang sudah aktif sejak awal terbukti
+    # meredamnya, persis dugaan spec §12.
+    SWIFT_VERSION: "6.0"
     SWIFT_APPROACHABLE_CONCURRENCY: YES
     SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES
     DEVELOPMENT_TEAM: R93K2HFM78
