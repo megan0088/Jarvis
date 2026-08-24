@@ -170,17 +170,30 @@ final class JarvisBuddyWindowController: NSWindowController {
     /// supaya slider di Settings terasa hidup saat digeser.
     func updateCharacterSize(_ size: CGFloat) {
         characterSize = size
-        guard let overlay, let host = robotHostingView as? NSHostingView<RobotCharacterView> else { return }
+        guard let window,
+              let host = robotHostingView as? NSHostingView<RobotCharacterView> else { return }
         host.rootView = RobotCharacterView(size: size)
-        host.frame = Self.characterFrame(size: size, in: CGRect(origin: .zero, size: overlay.frame.size))
+        host.frame = Self.characterFrame(size: size, in: window.frame)
     }
 
-    /// Karakter berdiri di pojok kanan bawah dengan margin tetap.
-    private static func characterFrame(size: CGFloat, in container: CGRect) -> CGRect {
-        let margin: CGFloat = 40
-        return CGRect(x: container.width - size - margin,
-                      y: margin,
-                      width: size, height: size)
+    /// Karakter berdiri di pojok kanan bawah **area yang benar-benar terlihat**.
+    ///
+    /// Memakai `visibleFrame`, bukan `frame`: `frame` mencakup ruang di balik Dock
+    /// dan menu bar, sehingga margin tetap dari tepi bawah layar menempatkan
+    /// karakter tepat di belakang Dock. `visibleFrame` sudah mengecualikan
+    /// keduanya, jadi posisinya ikut menyesuaikan sendiri saat Dock dipindah,
+    /// disembunyikan, atau berubah ukuran.
+    private static func characterFrame(size: CGFloat, in windowFrame: CGRect) -> CGRect {
+        let margin: CGFloat = 24
+        let screen = NSScreen.main ?? NSScreen.screens.first
+        let visible = screen?.visibleFrame ?? windowFrame
+
+        // visibleFrame memakai koordinat layar global; overlay memakai koordinat
+        // window yang beroriginkan sudut kiri-bawah gabungan seluruh layar.
+        let x = visible.maxX - windowFrame.origin.x - size - margin
+        let y = visible.minY - windowFrame.origin.y + margin
+
+        return CGRect(x: x, y: y, width: size, height: size)
     }
 
     /// Returns the union rect of all connected screens (handles multi-display).
