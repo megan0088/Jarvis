@@ -25,7 +25,7 @@ final class WellnessNotificationCenter: NSObject, UNUserNotificationCenterDelega
         }
     }
 
-    func schedule(_ reminders: [PetStore.ReminderSchedule]) async {
+    func schedule(_ reminders: [WellnessStore.ReminderSchedule]) async {
         await clearDeliveredReminders()
         await clearScheduledReminders()
 
@@ -60,7 +60,7 @@ final class WellnessNotificationCenter: NSObject, UNUserNotificationCenterDelega
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
-    func fetchDeliveredEvents() async -> [PetStore.ReminderEvent] {
+    func fetchDeliveredEvents() async -> [WellnessStore.ReminderEvent] {
         let notifications = await deliveredNotifications()
         let events = notifications.compactMap(event(from:))
         let identifiers = notifications
@@ -101,11 +101,11 @@ final class WellnessNotificationCenter: NSObject, UNUserNotificationCenterDelega
         }
     }
 
-    private func event(from notification: UNNotification) -> PetStore.ReminderEvent? {
+    private func event(from notification: UNNotification) -> WellnessStore.ReminderEvent? {
         let userInfo = notification.request.content.userInfo
         guard
             let rawKind = userInfo["wellnessKind"] as? String,
-            let kind = PetStore.ReminderKind(rawValue: rawKind)
+            let kind = WellnessStore.ReminderKind(rawValue: rawKind)
         else {
             return nil
         }
@@ -114,7 +114,7 @@ final class WellnessNotificationCenter: NSObject, UNUserNotificationCenterDelega
         let title = userInfo["wellnessTitle"] as? String ?? notification.request.content.title
         let body = userInfo["wellnessBody"] as? String ?? notification.request.content.body
 
-        return PetStore.ReminderEvent(
+        return WellnessStore.ReminderEvent(
             id: "\(notification.request.identifier).\(stamp)",
             kind: kind,
             date: notification.date,

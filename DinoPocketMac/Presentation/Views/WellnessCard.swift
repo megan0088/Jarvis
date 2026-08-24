@@ -2,13 +2,13 @@
 //  WellnessCard.swift
 //  Jarvis
 //
-//  Organism: today's wellness metrics (water/stretch/meal) from PetStore.
+//  Organism: today's wellness metrics (water/stretch/meal) from WellnessStore.
 //
 
 import SwiftUI
 
 struct WellnessCard: View {
-    @Bindable var store: PetStore
+    @Bindable var store: WellnessStore
 
     var body: some View {
         DashCard(title: "Today's wellness", systemImage: "target") {
@@ -22,7 +22,7 @@ struct WellnessCard: View {
 }
 
 #Preview {
-    WellnessCard(store: PetStore())
+    WellnessCard(store: WellnessStore())
         .frame(width: 300)
         .padding()
 }

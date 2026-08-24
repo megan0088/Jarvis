@@ -1,5 +1,5 @@
 //
-//  PetStore.swift
+//  WellnessStore.swift
 //  Jarvis
 //
 //  Created by Codex on 13/03/26.
@@ -10,7 +10,7 @@ import Observation
 
 @MainActor
 @Observable
-final class PetStore {
+final class WellnessStore {
     struct ScreenTimeEntry: Codable, Identifiable {
         var date: Date
         var duration: TimeInterval

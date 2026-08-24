@@ -12,7 +12,7 @@ import Testing
 struct JarvisTests {
     @MainActor
     @Test func screenTimeSplitsAcrossDays() {
-        let store = PetStore()
+        let store = WellnessStore()
         store.screenTimeHistory = []
 
         let calendar = Calendar(identifier: .gregorian)
@@ -33,11 +33,11 @@ struct JarvisTests {
 
     @MainActor
     @Test func reminderHistoryDeduplicatesEventIDs() {
-        let store = PetStore()
+        let store = WellnessStore()
         store.reminderHistory = []
         store.seenReminderEventIDs = []
 
-        let event = PetStore.ReminderEvent(
+        let event = WellnessStore.ReminderEvent(
             id: "wellness.water.9.0.test",
             kind: .water,
             date: .now,
@@ -52,10 +52,10 @@ struct JarvisTests {
 
     @MainActor
     @Test func completingReminderIncrementsGoalProgress() {
-        let store = PetStore()
+        let store = WellnessStore()
         store.goalProgress = .init(date: .now, water: 0, stretch: 0, meal: 0)
 
-        let reminder = PetStore.BuddyReminder(
+        let reminder = WellnessStore.BuddyReminder(
             key: "wellness.water.9.0.test",
             schedule: .init(
                 id: "wellness.water.9.0",
@@ -75,10 +75,10 @@ struct JarvisTests {
 
     @MainActor
     @Test func snoozingReminderStoresDeferredPrompt() {
-        let store = PetStore()
+        let store = WellnessStore()
         store.snoozedReminders = []
 
-        let reminder = PetStore.BuddyReminder(
+        let reminder = WellnessStore.BuddyReminder(
             key: "wellness.meal.13.0.test",
             schedule: .init(
                 id: "wellness.meal.13.0",

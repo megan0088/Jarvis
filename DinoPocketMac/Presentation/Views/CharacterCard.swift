@@ -2,13 +2,13 @@
 //  CharacterCard.swift
 //  Jarvis
 //
-//  Organism: Jarvis status + energy level from PetStore.
+//  Organism: Jarvis status + energy level from WellnessStore.
 //
 
 import SwiftUI
 
 struct CharacterCard: View {
-    @Bindable var store: PetStore
+    @Bindable var store: WellnessStore
 
     var body: some View {
         DashCard(title: "Jarvis", systemImage: "face.smiling") {
@@ -29,7 +29,7 @@ struct CharacterCard: View {
 }
 
 #Preview {
-    CharacterCard(store: PetStore())
+    CharacterCard(store: WellnessStore())
         .frame(width: 300)
         .padding()
 }

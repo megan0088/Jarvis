@@ -2,13 +2,13 @@
 //  ScreenTimeCard.swift
 //  Jarvis
 //
-//  Organism: today's total screen time from PetStore, formatted "Xj Ym".
+//  Organism: today's total screen time from WellnessStore, formatted "Xj Ym".
 //
 
 import SwiftUI
 
 struct ScreenTimeCard: View {
-    @Bindable var store: PetStore
+    @Bindable var store: WellnessStore
 
     private var todayLabel: String {
         let secs = store.screenTimeHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.duration ?? 0
@@ -26,7 +26,7 @@ struct ScreenTimeCard: View {
 }
 
 #Preview {
-    ScreenTimeCard(store: PetStore())
+    ScreenTimeCard(store: WellnessStore())
         .frame(width: 300)
         .padding()
 }

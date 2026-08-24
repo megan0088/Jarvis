@@ -12,7 +12,7 @@ import SwiftUI
 
 struct PetActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
-        var mood: PetStore.Mood
+        var mood: WellnessStore.Mood
         var hunger: Int
         var energy: Int
         // Wellness goals
@@ -66,7 +66,7 @@ struct Provider: TimelineProvider {
 
     private func currentEntry() -> PetEntry {
         let defaults = UserDefaults(suiteName: AppGroup.id) ?? .standard
-        let mood = PetStore.Mood(rawValue: defaults.string(forKey: "pet.mood") ?? "calm") ?? .calm
+        let mood = WellnessStore.Mood(rawValue: defaults.string(forKey: "pet.mood") ?? "calm") ?? .calm
         let hunger = defaults.integer(forKey: "pet.hunger")
         let energy = defaults.integer(forKey: "pet.energy")
         return PetEntry(date: .now, mood: mood, hunger: hunger, energy: energy)
@@ -75,7 +75,7 @@ struct Provider: TimelineProvider {
 
 struct PetEntry: TimelineEntry {
     let date: Date
-    let mood: PetStore.Mood
+    let mood: WellnessStore.Mood
     let hunger: Int
     let energy: Int
 }

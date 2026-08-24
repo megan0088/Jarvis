@@ -23,7 +23,7 @@ final class AccountStore {
 
     /// Kunci UserDefaults yang ikut dimusnahkan saat akun dihapus.
     ///
-    /// Kunci wellness diambil dari `PetStore.persistenceKeys`, bukan disalin
+    /// Kunci wellness diambil dari `WellnessStore.persistenceKeys`, bukan disalin
     /// tangan: versi salinan sempat salah (menulis "wellness.customSchedules"
     /// alih-alih "pet.customSchedules") dan melewatkan sembilan kunci lain,
     /// sehingga data pribadi akan tertinggal setelah "hapus akun" — kegagalan
@@ -31,7 +31,7 @@ final class AccountStore {
     ///
     /// Preferensi non-pribadi (ukuran buddy) sengaja TIDAK ikut dihapus.
     static var localDataKeys: [String] {
-        PetStore.persistenceKeys + [
+        WellnessStore.persistenceKeys + [
             "jarvis.chat.recent",
             "jarvis.activeBrain",
         ]

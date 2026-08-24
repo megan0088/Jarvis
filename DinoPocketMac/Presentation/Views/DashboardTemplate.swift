@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct DashboardTemplate: View {
-    @Bindable var store: PetStore
+    @Bindable var store: WellnessStore
     @Bindable var chat: ChatStore
     @Bindable var buddySettings: BuddySettingsStore
     @Bindable var account: AccountStore
@@ -52,5 +52,5 @@ struct DashboardTemplate: View {
 }
 
 #Preview {
-    DashboardTemplate(store: PetStore(), chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), account: AccountStore())
+    DashboardTemplate(store: WellnessStore(), chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), account: AccountStore())
 }

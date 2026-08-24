@@ -2,15 +2,15 @@
 //  RemindersCard.swift
 //  Jarvis
 //
-//  Organism: up to 3 upcoming reminders for the rest of today, from PetStore.
+//  Organism: up to 3 upcoming reminders for the rest of today, from WellnessStore.
 //
 
 import SwiftUI
 
 struct RemindersCard: View {
-    @Bindable var store: PetStore
+    @Bindable var store: WellnessStore
 
-    private var upcoming: [PetStore.ReminderSchedule] {
+    private var upcoming: [WellnessStore.ReminderSchedule] {
         let now = Calendar.current.dateComponents([.hour, .minute], from: .now)
         let minutesNow = (now.hour ?? 0) * 60 + (now.minute ?? 0)
         return store.reminderSchedules
@@ -44,7 +44,7 @@ struct RemindersCard: View {
 }
 
 #Preview {
-    RemindersCard(store: PetStore())
+    RemindersCard(store: WellnessStore())
         .frame(width: 300)
         .padding()
 }

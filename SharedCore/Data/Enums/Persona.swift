@@ -1,21 +1,12 @@
+//
+//  Persona.swift
+//  SharedCore
+//
+//  Dua mode percakapan, mencerminkan pilihan yang sama di ROG OMNI:
+//  Standard yang netral, dan satu persona berkarakter.
+//
+
 import Foundation
-
-enum BrainKind: String, CaseIterable, Identifiable, Codable {
-    case ollama, apple
-    var id: String { rawValue }
-    var displayName: String {
-        switch self {
-        case .ollama: "Ollama"
-        case .apple: "Apple Intelligence"
-        }
-    }
-}
-
-enum BrainAvailability: Equatable {
-    case ready
-    case needsSetup(String)
-    case unavailable(String)
-}
 
 enum Persona: String, CaseIterable, Codable {
     case standard, jarvis
@@ -33,12 +24,4 @@ enum Persona: String, CaseIterable, Codable {
             """
         }
     }
-}
-
-struct ChatMessage: Identifiable, Codable, Equatable {
-    enum Role: String, Codable { case user, assistant }
-    let id: UUID
-    let role: Role
-    var text: String
-    let date: Date
 }

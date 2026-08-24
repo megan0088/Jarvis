@@ -12,7 +12,7 @@ struct JarvisApp: App {
     /// Satu-satunya tempat implementasi konkret dipilih.
     private static let deps = AppDependencies.live()
 
-    @State private var store = deps.makePetStore()
+    @State private var store = deps.makeWellnessStore()
     @State private var chat = deps.makeChatStore()
     @State private var buddySettings = deps.buddySettings
     @State private var account = deps.account

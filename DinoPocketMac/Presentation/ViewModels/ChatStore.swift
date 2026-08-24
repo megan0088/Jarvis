@@ -23,7 +23,7 @@ final class ChatStore {
         didSet { UserDefaults.standard.set(activeBrain.rawValue, forKey: "jarvis.activeBrain") }
     }
 
-    var onCreateReminder: ((PetStore.ReminderSchedule) -> Void)?
+    var onCreateReminder: ((WellnessStore.ReminderSchedule) -> Void)?
 
     private let brains: [BrainKind: Brain]
     private var streamTask: Task<Void, Never>?

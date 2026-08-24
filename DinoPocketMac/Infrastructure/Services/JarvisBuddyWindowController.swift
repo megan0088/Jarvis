@@ -91,7 +91,7 @@ final class JarvisBuddyWindowController: NSWindowController {
 
     // MARK: - Public API
 
-    func startBuddyMode(store: PetStore,
+    func startBuddyMode(store: WellnessStore,
                         settings: BuddySettingsStore,
                         onDismiss: (() -> Void)? = nil) {
         guard let window, let overlay else { return }

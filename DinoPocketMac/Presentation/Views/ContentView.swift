@@ -51,7 +51,7 @@ private extension Color {
 // MARK: - ContentView
 
 struct ContentView: View {
-    @Bindable var store: PetStore
+    @Bindable var store: WellnessStore
     var onBuddyMode: (() -> Void)? = nil
 // Buddy mode activation property
 #if os(macOS)
@@ -600,7 +600,7 @@ struct ContentView: View {
         }
     }
 
-    private func wellnessTile(kind: PetStore.ReminderKind) -> some View {
+    private func wellnessTile(kind: WellnessStore.ReminderKind) -> some View {
         let summary = store.goalSummary[kind] ?? "0/0"
         let parts   = summary.split(separator: "/")
         let current = Int(parts.first ?? "0") ?? 0
@@ -639,7 +639,7 @@ struct ContentView: View {
         }
     }
 
-    private func wellnessColor(for kind: PetStore.ReminderKind) -> Color {
+    private func wellnessColor(for kind: WellnessStore.ReminderKind) -> Color {
         switch kind {
         case .water:   return Color.retroCyan
         case .stretch: return Color.retroOrange
@@ -925,10 +925,10 @@ private struct HeartBurst: View {
 // MARK: - Previews
 
 #Preview("macOS") {
-    ContentView(store: PetStore())
+    ContentView(store: WellnessStore())
         .frame(width: 900, height: 640)
 }
 
 #Preview("iOS") {
-    ContentView(store: PetStore())
+    ContentView(store: WellnessStore())
 }

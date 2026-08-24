@@ -50,7 +50,7 @@ struct AppDependencies {
         ChatStore(brains: brains)
     }
 
-    func makePetStore() -> PetStore {
-        PetStore()
+    func makeWellnessStore() -> WellnessStore {
+        WellnessStore()
     }
 }

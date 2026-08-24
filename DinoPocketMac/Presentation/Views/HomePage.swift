@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct HomePage: View {
-    @Bindable var store: PetStore
+    @Bindable var store: WellnessStore
     @Bindable var chat: ChatStore
     var onBuddyMode: (() -> Void)?
     @Binding var showChat: Bool
@@ -86,6 +86,6 @@ struct HomePage: View {
 
 #Preview {
     NavigationStack {
-        HomePage(store: PetStore(), chat: ChatStore(brains: [:]), onBuddyMode: nil, showChat: .constant(false))
+        HomePage(store: WellnessStore(), chat: ChatStore(brains: [:]), onBuddyMode: nil, showChat: .constant(false))
     }
 }

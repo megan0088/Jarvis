@@ -10,7 +10,7 @@
 import SwiftUI
 
 struct HistoryPage: View {
-    @Bindable var store: PetStore
+    @Bindable var store: WellnessStore
 
     var body: some View {
         Group {
@@ -76,6 +76,6 @@ struct HistoryPage: View {
 
 #Preview {
     NavigationStack {
-        HistoryPage(store: PetStore())
+        HistoryPage(store: WellnessStore())
     }
 }
