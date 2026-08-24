@@ -10,8 +10,10 @@ import SwiftUI
 struct SettingsPage: View {
     @Bindable var chat: ChatStore
     @Bindable var buddySettings: BuddySettingsStore
+    @Bindable var account: AccountStore
 
     @State private var appleAvailability: BrainAvailability?
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         Form {
@@ -68,9 +70,34 @@ struct SettingsPage: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+            Section("Account") {
+                LabeledContent("Signed in as") {
+                    Text(account.displayName ?? "Apple ID")
+                        .foregroundStyle(.secondary)
+                }
+
+                Button("Sign Out") { account.signOut() }
+
+                Button("Delete Account and Data", role: .destructive) {
+                    showDeleteConfirm = true
+                }
+            }
         }
         .formStyle(.grouped)
         .navigationTitle("Settings")
+        .confirmationDialog("Delete account and all local data?",
+                            isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("Delete Everything", role: .destructive) {
+                account.deleteAccount(alsoClearing: AccountStore.localDataKeys)
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            // Jujur soal batas kuasa app: mencabut izin Apple ID hanya bisa
+            // dilakukan user dari System Settings, bukan dari sini.
+            Text("This erases your wellness history, reminders, and chat from this Mac, "
+                 + "and signs you out. To revoke DinoPocket's access to your Apple ID, "
+                 + "open System Settings › Apple Account › Sign in with Apple.")
+        }
         .task {
             appleAvailability = await chat.availability(of: .apple)
         }
@@ -79,6 +106,6 @@ struct SettingsPage: View {
 
 #Preview {
     NavigationStack {
-        SettingsPage(chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore())
+        SettingsPage(chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), account: AccountStore())
     }
 }

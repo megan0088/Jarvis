@@ -22,6 +22,7 @@ struct JarvisApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State var isBuddyMode = false
     @State private var buddySettings = BuddySettingsStore()
+    @State private var account = AccountStore()
 
     init() {
         WellnessNotificationCenter.shared.configure()
@@ -33,6 +34,7 @@ struct JarvisApp: App {
                 .task {
                     chat.onCreateReminder = { [store] schedule in store.addCustomSchedule(schedule) }
                     await store.prepareWellness()
+                    await account.refreshCredentialState()
                 }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -51,10 +53,20 @@ struct JarvisApp: App {
 
     @ViewBuilder
     private var rootView: some View {
+        if account.isSignedIn && account.hasCompletedOnboarding {
+            dashboard
+        } else {
+            OnboardingView(account: account, chat: chat)
+        }
+    }
+
+    @ViewBuilder
+    private var dashboard: some View {
         DashboardTemplate(
             store: store,
             chat: chat,
             buddySettings: buddySettings,
+            account: account,
             onBuddyMode: toggleBuddyMode,
             isBuddyModeActive: isBuddyMode
         )

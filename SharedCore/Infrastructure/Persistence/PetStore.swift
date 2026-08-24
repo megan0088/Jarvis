@@ -139,7 +139,19 @@ final class PetStore {
         static let goalProgress = "wellness.goalProgress"
         static let snoozedReminders = "wellness.snoozedReminders"
         static let customSchedules = "pet.customSchedules"
+
+        /// Setiap kunci di atas, untuk pemusnahan data saat akun dihapus
+        /// (App Store Guideline 5.1.1(v)). Didaftarkan di sebelah definisinya
+        /// supaya kunci baru tidak diam-diam luput dari penghapusan.
+        static let all: [String] = [
+            mood, hunger, energy, lastFed, affection,
+            screenTimeHistory, reminderHistory, reminderEventsSeen,
+            remindersEnabled, goalProgress, snoozedReminders, customSchedules,
+        ]
     }
+
+    /// Kunci UserDefaults yang dimiliki store ini.
+    static var persistenceKeys: [String] { Keys.all }
 
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
