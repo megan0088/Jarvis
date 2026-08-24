@@ -11,12 +11,32 @@ import SwiftUI
 struct ChatPage: View {
     @Bindable var chat: ChatStore
     @State private var draft = ""
+    @State private var availability: BrainAvailability?
 
     private var canSend: Bool {
         !chat.isStreaming && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
+        Group {
+            if case .ready = availability {
+                conversation
+            } else if let availability {
+                AIUnavailableCard(availability: availability)
+            } else {
+                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .task {
+            availability = await chat.availability(of: .apple)
+            // Prompt titipan dari quick action di Home.
+            if let pending = chat.consumePendingPrompt() {
+                draft = pending
+            }
+        }
+    }
+
+    private var conversation: some View {
         VStack(spacing: 0) {
             if let notice = chat.noticeMessage {
                 Text(notice)

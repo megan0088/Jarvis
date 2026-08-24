@@ -9,6 +9,16 @@ final class ChatStore {
     var persona: Persona = .jarvis
     var noticeMessage: String?
 
+    /// Prompt yang dititipkan quick action di Home, diambil ChatPage saat muncul.
+    /// Quick action sebelumnya hanya membuka panel kosong — tombol yang
+    /// menjanjikan sesuatu lalu tidak melakukannya adalah sasaran Guideline 2.1.
+    var pendingPrompt: String?
+
+    func consumePendingPrompt() -> String? {
+        defer { pendingPrompt = nil }
+        return pendingPrompt
+    }
+
     var activeBrain: BrainKind {
         didSet { UserDefaults.standard.set(activeBrain.rawValue, forKey: "jarvis.activeBrain") }
     }

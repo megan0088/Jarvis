@@ -15,6 +15,21 @@ struct HomePage: View {
 
     private let columns = [GridItem(.adaptive(minimum: 260), spacing: Spacing.md)]
 
+    /// Angka hari ini disisipkan ke prompt supaya model MERANGKAI data nyata,
+    /// bukan mengarang. Model on-device kecil kuat pada tugas seperti ini dan
+    /// lemah pada pengetahuan dunia, jadi ringkasan yang di-ground begini adalah
+    /// pemakaian terbaiknya.
+    private var summaryPrompt: String {
+        let desk = HistoryPage.durationText(store.todayScreenTime)
+        let g = store.goalProgress
+        return """
+        Summarize my day so far in two or three warm sentences. \
+        Here is what I actually did: \(desk) at my desk, \(g.water) glasses of water, \
+        \(g.stretch) stretch breaks, \(g.meal) meals. \
+        Only use these numbers; do not invent anything else.
+        """
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.lg) {
@@ -34,9 +49,11 @@ struct HomePage: View {
                         onBuddyMode?()
                     }
                     PillButton(title: "Summarize my day", systemImage: "text.alignleft") {
+                        chat.pendingPrompt = summaryPrompt
                         showChat = true
                     }
                     PillButton(title: "Set a reminder", systemImage: "bell.badge") {
+                        chat.pendingPrompt = "Remind me to "
                         showChat = true
                     }
                 }

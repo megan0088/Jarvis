@@ -41,6 +41,7 @@ struct DashboardTemplate: View {
                 SettingsPage(chat: chat, buddySettings: buddySettings, account: account)
             }
         }
+        .frame(minWidth: 720, minHeight: 520)
         .sheet(isPresented: $showChat) {
             NavigationStack {
                 ChatPage(chat: chat)

@@ -37,6 +37,11 @@ struct JarvisApp: App {
                     await account.refreshCredentialState()
                 }
         }
+        // Modifier Scene, bukan View. Tanpa ini jendela memakai ukuran bawaan
+        // yang bisa memotong grid kartu dan sidebar. 1000×680 memuat dua kolom
+        // LazyVGrid(.adaptive(minimum: 260)) plus sidebar 190pt dengan lega.
+        .defaultSize(width: 1000, height: 680)
+        .windowResizability(.contentMinSize)
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
