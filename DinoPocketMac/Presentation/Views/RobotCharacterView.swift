@@ -4,14 +4,18 @@
 //
 //  Companion 3D dari Robot.usdz, dirender lewat RealityView (SwiftUI).
 //
-//  CATATAN — jangan ganti ke ARView.
-//  Pernah dicoba karena `ARView.Environment.Background.color(_:)` menawarkan latar
-//  bening yang tidak dimiliki `RealityViewEnvironment`. Transparansinya memang
-//  bekerja, TAPI ARView di macOS mengabaikan `PerspectiveCamera` yang ditaruh di
-//  scene: render tetap close-up ekstrem meski jarak kamera diubah 0.71 → 5.0, dan
-//  meski model didorong 2 unit menjauh. Diverifikasi lewat snapshot PNG.
-//  RealityView menghormati kamera, dan ternyata latar buram yang terlihat di Buddy
-//  Mode datang dari `SKView` overlay-nya, bukan dari view ini.
+//  CATATAN — dua jalan buntu yang tidak perlu diulang.
+//
+//  1. Latar buram di Buddy Mode BUKAN berasal dari view ini, melainkan dari
+//     `SKView` overlay selebar layar di `JarvisBuddyWindowController` (SKView
+//     tanpa scene merender latar buram). Sudah diganti `NSView` polos.
+//
+//  2. Sempat diganti ke `ARView` demi `Environment.Background.color(.clear)`,
+//     lalu disimpulkan "ARView mengabaikan PerspectiveCamera" karena mengubah
+//     jarak kamera 0.71 → 5.0 nyaris tak berpengaruh. Kesimpulan itu KELIRU.
+//     Penyebab sebenarnya bug skala di bawah: modelnya selebar 35 unit, jadi
+//     butuh kamera ~90 unit untuk memuatnya — perubahan ke 5.0 memang tak
+//     terlihat. Kamera berfungsi normal di kedua view.
 //
 //  Di Wave 1 view ini menjadi implementasi `CharacterPresenting`, dan angka
 //  framing di bawah pindah ke `CharacterAsset`.
@@ -42,7 +46,15 @@ struct RobotCharacterView: View {
             let maxDim = max(bounds.extents.x, bounds.extents.y, bounds.extents.z, 0.0001)
             let target: Float = 0.35
             let factor = target / maxDim
-            robot.scale = SIMD3<Float>(repeating: factor)
+
+            // KALIKAN skala, jangan timpa. Robot.usdz datang dengan
+            // `scale = 0.01` bawaan (khas ekspor USDZ yang mengonversi cm ke m),
+            // dan `visualBounds` sudah memperhitungkannya. Menulis
+            // `robot.scale = factor` membuang skala 0.01 itu sehingga model
+            // membengkak 31.9× — extents jadi 35.0 × 32.3 × 10.2 alih-alih
+            // 0.35 × 0.32 × 0.10, dan karakter memenuhi layar sebagai close-up
+            // yang tak terkenali. Diukur, bukan ditebak.
+            robot.scale *= factor
             robot.position = -bounds.center * factor
 
             content.add(robot)
