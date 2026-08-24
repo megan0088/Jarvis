@@ -36,9 +36,7 @@ struct DashboardTemplate: View {
                 }
                 .navigationTitle("Wellness")
             case .history:
-                Text("History coming soon.")
-                    .foregroundStyle(.secondary)
-                    .navigationTitle("History")
+                HistoryPage(store: store)
             case .settings:
                 SettingsPage(chat: chat, buddySettings: buddySettings, account: account)
             }

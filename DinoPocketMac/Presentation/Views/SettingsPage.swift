@@ -15,6 +15,13 @@ struct SettingsPage: View {
     @State private var appleAvailability: BrainAvailability?
     @State private var showDeleteConfirm = false
 
+    private static var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        return "\(short) (\(build))"
+    }
+
     var body: some View {
         Form {
             Section("Assistant") {
@@ -81,6 +88,29 @@ struct SettingsPage: View {
                 Button("Delete Account and Data", role: .destructive) {
                     showDeleteConfirm = true
                 }
+            }
+
+            Section("About") {
+                LabeledContent("Version") {
+                    Text(Self.versionText).foregroundStyle(.secondary)
+                }
+
+                // Lisensi Sketchfab Standard mewajibkan kredit pencipta. Baris ini
+                // hilang sendiri begitu aset diganti model buatan sendiri, karena
+                // atribusinya ikut ke `CharacterAsset` (Wave 1).
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Acknowledgements").font(.callout.weight(.medium))
+                    Text("3D character by l0wpoly (sketchfab.com/l0wpoly) — Sketchfab Standard License")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+                .padding(.vertical, 2)
+
+                Text("DinoPocket runs entirely on this Mac. No account data, wellness "
+                     + "history, or conversation ever leaves the device.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
