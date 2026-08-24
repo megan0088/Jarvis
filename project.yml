@@ -67,21 +67,21 @@ targets:
         ENABLE_INCOMING_NETWORK_CONNECTIONS: NO
         ENABLE_USER_SELECTED_FILES: readwrite
         COMBINE_HIDPI_IMAGES: YES
-    configs:
-      # Entitlement Sign in with Apple HANYA di Release.
-      #
-      # Menyertakannya di Debug memaksa provisioning profile bercapability SIWA,
-      # dan tanpa itu build gagal total ("No profiles for 'com.Jarvis.Ega' were
-      # found") sehingga app tidak bisa dijalankan sama sekali selama setup akun
-      # developer belum tuntas. Debug memakai skip berlabel jelas di onboarding.
-      #
-      # PRASYARAT SEBELUM RELEASE BISA DI-BUILD:
-      #   1. Daftarkan Mac ini di developer account (Xcode > Settings > Accounts)
-      #   2. Aktifkan capability "Sign In with Apple" untuk App ID com.Jarvis.Ega
-      #      di developer.apple.com > Identifiers
-      #   3. Build dengan -allowProvisioningUpdates
-      Release:
-        CODE_SIGN_ENTITLEMENTS: DinoPocketMac/DinoPocketMac.entitlements
+      configs:
+        # Entitlement Sign in with Apple HANYA di Release.
+        #
+        # Menyertakannya di Debug memaksa provisioning profile bercapability SIWA,
+        # dan tanpa itu build gagal total ("No profiles for 'com.Jarvis.Ega' were
+        # found") sehingga app tidak bisa dijalankan sama sekali selama setup akun
+        # developer belum tuntas. Debug memakai skip berlabel jelas di onboarding.
+        #
+        # PRASYARAT SEBELUM RELEASE BISA DI-BUILD:
+        #   1. Daftarkan Mac ini di developer account (Xcode > Settings > Accounts)
+        #   2. Aktifkan capability "Sign In with Apple" untuk App ID com.Jarvis.Ega
+        #      di developer.apple.com > Identifiers
+        #   3. Build dengan -allowProvisioningUpdates
+        Release:
+          CODE_SIGN_ENTITLEMENTS: DinoPocketMac/DinoPocketMac.entitlements
 
   DinoPocketTests:
     type: bundle.unit-test
