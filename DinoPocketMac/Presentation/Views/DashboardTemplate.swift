@@ -38,7 +38,7 @@ struct DashboardTemplate: View {
             case .history:
                 HistoryPage(store: store)
             case .settings:
-                SettingsPage(chat: chat, buddySettings: buddySettings, account: account)
+                SettingsPage(chat: chat, store: store, buddySettings: buddySettings, account: account)
             }
         }
         .frame(minWidth: 720, minHeight: 520)

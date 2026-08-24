@@ -194,7 +194,7 @@ struct ChatStoreTests {
     @MainActor @Test func sendCreatesReminderWithoutCallingBrain() async {
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         let store = ChatStore(brains: [:])
-        var created: [WellnessStore.ReminderSchedule] = []
+        var created: [ReminderSchedule] = []
         store.onCreateReminder = { created.append($0) }
         store.noticeMessage = "stale banner"
 

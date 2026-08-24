@@ -21,22 +21,6 @@ final class AccountStore {
         static let onboardingDone = "onboarding.completed"      // UserDefaults
     }
 
-    /// Kunci UserDefaults yang ikut dimusnahkan saat akun dihapus.
-    ///
-    /// Kunci wellness diambil dari `WellnessStore.persistenceKeys`, bukan disalin
-    /// tangan: versi salinan sempat salah (menulis "wellness.customSchedules"
-    /// alih-alih "pet.customSchedules") dan melewatkan sembilan kunci lain,
-    /// sehingga data pribadi akan tertinggal setelah "hapus akun" — kegagalan
-    /// paling fatal di jalur ini.
-    ///
-    /// Preferensi non-pribadi (ukuran buddy) sengaja TIDAK ikut dihapus.
-    static var localDataKeys: [String] {
-        WellnessStore.persistenceKeys + [
-            "jarvis.chat.recent",
-            "jarvis.activeBrain",
-        ]
-    }
-
     private(set) var userID: String?
     private(set) var displayName: String?
 
@@ -103,18 +87,16 @@ final class AccountStore {
     /// kredensial, nama, dan data wellness/chat. Kredensial Sign in with Apple
     /// di sisi Apple dicabut user lewat System Settings — di luar kuasa app,
     /// jadi UI harus menyebutkannya, bukan berpura-pura sudah menanganinya.
-    func deleteAccount(alsoClearing keysToWipe: [String]) {
+    /// Hanya membereskan miliknya sendiri: kredensial, nama, dan status
+    /// onboarding. Data wellness dan chat dimusnahkan pemiliknya masing-masing
+    /// lewat `DeleteAccountUseCase` — store ini tidak tahu, dan tidak boleh
+    /// menebak, kunci maupun suite milik komponen lain.
+    func eraseAllStoredData() {
         signOut()
-
         displayName = nil
         defaults.removeObject(forKey: Keys.displayName)
-
         hasCompletedOnboarding = false
         defaults.removeObject(forKey: Keys.onboardingDone)
-
-        for key in keysToWipe {
-            defaults.removeObject(forKey: key)
-        }
     }
 
     // MARK: - Credential state
@@ -133,3 +115,5 @@ final class AccountStore {
         }
     }
 }
+
+extension AccountStore: LocallyErasable {}

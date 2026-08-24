@@ -11,115 +11,8 @@ import Observation
 @MainActor
 @Observable
 final class WellnessStore {
-    struct ScreenTimeEntry: Codable, Identifiable {
-        var date: Date
-        var duration: TimeInterval
-
-        var id: Date { Calendar.current.startOfDay(for: date) }
-    }
-
-    enum ReminderKind: String, CaseIterable, Codable, Identifiable {
-        case water
-        case stretch
-        case meal
-
-        var id: String { rawValue }
-
-        var title: String {
-            switch self {
-            case .water: "Hydration"
-            case .stretch: "Stretching"
-            case .meal: "Meals"
-            }
-        }
-
-        var icon: String {
-            switch self {
-            case .water: "drop.fill"
-            case .stretch: "figure.cooldown"
-            case .meal: "fork.knife"
-            }
-        }
-
-        var researchNote: String {
-            switch self {
-            case .water:
-                "NHS recommends about 6-8 glasses of fluid a day. Jarvis default: a reminder every 2 hours."
-            case .stretch:
-                "AHA recommends moving at least every 30 minutes when sitting a lot. Jarvis default: a reminder every 45 minutes."
-            case .meal:
-                "Heart-healthy nutrition guidelines recommend regular meals throughout the day. Jarvis default: breakfast, lunch, dinner."
-            }
-        }
-    }
-
-    struct ReminderEvent: Codable, Identifiable {
-        var id: String
-        var kind: ReminderKind
-        var date: Date
-        var message: String
-        var wasCompleted: Bool = false
-    }
-
-    struct WellnessGoalProgress: Codable {
-        var date: Date
-        var water: Int
-        var stretch: Int
-        var meal: Int
-    }
-
-    struct SnoozedReminder: Codable {
-        var key: String
-        var kind: ReminderKind
-        var fireDate: Date
-    }
-
-    struct ReminderSchedule: Codable, Identifiable {
-        var id: String
-        var kind: ReminderKind
-        var hour: Int
-        var minute: Int
-        var title: String
-        var body: String
-
-        var timeLabel: String {
-            let components = DateComponents(hour: hour, minute: minute)
-            return Calendar.current.date(from: components)?.formatted(date: .omitted, time: .shortened) ?? "\(hour):\(minute)"
-        }
-    }
-
-    struct BuddyReminder {
-        var key: String
-        var schedule: ReminderSchedule
-        var scheduledDate: Date
-    }
-
     private enum AppGroup {
         static let id = "group.com.example.jarvis"
-    }
-
-    enum Mood: String, CaseIterable, Codable {
-        case happy, calm, hungry, sleepy, angry
-
-        var label: String {
-            switch self {
-            case .happy: "Laughing"
-            case .calm: "Ready"
-            case .hungry: "Hungry"
-            case .sleepy: "Sleepy"
-            case .angry: "Angry"
-            }
-        }
-
-        var emoji: String {
-            switch self {
-            case .happy: "😂"
-            case .calm: "😌"
-            case .hungry: "😋"
-            case .sleepy: "🥱"
-            case .angry: "😤"
-            }
-        }
     }
 
     private let defaults = UserDefaults(suiteName: AppGroup.id) ?? .standard
@@ -152,6 +45,20 @@ final class WellnessStore {
 
     /// Kunci UserDefaults yang dimiliki store ini.
     static var persistenceKeys: [String] { Keys.all }
+
+    /// Memusnahkan seluruh data wellness yang tersimpan.
+    ///
+    /// Store yang melakukannya sendiri, bukan pemanggil, karena hanya store ini
+    /// yang tahu SUITE tempat datanya berada. Versi sebelumnya menghapus dari
+    /// `UserDefaults.standard` sementara data sesungguhnya ada di suite app
+    /// group — "hapus akun" tidak menghapus apa pun, tanpa error.
+    func eraseAllStoredData() {
+        for key in Keys.all {
+            defaults.removeObject(forKey: key)
+            ubiquitous.removeObject(forKey: key)
+        }
+        ubiquitous.synchronize()
+    }
 
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
@@ -609,3 +516,5 @@ final class WellnessStore {
         return try? JSONDecoder().decode(type, from: data)
     }
 }
+
+extension WellnessStore: LocallyErasable {}

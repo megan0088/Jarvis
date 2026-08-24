@@ -10,7 +10,7 @@ import SwiftUI
 struct RemindersCard: View {
     @Bindable var store: WellnessStore
 
-    private var upcoming: [WellnessStore.ReminderSchedule] {
+    private var upcoming: [ReminderSchedule] {
         let now = Calendar.current.dateComponents([.hour, .minute], from: .now)
         let minutesNow = (now.hour ?? 0) * 60 + (now.minute ?? 0)
         return store.reminderSchedules

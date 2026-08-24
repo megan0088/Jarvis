@@ -600,7 +600,7 @@ struct ContentView: View {
         }
     }
 
-    private func wellnessTile(kind: WellnessStore.ReminderKind) -> some View {
+    private func wellnessTile(kind: ReminderKind) -> some View {
         let summary = store.goalSummary[kind] ?? "0/0"
         let parts   = summary.split(separator: "/")
         let current = Int(parts.first ?? "0") ?? 0
@@ -639,7 +639,7 @@ struct ContentView: View {
         }
     }
 
-    private func wellnessColor(for kind: WellnessStore.ReminderKind) -> Color {
+    private func wellnessColor(for kind: ReminderKind) -> Color {
         switch kind {
         case .water:   return Color.retroCyan
         case .stretch: return Color.retroOrange

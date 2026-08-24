@@ -3,11 +3,11 @@ import Foundation
 enum ReminderIntent {
     /// Parse an English "remind me…" request into a custom ReminderSchedule, or nil.
     /// Requires: a reminder keyword ("remind"/"reminder") + a recognizable kind + a clock time.
-    static func parse(_ text: String) -> WellnessStore.ReminderSchedule? {
+    static func parse(_ text: String) -> ReminderSchedule? {
         let t = text.lowercased()
         guard t.contains("remind") else { return nil }
 
-        let kind: WellnessStore.ReminderKind
+        let kind: ReminderKind
         if t.contains("water") || t.contains("drink") || t.contains("hydrat") { kind = .water }
         else if t.contains("stretch") || t.contains("move") { kind = .stretch }
         else if t.contains("meal") || t.contains("eat") || t.contains("lunch") || t.contains("breakfast") || t.contains("dinner") || t.contains("food") { kind = .meal }
@@ -22,7 +22,7 @@ enum ReminderIntent {
             case .meal: ("Meal time", "Time to eat — don't skip it.")
             }
         }()
-        return WellnessStore.ReminderSchedule(
+        return ReminderSchedule(
             id: "custom.\(kind.rawValue).\(hour).\(minute)",
             kind: kind, hour: hour, minute: minute, title: title, body: body
         )

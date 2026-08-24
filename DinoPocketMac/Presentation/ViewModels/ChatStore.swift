@@ -14,6 +14,15 @@ final class ChatStore {
     /// menjanjikan sesuatu lalu tidak melakukannya adalah sasaran Guideline 2.1.
     var pendingPrompt: String?
 
+    /// Membuang riwayat percakapan yang tersimpan beserta yang ada di memori.
+    func eraseAllStoredData() {
+        messages = []
+        noticeMessage = nil
+        pendingPrompt = nil
+        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
+        UserDefaults.standard.removeObject(forKey: "jarvis.activeBrain")
+    }
+
     func consumePendingPrompt() -> String? {
         defer { pendingPrompt = nil }
         return pendingPrompt
@@ -23,7 +32,7 @@ final class ChatStore {
         didSet { UserDefaults.standard.set(activeBrain.rawValue, forKey: "jarvis.activeBrain") }
     }
 
-    var onCreateReminder: ((WellnessStore.ReminderSchedule) -> Void)?
+    var onCreateReminder: ((ReminderSchedule) -> Void)?
 
     private let brains: [BrainKind: Brain]
     private var streamTask: Task<Void, Never>?
@@ -131,3 +140,5 @@ final class ChatStore {
         }
     }
 }
+
+extension ChatStore: LocallyErasable {}

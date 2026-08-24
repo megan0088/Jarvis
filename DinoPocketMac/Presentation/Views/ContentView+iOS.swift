@@ -186,7 +186,7 @@ extension ContentView {
         }
     }
 
-    private func triggerMoodTakeover(_ mood: WellnessStore.Mood) {
+    private func triggerMoodTakeover(_ mood: Mood) {
         guard let liveActivity else { return }
         Task {
             var state = liveActivity.content.state

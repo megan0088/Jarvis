@@ -37,7 +37,7 @@ struct JarvisTests {
         store.reminderHistory = []
         store.seenReminderEventIDs = []
 
-        let event = WellnessStore.ReminderEvent(
+        let event = ReminderEvent(
             id: "wellness.water.9.0.test",
             kind: .water,
             date: .now,
@@ -55,7 +55,7 @@ struct JarvisTests {
         let store = WellnessStore()
         store.goalProgress = .init(date: .now, water: 0, stretch: 0, meal: 0)
 
-        let reminder = WellnessStore.BuddyReminder(
+        let reminder = BuddyReminder(
             key: "wellness.water.9.0.test",
             schedule: .init(
                 id: "wellness.water.9.0",
@@ -78,7 +78,7 @@ struct JarvisTests {
         let store = WellnessStore()
         store.snoozedReminders = []
 
-        let reminder = WellnessStore.BuddyReminder(
+        let reminder = BuddyReminder(
             key: "wellness.meal.13.0.test",
             schedule: .init(
                 id: "wellness.meal.13.0",
