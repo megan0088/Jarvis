@@ -7,11 +7,20 @@
 //
 
 import AppKit
-import SpriteKit
 import SwiftUI
 
-private final class BuddyOverlayView: SKView {
+/// Lapisan tembus pandang selebar seluruh layar yang menampung karakter.
+///
+/// Dulunya `SKView`, peninggalan karakter SpriteKit. Setelah karakter 2D
+/// dikarantina, view ini tidak pernah lagi menampilkan scene — dan **SKView tanpa
+/// scene merender latar buram**, sehingga seluruh desktop tertutup kotak abu-abu.
+/// Itulah "background tidak bening" yang terlihat, bukan salah RealityView.
+///
+/// `NSView` polos tidak menggambar apa pun, jadi transparansinya gratis.
+private final class BuddyOverlayView: NSView {
     var shouldHandlePoint: ((CGPoint) -> Bool)?
+
+    override var isOpaque: Bool { false }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         if let hit = super.hitTest(point), hit !== self {
@@ -28,7 +37,7 @@ final class JarvisBuddyWindowController: NSWindowController {
     static let shared = JarvisBuddyWindowController()
 
     private var robotHostingView: NSView?
-    private var skView: BuddyOverlayView?
+    private var overlay: BuddyOverlayView?
     private var dismissHandler: (() -> Void)?
     private let stopButton = NSButton(title: "Stop Buddy", target: nil, action: nil)
     private let controlStack = NSStackView()
@@ -54,9 +63,8 @@ final class JarvisBuddyWindowController: NSWindowController {
         win.hidesOnDeactivate = false
         win.becomesKeyOnlyIfNeeded = true
 
-        // SKView fills the whole window
+        // Lapisan tembus pandang memenuhi seluruh window
         let view = BuddyOverlayView(frame: CGRect(origin: .zero, size: totalFrame.size))
-        view.allowsTransparency = true
         view.wantsLayer = true
         view.layer?.backgroundColor = CGColor.clear
         win.contentView = view
@@ -85,7 +93,7 @@ final class JarvisBuddyWindowController: NSWindowController {
             controlStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24)
         ])
 
-        skView = view
+        overlay = view
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
@@ -95,15 +103,14 @@ final class JarvisBuddyWindowController: NSWindowController {
     func startBuddyMode(store: PetStore,
                         size: CGFloat = CGFloat(BuddySettingsStore.defaultSize),
                         onDismiss: (() -> Void)? = nil) {
-        guard let window, let skView else { return }
+        guard let window, let overlay else { return }
         dismissHandler = onDismiss
         characterSize = size
 
         let totalFrame = JarvisBuddyWindowController.totalScreenFrame()
         window.setFrame(totalFrame, display: false)
 
-        skView.frame = CGRect(origin: .zero, size: totalFrame.size)
-        skView.presentScene(nil) // no SpriteKit character — 3D robot instead
+        overlay.frame = CGRect(origin: .zero, size: totalFrame.size)
 
         // Floating 3D robot (Robot.usdz) at the bottom-right of the desktop.
         robotHostingView?.removeFromSuperview()
@@ -118,16 +125,16 @@ final class JarvisBuddyWindowController: NSWindowController {
         host.layer?.isOpaque = false
         host.layer?.backgroundColor = NSColor.clear.cgColor
 
-        skView.addSubview(host)
+        overlay.addSubview(host)
         robotHostingView = host
 
         // Only the control buttons are interactive; the rest stays click-through.
-        skView.shouldHandlePoint = { [weak self] point in
+        overlay.shouldHandlePoint = { [weak self] point in
             guard let self else { return false }
             return self.controlStack.frame.insetBy(dx: -8, dy: -8).contains(point)
         }
 
-        skView.addSubview(controlStack, positioned: .above, relativeTo: nil)
+        overlay.addSubview(controlStack, positioned: .above, relativeTo: nil)
         startHoverMonitoring()
 
         window.orderFrontRegardless()
@@ -137,10 +144,9 @@ final class JarvisBuddyWindowController: NSWindowController {
     func stopBuddyMode() {
         robotHostingView?.removeFromSuperview()
         robotHostingView = nil
-        skView?.presentScene(nil)
         hoverTimer?.invalidate()
         hoverTimer = nil
-        skView?.shouldHandlePoint = nil
+        overlay?.shouldHandlePoint = nil
         window?.ignoresMouseEvents = false
         window?.orderOut(nil)
     }
@@ -164,9 +170,9 @@ final class JarvisBuddyWindowController: NSWindowController {
     /// supaya slider di Settings terasa hidup saat digeser.
     func updateCharacterSize(_ size: CGFloat) {
         characterSize = size
-        guard let skView, let host = robotHostingView as? NSHostingView<RobotCharacterView> else { return }
+        guard let overlay, let host = robotHostingView as? NSHostingView<RobotCharacterView> else { return }
         host.rootView = RobotCharacterView(size: size)
-        host.frame = Self.characterFrame(size: size, in: CGRect(origin: .zero, size: skView.frame.size))
+        host.frame = Self.characterFrame(size: size, in: CGRect(origin: .zero, size: overlay.frame.size))
     }
 
     /// Karakter berdiri di pojok kanan bawah dengan margin tetap.
@@ -185,11 +191,11 @@ final class JarvisBuddyWindowController: NSWindowController {
     private func startHoverMonitoring() {
         hoverTimer?.invalidate()
         hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { [weak self] _ in
-            guard let self, let window, let skView else { return }
+            guard let self, let window, let overlay else { return }
             let mouseInScreen = NSEvent.mouseLocation
             let mouseInWindow = window.convertPoint(fromScreen: mouseInScreen)
-            let mouseInView = skView.convert(mouseInWindow, from: nil)
-            let shouldHandle = skView.shouldHandlePoint?(mouseInView) ?? false
+            let mouseInView = overlay.convert(mouseInWindow, from: nil)
+            let shouldHandle = overlay.shouldHandlePoint?(mouseInView) ?? false
             window.ignoresMouseEvents = !shouldHandle
         }
     }

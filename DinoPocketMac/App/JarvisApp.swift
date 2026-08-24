@@ -10,7 +10,15 @@ import SwiftUI
 @main
 struct JarvisApp: App {
     @State private var store = PetStore()
-    @State private var chat = ChatStore(brains: [.ollama: OllamaBrain(), .apple: AppleBrain()])
+    // Rilis: HANYA Apple Intelligence. Ollama butuh localhost, sementara build ini
+    // menyetel ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO — menyertakannya berarti
+    // menawarkan opsi yang pasti gagal, dan app yang bergantung pada software
+    // eksternal berisiko ditolak App Review.
+    #if DEBUG
+    @State private var chat = ChatStore(brains: [.apple: AppleBrain(), .ollama: OllamaBrain()])
+    #else
+    @State private var chat = ChatStore(brains: [.apple: AppleBrain()])
+    #endif
     @Environment(\.scenePhase) private var scenePhase
     @State var isBuddyMode = false
     @State private var buddySettings = BuddySettingsStore()

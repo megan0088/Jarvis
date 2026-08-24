@@ -22,11 +22,20 @@ final class ChatStore {
     init(brains: [BrainKind: Brain]) {
         self.brains = brains
         let saved = UserDefaults.standard.string(forKey: "jarvis.activeBrain")
-        self.activeBrain = saved.flatMap(BrainKind.init(rawValue:)) ?? .ollama
+        // Default Apple Intelligence: build rilis hanya menyertakan otak itu, dan
+        // sandbox App Store memblokir jaringan sehingga Ollama tidak akan pernah siap.
+        self.activeBrain = saved.flatMap(BrainKind.init(rawValue:)) ?? .apple
         if let data = UserDefaults.standard.data(forKey: "jarvis.chat.recent"),
            let restored = try? JSONDecoder().decode([ChatMessage].self, from: data) {
             messages = restored
         }
+    }
+
+    /// Ketersediaan satu otak, tanpa efek samping — untuk baris status di Settings.
+    /// `resolveBrain()` tidak dipakai di sana karena ia mengubah `noticeMessage`.
+    func availability(of kind: BrainKind) async -> BrainAvailability? {
+        guard let brain = brains[kind] else { return nil }
+        return await brain.availability()
     }
 
     /// Pilih otak aktif kalau siap, jika tidak fallback ke otak lain yang siap.
@@ -41,7 +50,7 @@ final class ChatStore {
                 return brain
             }
         }
-        noticeMessage = "No brain is ready yet. Check Ollama or Apple Intelligence in Settings."
+        noticeMessage = "Apple Intelligence isn't available yet. Enable it in System Settings to chat."
         return nil
     }
 
