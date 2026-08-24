@@ -14,6 +14,30 @@ struct SettingsPage: View {
 
     @State private var appleAvailability: BrainAvailability?
     @State private var showDeleteConfirm = false
+    @State private var launchAtLoginOn = false
+    @State private var launchAtLoginError: String?
+
+    private let launchAtLogin = LaunchAtLoginService()
+
+    private var launchAtLoginNeedsApproval: Bool { launchAtLogin.needsUserApproval }
+
+    /// Binding manual, bukan @State biasa: kalau SMAppService menolak, toggle
+    /// harus kembali ke posisi semula alih-alih menampilkan keadaan palsu.
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { launchAtLoginOn },
+            set: { wanted in
+                do {
+                    try launchAtLogin.setEnabled(wanted)
+                    launchAtLoginOn = launchAtLogin.isEnabled
+                    launchAtLoginError = nil
+                } catch {
+                    launchAtLoginOn = launchAtLogin.isEnabled
+                    launchAtLoginError = "macOS refused that change: \(error.localizedDescription)"
+                }
+            }
+        )
+    }
 
     private static var versionText: String {
         let info = Bundle.main.infoDictionary
@@ -73,9 +97,43 @@ struct SettingsPage: View {
                             .frame(width: 56, alignment: .trailing)
                     }
                 }
-                Text("Takes effect immediately while Buddy Mode is running.")
+                LabeledContent("Opacity") {
+                    HStack(spacing: 12) {
+                        Slider(value: $buddySettings.opacity,
+                               in: BuddySettingsStore.opacityRange)
+                        Text("\(Int(buddySettings.opacity * 100))%")
+                            .font(.body.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(width: 56, alignment: .trailing)
+                    }
+                }
+
+                Toggle("Keep on top of other windows", isOn: $buddySettings.keepOnTop)
+
+                Toggle("Wander around the desktop", isOn: $buddySettings.strolling)
+
+                Text("Changes apply immediately while Buddy Mode is running. "
+                     + "Press Esc to leave Buddy Mode.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+            }
+
+            Section("General") {
+                Toggle("Launch at login", isOn: launchAtLoginBinding)
+
+                if launchAtLoginNeedsApproval {
+                    // Status .requiresApproval berarti user pernah menolak app ini
+                    // di Login Items; registrasi "berhasil" tanpa app pernah
+                    // diluncurkan, jadi toggle menyala akan berbohong.
+                    Text("Approve DinoPocket in System Settings › General › Login Items.")
+                        .font(.footnote)
+                        .foregroundStyle(.orange)
+                }
+                if let launchAtLoginError {
+                    Text(launchAtLoginError)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                }
             }
             Section("Account") {
                 LabeledContent("Signed in as") {
@@ -130,6 +188,7 @@ struct SettingsPage: View {
         }
         .task {
             appleAvailability = await chat.availability(of: .apple)
+            launchAtLoginOn = launchAtLogin.isEnabled
         }
     }
 }

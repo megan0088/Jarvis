@@ -9,20 +9,16 @@ import SwiftUI
 
 @main
 struct JarvisApp: App {
-    @State private var store = PetStore()
-    // Rilis: HANYA Apple Intelligence. Ollama butuh localhost, sementara build ini
-    // menyetel ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO — menyertakannya berarti
-    // menawarkan opsi yang pasti gagal, dan app yang bergantung pada software
-    // eksternal berisiko ditolak App Review.
-    #if DEBUG
-    @State private var chat = ChatStore(brains: [.apple: AppleBrain(), .ollama: OllamaBrain()])
-    #else
-    @State private var chat = ChatStore(brains: [.apple: AppleBrain()])
-    #endif
+    /// Satu-satunya tempat implementasi konkret dipilih.
+    private static let deps = AppDependencies.live()
+
+    @State private var store = deps.makePetStore()
+    @State private var chat = deps.makeChatStore()
+    @State private var buddySettings = deps.buddySettings
+    @State private var account = deps.account
+
     @Environment(\.scenePhase) private var scenePhase
     @State var isBuddyMode = false
-    @State private var buddySettings = BuddySettingsStore()
-    @State private var account = AccountStore()
 
     init() {
         WellnessNotificationCenter.shared.configure()
@@ -75,15 +71,29 @@ struct JarvisApp: App {
             onBuddyMode: toggleBuddyMode,
             isBuddyModeActive: isBuddyMode
         )
-        .onChange(of: buddySettings.size) { _, newSize in
+        // Setiap preferensi buddy diterapkan langsung tanpa memulai ulang mode,
+        // supaya kontrol di Settings terasa hidup saat digeser.
+        .onChange(of: buddySettings.size) { _, value in
             guard isBuddyMode else { return }
-            JarvisBuddyWindowController.shared.updateCharacterSize(CGFloat(newSize))
+            JarvisBuddyWindowController.shared.updateCharacterSize(CGFloat(value))
+        }
+        .onChange(of: buddySettings.opacity) { _, value in
+            guard isBuddyMode else { return }
+            JarvisBuddyWindowController.shared.apply(opacity: value)
+        }
+        .onChange(of: buddySettings.keepOnTop) { _, value in
+            guard isBuddyMode else { return }
+            JarvisBuddyWindowController.shared.apply(keepOnTop: value)
+        }
+        .onChange(of: buddySettings.strolling) { _, value in
+            guard isBuddyMode else { return }
+            JarvisBuddyWindowController.shared.apply(strolling: value)
         }
         .onChange(of: isBuddyMode) { _, active in
             if active {
                 JarvisBuddyWindowController.shared.startBuddyMode(
                     store: store,
-                    size: CGFloat(buddySettings.size),
+                    settings: buddySettings,
                     onDismiss: { dismissFromBuddy() }
                 )
                 hidePrimaryWindows()

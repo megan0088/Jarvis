@@ -11,7 +11,6 @@
 //
 
 import SwiftUI
-import AppKit
 
 struct AIUnavailableCard: View {
 
@@ -61,17 +60,10 @@ struct AIUnavailableCard: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    /// Sandbox mengizinkan membuka URL scheme System Settings lewat NSWorkspace.
-    /// Kalau pane spesifiknya tidak dikenali versi macOS yang dipakai, jatuh ke
-    /// System Settings umum — lebih baik daripada tombol yang tidak berbuat apa-apa.
+    /// Dialihkan ke `AppLauncherService` agar daftar pane dan perilaku
+    /// fallback-nya hidup di satu tempat yang punya test.
     static func openAppleIntelligenceSettings() {
-        let candidates = [
-            "x-apple.systempreferences:com.apple.preference.AppleIntelligence",
-            "x-apple.systempreferences:",
-        ]
-        for raw in candidates {
-            if let url = URL(string: raw), NSWorkspace.shared.open(url) { return }
-        }
+        AppLauncherService().open(.appleIntelligence)
     }
 }
 
