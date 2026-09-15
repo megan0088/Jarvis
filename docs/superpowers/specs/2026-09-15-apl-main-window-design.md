@@ -39,7 +39,7 @@ sheet. Visi di atas membalik prioritas itu.
 
 | # | Keputusan | Alasan |
 |---|---|---|
-| 1 | **v1 = chatbot + karakter 3D + Buddy desktop.** Tracking manual air/stretch/meals, Desk Time, dan halaman History dihapus dari UI (kode dikarantina, bukan dihapus) | Di luar visi; menambah permukaan untuk dipolish dan risiko review soal klaim kesehatan |
+| 1 | **v1 = chatbot + karakter 3D + Buddy desktop.** Tracking manual air/stretch/meals, Desk Time, dan halaman History dihapus (kode ikut dihapus; riwayatnya di git — spec A §6) | Di luar visi; menambah permukaan untuk dipolish dan risiko review soal klaim kesehatan |
 | 2 | **Sign in with Apple dihapus total.** Nama panggilan ditanya di onboarding; "hapus akun" menjadi **Erase All Data** | App on-device tanpa server; login wajib berisiko Guideline 5.1.1(v) |
 | 3 | **Reminder dibuat lewat chat, sekali jalan + harian.** "at 3 PM" / "tomorrow at 9" = sekali; "every day at 9" = harian | Sesuai ekspektasi pengguna chatbot |
 | 4 | **Perilaku ala OMNI di v1:** bubble chat dari Buddy, global shortcut, karakter bicara duluan (proaktif), suara (TTS) | Dipilih pemilik produk; semuanya sub-project C |
@@ -50,6 +50,7 @@ sheet. Visi di atas membalik prioritas itu.
 | 9 | **Ekspresi: satu USDZ per ekspresi + cache** | Aset tetap apa adanya; kode `USDZCharacterView` yang sudah teruji dipertahankan |
 | 10 | **Settings pindah ke jendela Settings standar (⌘,)** | Layout A tidak punya sidebar |
 | 11 | Nama **Apl** tetap (diputuskan 2026-08-26) | Risiko Guideline 5.2.5 sudah tercatat di spec 2026-08-24 §14 |
+| 12 | **Apple Intelligence satu-satunya brain** — Ollama dihapus, termasuk di build DEBUG (diputuskan 2026-09-16) | Rincian di spec A §2 #7 |
 
 Keputusan ini **menggantikan** bagian spec 2026-08-24 berikut: roadmap v1 di §15 (wellness
 manual, Desk Time, History nyata), butir §13 "HistoryPage berisi data nyata", dan alur
@@ -72,17 +73,14 @@ bisa diverifikasi, meneruskan pola "gelombang" yang sudah dipakai.
 **Urutan implementasi: A → B → C → D.** B dirancang lebih dulu karena keputusan desainnya
 menentukan apa yang dihapus A.
 
-### Masukan untuk spec A (bukan desain final)
+### Spec A
 
-- Reminder keluar dari `WellnessStore` ke repository sendiri. Model mendapat **tanggal
-  kemunculan** dan **aturan ulang** (`once` / `daily`); parser `ReminderIntent` mengenali
-  "at 3 PM", "tomorrow at 9", "every day at 9"; reminder `once` yang sudah lewat tidak
-  muncul di Up next. Data `pet.customSchedules` lama dimigrasikan sebagai `daily` — itulah
-  perilaku yang selama ini sudah berlaku.
-- Jadwal reminder wellness bawaan (`baseReminderSchedules`) ikut dikarantina; ajakan
-  istirahat kembali sebagai perilaku proaktif di C.
-- Hapus: entitlement `com.apple.developer.applesignin`, langkah SIWA di onboarding,
-  pemeriksaan SIWA di `verify-release.sh`, dan kewajiban login di `AplApp.rootView`.
+Dirinci di `2026-09-15-apl-foundation-design.md`. Dua hal di sana menggantikan catatan
+awal dokumen ini: kode wellness **dihapus** (bukan dikarantina), dan **tidak ada migrasi**
+data reminder lama — app belum pernah rilis, jadi A membersihkan data lama alih-alih
+memindahkannya. Tipe yang dipakai B dari A: `Reminder` (`.once` / `.daily`),
+`ReminderStoring`, `CancelReminderUseCase`, `UpdateReminderUseCase`, `ProfileStore`,
+`EraseAllDataUseCase`.
 
 ---
 
@@ -167,7 +165,8 @@ MainWindow ─┬─ CharacterStage            (atau CompactStageHeader < 820pt)
     data, bukan dengan menebak teks. Pesan tersimpan tanpa kunci ini tetap ter-decode.
   - `lastEvent: (kind: .reminderCreated | .failed, at: Date)?`
   - Kegagalan stream menandai pesan `status: .failed`, bukan menyisipkan teks peringatan.
-  - `persona` dan pemilihan brain di UI dihapus dari jalur rilis.
+  - `persona`, `BrainKind`, dan pemilihan brain sudah dihapus di A; `ChatStore` memegang
+    satu `Brain` (Apple Intelligence).
 - **`ReminderListViewModel`** (baru): reminder terurut menurut kemunculan terdekat, `cancel`,
   `undo`; membaca repository reminder dari A dan menjadwalkan ulang notifikasi.
 - **`CharacterMoodResolver`** — fungsi murni `(availability, isStreaming, lastEvent,
@@ -259,8 +258,9 @@ Selesai = flag `hasCompletedOnboarding`; tidak ada keychain maupun kredensial.
 | Character | Ukuran · opacity · keep on top · wander (`BuddySettings` yang sudah ada) |
 | Privacy | **Erase All Data…** — konfirmasi menyebut apa yang dihapus (percakapan, reminder, preferensi), lalu kembali ke onboarding |
 
-Build `DEBUG` menambah tab **Debug**: pilihan brain (Ollama) dan paksa status
-availability untuk menguji state AI mati. Tab ini tidak dikompilasi di Release.
+Build `DEBUG` menambah tab **Debug** berisi satu kontrol: paksa status availability Apple
+Intelligence (Ready · Not enabled · Device not eligible · Model downloading) untuk menguji
+state AI mati. Tab ini tidak dikompilasi di Release.
 
 Kredit aset di About panel standar; kosong karena `CharacterAsset.attribution == nil`.
 
