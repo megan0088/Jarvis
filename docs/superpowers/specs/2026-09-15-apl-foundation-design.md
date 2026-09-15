@@ -62,6 +62,12 @@ lulus · app terbuka dan chat bisa dipakai.
 A2 mendahului A3 karena reminder hari ini tinggal di `WellnessStore`: menghapus wellness
 lebih dulu merusak reminder di tengah jalan.
 
+> **Ditata ulang di rencana implementasi** (`docs/superpowers/plans/2026-09-16-apl-foundation.md`).
+> A2 "pindah dengan perilaku lama" ditiadakan karena hasilnya langsung ditulis ulang di A4.
+> Urutannya menjadi: A0 → A1 → domain reminder baru dibangun aditif → disambungkan ke chat →
+> A3 hapus wellness → A5. Syarat di atas tetap terpenuhi: wellness baru dihapus setelah
+> reminder tidak lagi bergantung padanya.
+
 **UI sementara setelah A** (diganti B): sidebar hanya **Apl AI** dan **Settings**; chat
 menjadi halaman awal; Settings berisi Profile (nama panggilan), Assistant, Buddy, General,
 dan **Erase All Data…**.
@@ -129,12 +135,14 @@ enum ReminderParseResult: Equatable {
 | `today at …` | sama dengan di atas |
 | `tomorrow at …` | `.once` besok |
 | `in 20 minutes` · `in 2 hours` · `in an hour` · `in a minute` | `.once` sekarang + durasi |
-| `every day at …` · `daily at …` | `.daily` |
+| `every day at …` · `daily at …` · `at … every day` | `.daily` |
 
-Aturan jam dipertahankan dari `ReminderIntent`: angka tanpa am/pm dan tanpa titik dua bukan
-waktu; `12am` = 00.00, `12pm` = 12.00; jam/menit di luar rentang diabaikan.
+Aturan jam: angka tanpa am/pm dan tanpa titik dua **hanya** dianggap jam tepat setelah `at`,
+dan dibaca sebagai jam 24 (`at 9` = 09.00) — permintaan seperti "tomorrow at 9" dan
+"every day at 9" membutuhkannya. Di tempat lain angka polos bukan waktu. `12am` = 00.00, `12pm` = 12.00;
+jam/menit di luar rentang diabaikan.
 
-**Judul:** frasa setelah "to" atau "about", dengan bagian waktu dibuang, spasi dan tanda baca
+**Judul:** dicari setelah pemicu — frasa setelah "to" atau "about", dengan bagian waktu dibuang, spasi dan tanda baca
 di ujung dirapikan, huruf pertama dikapitalkan. Urutan bebas — "remind me at 3pm to stretch"
 dan "remind me to stretch at 3pm" menghasilkan judul yang sama. Tanpa judul → "Reminder".
 
@@ -166,10 +174,10 @@ Jam yang sudah lewat hari ini otomatis menjadi "tomorrow" — pengguna melihatny
 
 ### Notifikasi
 
-`WellnessNotificationCenter` → `ReminderNotificationCenter`, di belakang protokol:
+`WellnessNotificationCenter` digantikan `ReminderNotificationCenter`, di belakang protokol (bernama `ReminderScheduling`, karena `NotificationScheduling` masih dipakai wellness selama keduanya berdampingan):
 
 ```swift
-protocol NotificationScheduling: Sendable {
+protocol ReminderScheduling: Sendable {
     func requestAuthorization() async -> Bool
     func sync(_ reminders: [Reminder], now: Date) async
     func cancelAll() async
@@ -192,7 +200,7 @@ protocol NotificationScheduling: Sendable {
 | `CancelReminderUseCase` | B (Up next, Undo) |
 | `UpdateReminderUseCase` | B (edit di popover) |
 
-Ketiganya menulis ke `ReminderStoring` lalu memanggil `NotificationScheduling.sync`.
+Ketiganya menulis ke `ReminderStoring` lalu memanggil `ReminderScheduling.sync`.
 
 ---
 
@@ -210,7 +218,7 @@ Ketiganya menulis ke `ReminderStoring` lalu memanggil `NotificationScheduling.sy
 - `DeleteAccountUseCase` → **`EraseAllDataUseCase`**: memusnahkan setiap `LocallyErasable`
   (`ProfileStore`, `ReminderStore`, `ChatStore`, `FileChatSessionStore`, dan
   `BuddySettingsStore` — yang di A dijadikan `LocallyErasable` agar preferensi karakter ikut
-  kembali ke bawaan), memanggil `NotificationScheduling.cancelAll()`, lalu
+  kembali ke bawaan), memanggil `ReminderScheduling.cancelAll()`, lalu
   `LegacyDataCleanup.run(force: true)`. Setelahnya app kembali ke onboarding.
 
 ### `LegacyDataCleanup`
@@ -280,7 +288,7 @@ dan tidak disentuh, meski masih merujuk tipe yang dihapus.
 
 ## 8. Testing
 
-Swift Testing; `Brain` dan `NotificationScheduling` di-mock; tidak ada test yang memanggil
+Swift Testing; `Brain` dan `ReminderScheduling` di-mock; tidak ada test yang memanggil
 Apple Intelligence sungguhan.
 
 ### Nasib test lama
@@ -290,7 +298,7 @@ Apple Intelligence sungguhan.
 | `WellnessStoreTests` (4), `FetchWellnessSummaryTests` (4) | Dihapus |
 | `RemindersWiringTests` — suite "Pengingat terhubung ke dashboard" (7), "Prompt ringkasan" (2) | Dihapus |
 | `RemindersWiringTests` — suite "Ketersediaan otak untuk layar chat": `chatIsUsableWhenAppleIsDownButAnotherBrainIsReady` | Dihapus (tidak ada brain lain) |
-| `RemindersWiringTests` — suite yang sama: `chatReportsAppleReasonWhenNoBrainIsReady` | Dipindah ke `ChatStoreTests`, disesuaikan ke brain tunggal |
+| `RemindersWiringTests` — suite yang sama: `chatReportsAppleReasonWhenNoBrainIsReady` | Dipindah ke `ChatAvailabilityTests.swift`, disesuaikan ke brain tunggal |
 | `OllamaBrainTests` (6), `BrainTypesTests.brainKindHasBothBackends`, `AppleBrainTests.kindIsApple`, `ChatStoreTests.fallsBackWhenActiveBrainUnavailable` | Dihapus bersama `OllamaBrain` dan `BrainKind` |
 | `DeleteAccountUseCaseTests` (5) | Menjadi `EraseAllDataUseCaseTests`; test sign-out dan app-group-suite diganti test `LegacyDataCleanup` |
 | `ReminderIntentTests` (7) | Menjadi `ReminderParserTests` |
