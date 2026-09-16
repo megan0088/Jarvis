@@ -27,11 +27,6 @@ struct AppDependencies {
     /// software eksternal berisiko ditolak App Review.
     let brains: [BrainKind: Brain]
 
-    /// Satu-satunya instance WellnessStore dalam app — disimpan di sini agar
-    /// makeWellnessViewModel() tidak membuat store baru setiap dipanggil, yang
-    /// akan menghasilkan dua sumber kebenaran untuk data yang sama.
-    let wellnessStore: WellnessStore
-
     /// Satu-satunya instance ReminderStore: chat dan daftar reminder harus
     /// membaca daftar yang sama.
     let reminderStore: ReminderStore
@@ -69,7 +64,6 @@ struct AppDependencies {
             buddySettings: BuddySettingsStore(),
             profile: ProfileStore(),
             brains: brains,
-            wellnessStore: WellnessStore(),
             reminderStore: reminderStore,
             reminderScheduler: ReminderNotificationCenter.shared,
             erasableStores: erasable
@@ -80,14 +74,6 @@ struct AppDependencies {
 
     func makeChatStore() -> ChatStore {
         ChatStore(brains: brains)
-    }
-
-    /// View model selalu dibungkus di atas wellnessStore yang sama, sehingga
-    /// hanya ada satu sumber kebenaran data wellness dalam satu sesi app.
-    func makeWellnessViewModel() -> WellnessViewModel {
-        WellnessViewModel(store: wellnessStore,
-                          notifications: WellnessNotificationCenter.shared,
-                          idle: IdleTimeService())
     }
 
     func makeCreateReminderUseCase() -> CreateReminderFromTextUseCase {

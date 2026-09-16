@@ -12,14 +12,10 @@ struct AplApp: App {
     /// Satu-satunya tempat implementasi konkret dipilih.
     private static let deps = AppDependencies.live()
 
-    @State private var wellness = deps.makeWellnessViewModel()
     @State private var chat = deps.makeChatStore()
-    // Catatan: wellness dibuat dari deps.wellnessStore yang sudah disimpan di
-    // AppDependencies, sehingga hanya ada satu WellnessStore dalam seluruh app.
     @State private var buddySettings = deps.buddySettings
     @State private var profile = deps.profile
 
-    @Environment(\.scenePhase) private var scenePhase
     @State var isBuddyMode = false
 
     init() {
@@ -31,26 +27,12 @@ struct AplApp: App {
             rootView
                 .task {
                     chat.createReminder = Self.deps.makeCreateReminderUseCase()
-                    await wellness.prepare()
                 }
         }
         // Modifier Scene, bukan View. Tanpa ini jendela memakai ukuran bawaan
-        // yang bisa memotong grid kartu dan sidebar. 1000×680 memuat dua kolom
-        // LazyVGrid(.adaptive(minimum: 260)) plus sidebar 190pt dengan lega.
+        // yang bisa memotong sidebar dan halaman chat.
         .defaultSize(width: 1000, height: 680)
         .windowResizability(.contentMinSize)
-        .onChange(of: scenePhase) { _, phase in
-            switch phase {
-            case .active:
-                wellness.resumeSession()
-                Task { await wellness.syncReminderHistory() }
-            case .inactive, .background:
-                wellness.pauseSession()
-                if phase == .background { wellness.tick() }
-            @unknown default:
-                break
-            }
-        }
     }
 
     @ViewBuilder
@@ -69,7 +51,6 @@ struct AplApp: App {
     @ViewBuilder
     private var dashboard: some View {
         DashboardTemplate(
-            wellness: wellness,
             chat: chat,
             buddySettings: buddySettings,
             profile: profile,
@@ -106,10 +87,6 @@ struct AplApp: App {
             }
         }
         // Buddy Mode menyala sendiri begitu dashboard tampil.
-        //
-        // Sebelumnya ia hanya bisa dinyalakan lewat tombol di HomePage, dan
-        // janji di layar onboarding — "a small robot lives on your desktop" —
-        // baru terjadi kalau user menemukan tombol itu lebih dulu.
         //
         // Dijalankan sekali per kemunculan dashboard; menyalakan ulang saat
         // sudah aktif akan membangun ulang jendelanya tanpa alasan.

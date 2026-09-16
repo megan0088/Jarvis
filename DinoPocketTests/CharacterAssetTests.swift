@@ -55,23 +55,3 @@ struct CharacterAssetTests {
         #expect(CharacterAsset.robot.idleBobDuration > 0)
     }
 }
-
-struct TrackFocusSessionTests {
-
-    @Test func inactiveAlwaysPauses() {
-        #expect(TrackFocusSessionUseCase.shouldPause(event: .becameInactive, idleSeconds: 0))
-    }
-
-    @Test func activeNeverPauses() {
-        #expect(!TrackFocusSessionUseCase.shouldPause(event: .becameActive, idleSeconds: 99_999))
-    }
-
-    /// Inti dari UseCase ini: app yang dibiarkan terbuka semalaman tetap
-    /// `.active`, jadi tanpa ambang idle seluruh malam tercatat sebagai kerja.
-    @Test func periodicCheckPausesOnlyPastTheIdleThreshold() {
-        let threshold = TrackFocusSessionUseCase.idleThreshold
-        #expect(!TrackFocusSessionUseCase.shouldPause(event: .periodicCheck, idleSeconds: threshold - 1))
-        #expect(TrackFocusSessionUseCase.shouldPause(event: .periodicCheck, idleSeconds: threshold))
-        #expect(TrackFocusSessionUseCase.shouldPause(event: .periodicCheck, idleSeconds: 8 * 3600))
-    }
-}

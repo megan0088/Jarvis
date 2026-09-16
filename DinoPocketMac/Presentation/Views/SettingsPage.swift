@@ -9,7 +9,6 @@ import SwiftUI
 
 struct SettingsPage: View {
     @Bindable var chat: ChatStore
-    let wellness: WellnessViewModel
     @Bindable var buddySettings: BuddySettingsStore
     let profile: ProfileStore
     /// Penyimpanan tambahan dari composition root (mis. transcript percakapan).
@@ -89,31 +88,13 @@ struct SettingsPage: View {
             }
 
             Section("Reminders") {
-                // Satu-satunya jalan menyalakan pengingat di app ini.
-                // Sebelumnya tombolnya cuma ada di `ContentView.swift` yang
-                // DIKECUALIKAN dari target macOS, jadi `remindersEnabled`
-                // selamanya false dan nol notifikasi pernah terdaftar.
-                Toggle("Daily wellness reminders", isOn: Binding(
-                    get: { wellness.remindersEnabled },
-                    set: { wanted in Task { await wellness.setRemindersEnabled(wanted) } }
-                ))
-
-                if wellness.authorizationWasDenied {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("macOS is blocking notifications for Apl, so reminders "
-                             + "cannot be scheduled.")
-                            .font(.footnote)
-                            .foregroundStyle(.orange)
-                        Button("Open Notification Settings") {
-                            launcher.open(.notifications)
-                        }
-                        .controlSize(.small)
-                    }
-                } else if wellness.remindersEnabled {
-                    Text("\(wellness.reminderSchedules.count) reminders scheduled: water, "
-                         + "stretch breaks, and meals.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                // Reminder dibuat lewat chat. Di sini hanya ada jalan ke izin
+                // notifikasi, karena tanpa izin reminder tidak pernah muncul.
+                Text("Ask Apl in chat, for example “Remind me to stretch at 3 PM”.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Button("Open Notification Settings") {
+                    launcher.open(.notifications)
                 }
             }
 
@@ -216,13 +197,10 @@ struct SettingsPage: View {
                 // Tiap penyimpanan memusnahkan miliknya sendiri; UseCase ini
                 // tidak tahu satu pun nama kunci atau suite.
                 let stores: [any LocallyErasable] =
-                    [profile, wellness.erasableStore, chat, buddySettings] + extraErasableStores
+                    [profile, chat, buddySettings] + extraErasableStores
                 let useCase = EraseAllDataUseCase(
                     stores: stores,
-                    clearNotifications: {
-                        await WellnessNotificationCenter.shared.clearScheduledReminders()
-                        await ReminderNotificationCenter.shared.cancelAll()
-                    }
+                    clearNotifications: { await ReminderNotificationCenter.shared.cancelAll() }
                 )
                 Task { await useCase.execute() }
             }
@@ -242,6 +220,6 @@ struct SettingsPage: View {
 
 #Preview {
     NavigationStack {
-        SettingsPage(chat: ChatStore(brains: [:]), wellness: .preview, buddySettings: BuddySettingsStore(), profile: ProfileStore())
+        SettingsPage(chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), profile: ProfileStore())
     }
 }

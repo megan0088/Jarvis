@@ -50,7 +50,7 @@ struct AIUnavailableCard: View {
                     .buttonStyle(.borderedProminent)
             }
 
-            Text("Your character, reminders, wellness tracking, and history all keep working.")
+            Text("Your character and reminders keep working.")
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)

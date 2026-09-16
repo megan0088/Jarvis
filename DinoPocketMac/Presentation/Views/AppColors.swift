@@ -15,10 +15,5 @@ enum AppColor {
     static let card = Color(nsColor: .controlBackgroundColor)
     static let groupedBackground = Color(nsColor: .windowBackgroundColor)
 
-    // Wellness tints
-    static let water = Color.teal
-    static let stretch = Color.green
-    static let meal = Color.orange
-
     static let online = Color.green
 }

@@ -8,20 +8,14 @@
 import SwiftUI
 
 enum DashboardSection: String, CaseIterable, Identifiable {
-    case home = "Home"
     case chat = "Apl AI"
-    case wellness = "Wellness"
-    case history = "History"
     case settings = "Settings"
 
     var id: String { rawValue }
 
     var icon: String {
         switch self {
-        case .home: "house"
         case .chat: "sparkles"
-        case .wellness: "heart"
-        case .history: "clock.arrow.circlepath"
         case .settings: "gearshape"
         }
     }
@@ -49,6 +43,6 @@ struct SidebarView: View {
 }
 
 #Preview {
-    SidebarView(selection: .constant(.home), chat: ChatStore(brains: [:]))
+    SidebarView(selection: .constant(.chat), chat: ChatStore(brains: [:]))
         .frame(width: 220, height: 400)
 }
