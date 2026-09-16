@@ -1,7 +1,8 @@
 # Apl — Jendela Utama Chat-First (Sub-project B) — Design Spec
 
 - Tanggal: 2026-09-15
-- Status: Desain disetujui per bagian; menunggu review spec
+- Status: Disetujui. Rencana implementasi: `docs/superpowers/plans/2026-09-17-apl-main-window.md`
+  (penyesuaian saat perencanaan di §13)
 - Basis kode: branch `refactor/taggo-architecture` @ `a529a42` + perubahan yang belum di-commit
 - Target: **macOS 26+** (Apple Silicon), distribusi **Mac App Store**
 - Melanjutkan: `2026-08-24-dinopocket-mac-real-design.md`. Bila bertentangan, dokumen ini
@@ -125,7 +126,8 @@ status + teks) → `UpNextList` → `StageActions` (tombol **Buddy Mode** + tomb
 
 **Teks status per ekspresi:** idle "Here when you need me" · greet "Good morning!" sebelum
 12.00, "Good afternoon!" sebelum 18.00, selain itu "Good evening!" · thinking "Thinking…" ·
-celebrate "Reminder set for 3:00 PM" · sleepy "Apple Intelligence is off".
+celebrate "Reminder set for 3:00 PM" · sleepy "Apple Intelligence is off" (atau "Something went
+wrong" bila robot tertidur karena jawaban gagal — §13).
 
 **Up next:** maksimal tiga kemunculan terdekat, masing-masing judul + waktu relatif ("Today,
 3:00 PM", "Tomorrow, 9:00 AM", "Every day, 9:00 AM"). "See all" membuka popover berisi
@@ -179,7 +181,7 @@ MainWindow ─┬─ CharacterStage            (atau CompactStageHeader < 820pt)
   6. Selain itu → `.idle`
 
   Pemanggil menjadwalkan evaluasi ulang tepat saat jendela 3 detik berakhir; resolver
-  sendiri tidak menyimpan timer.
+  sendiri tidak menyimpan timer. Jendela 3 detik berlaku setengah terbuka, `[t, t+3)` (§13).
 - **`CharacterExpressionCache`** (`@MainActor`): memuat kelima USDZ sekali saat pertama
   dibutuhkan, lalu menyerahkan `clone(recursive: true)`. `USDZCharacterView.show(_:)`
   mengambil dari cache alih-alih `Entity(named:)`; normalisasi skala dan `stage` yang
@@ -211,7 +213,9 @@ Token custom hanya:
 | Status | `systemGreen` / `systemOrange` | sama |
 
 Aksen dipasang lewat `AccentColor` sehingga toggle, focus ring, dan tombol sistem ikut teal
-tanpa kode tambahan. Token wellness (`water`, `stretch`, `meal`) dihapus.
+tanpa kode tambahan. Token wellness (`water`, `stretch`, `meal`) dihapus. Elemen merek (bubble,
+glow, tombol kirim) memakai `Color("AccentColor")` langsung, karena accent pilihan pengguna di
+System Settings menimpa accent app (§13).
 
 Asal aksen: diambil dari robot (telinga `#4A718E`, glow dada `#76FFFF`), lalu disesuaikan
 agar kontrasnya lolos di kedua mode.
@@ -233,7 +237,8 @@ utamanya, dalam light dan dark.
 ### Aksesibilitas & keyboard
 
 - Robot punya label VoiceOver yang mengikuti ekspresi ("Apl, thinking")
-- Return kirim · ⇧Return baris baru · Esc menghentikan jawaban yang sedang ditulis
+- Return kirim · ⇧Return baris baru (di akhir draft; ⌥Return di posisi kursor) · Esc
+  menghentikan jawaban yang sedang ditulis · ⌘K Clear Conversation…
 - Reduce Motion mematikan gerak bob dan pop
 - Seluruh copy UI dalam bahasa Inggris
 
@@ -270,7 +275,7 @@ Kredit aset di About panel standar; kosong karena `CharacterAsset.attribution ==
 
 | Situasi | Perilaku |
 |---|---|
-| Apple Intelligence mati / perangkat tidak mendukung | `AIUnavailableBanner` menggantikan composer; robot `.sleepy`; Up next dan reminder tetap bekerja; availability dicek ulang setiap jendela aktif |
+| Apple Intelligence mati / perangkat tidak mendukung | `AIUnavailableBanner` tampil di atas composer, dan composer tetap bisa dipakai untuk reminder (§13). Robot `.sleepy`. Up next dan reminder tetap bekerja. Availability dicek ulang setiap jendela aktif |
 | Model sedang diunduh | Composer nonaktif dengan "Getting ready…", aktif sendiri saat tersedia |
 | Stream gagal | `FailedMessage` + **Retry**; `lastEvent = .failed` |
 | Guardrail menolak | Balasan netral "I can't help with that one." — bukan gaya error |
@@ -322,3 +327,26 @@ khusus `DEBUG`.
 | Pergantian ekspresi terlalu sering saat streaming pendek | Resolver berbasis prioritas + jendela 3 detik; evaluasi ulang hanya pada perubahan input |
 | Light mode belum pernah digambar | Diverifikasi lewat screenshot manual §10; kanvas diperbarui bila hasilnya meleset |
 | Nama "Apl" dekat dengan "Apple" (Guideline 5.2.5) | Keputusan sadar pemilik produk; dicatat ulang untuk App Review Notes di D |
+
+---
+
+## 13. Penyesuaian saat perencanaan (2026-09-17)
+
+Ditemukan saat menulis rencana implementasi. Rinciannya ada di rencana, bagian "Deviasi".
+
+| # | Penyesuaian | Alasan |
+|---|---|---|
+| 1 | Elemen merek memakai `Color("AccentColor")`, bukan `Color.accentColor` | Accent pilihan pengguna menimpa accent app di macOS; kontrol sistem tetap mengikutinya |
+| 2 | `.sleepy` karena jawaban gagal berstatus "Something went wrong" | "Apple Intelligence is off" menyesatkan bila AI sebenarnya menyala |
+| 3 | ⇧Return menambah baris di akhir draft; ⌥Return di posisi kursor | SwiftUI tidak memberi akses ke posisi kursor |
+| 4 | Clear Conversation dan Erase All Data juga mengosongkan sesi Apple Intelligence (`Brain.resetConversation()`) | Tanpa itu, model tetap ingat dan menyimpan ulang percakapan yang sudah dihapus |
+| 5 | `ChatStore` menerima `defaults` dan `now` | Test host adalah Apl.app; test tidak boleh menulis ke data app sungguhan |
+| 6 | Jawaban yang dihentikan berstatus `.stopped` | Menggantikan sufiks teks " (cancelled)", sejalan dengan "nol teks peringatan di isi pesan" |
+| 7 | `Presentation` ditata per fitur (DesignSystem, Components, Chat, Stage, Window, Settings, Onboarding, Character, ViewModels) | Berkas yang berubah bersama tinggal bersama |
+| 8 | Kategori App Store (masih Health & Fitness) diserahkan ke D | Bukan urusan jendela utama |
+| 9 | `AIUnavailableBanner` tampil di atas composer yang tetap terbuka. Composer hanya dikunci saat model disiapkan. Pesan non-reminder dijawab pemberitahuan di bawah percakapan | Reminder lewat chat harus tetap bisa dibuat tanpa AI (§9 baris 1 menjanjikannya) |
+| 10 | Momen 3 detik berlaku setengah terbuka, `[t, t+3)` | Dengan batas inklusif, evaluasi ulang di detik ke-3 menjadwalkan dirinya lagi dan wajah tertahan |
+| 11 | Animasi robot di jendela utama dijeda saat jendela tidak aktif atau Low Power Mode | SwiftUI tidak punya sinyal "tertutup jendela lain" yang andal (mitigasi §12) |
+| 12 | `ReminderChip` punya status ketiga, "Reminder passed" | Reminder sekali jalan yang lewat, atau sudah dibuang setelah sehari, bukan "removed" |
+| 13 | `CompactStageHeader` punya tombol lonceng ke popover reminder | Up next tidak terlihat dalam mode compact |
+| 14 | Clear Conversation memakai ⌘K | Shortcut untuk menu yang ditambahkan §4 |
