@@ -10,8 +10,8 @@ import SwiftUI
 struct HomePage: View {
     let wellness: WellnessViewModel
     @Bindable var chat: ChatStore
-    /// Nama dari Sign in with Apple. `nil` saat user menyembunyikan namanya —
-    /// sapaannya lalu jatuh ke bentuk tanpa nama, bukan ke nama orang lain.
+    /// Nama panggilan dari onboarding. `nil` bila pengguna tidak mengisinya —
+    /// sapaannya lalu jatuh ke bentuk tanpa nama.
     var greetingName: String?
     var onBuddyMode: (() -> Void)?
     @Binding var showChat: Bool

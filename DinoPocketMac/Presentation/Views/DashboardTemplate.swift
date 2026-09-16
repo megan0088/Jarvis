@@ -12,7 +12,7 @@ struct DashboardTemplate: View {
     let wellness: WellnessViewModel
     @Bindable var chat: ChatStore
     @Bindable var buddySettings: BuddySettingsStore
-    @Bindable var account: AccountStore
+    let profile: ProfileStore
     var extraErasableStores: [any LocallyErasable] = []
     var onBuddyMode: (() -> Void)? = nil
     var isBuddyModeActive: Bool = false
@@ -27,7 +27,7 @@ struct DashboardTemplate: View {
         } detail: {
             switch selection {
             case .home:
-                HomePage(wellness: wellness, chat: chat, greetingName: account.firstName,
+                HomePage(wellness: wellness, chat: chat, greetingName: profile.nickname,
                          onBuddyMode: onBuddyMode, showChat: $showChat)
             case .chat:
                 ChatPage(chat: chat)
@@ -40,7 +40,7 @@ struct DashboardTemplate: View {
             case .history:
                 HistoryPage(wellness: wellness)
             case .settings:
-                SettingsPage(chat: chat, wellness: wellness, buddySettings: buddySettings, account: account,
+                SettingsPage(chat: chat, wellness: wellness, buddySettings: buddySettings, profile: profile,
                              extraErasableStores: extraErasableStores)
             }
         }
@@ -55,5 +55,5 @@ struct DashboardTemplate: View {
 }
 
 #Preview {
-    DashboardTemplate(wellness: .preview, chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), account: AccountStore())
+    DashboardTemplate(wellness: .preview, chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), profile: ProfileStore())
 }

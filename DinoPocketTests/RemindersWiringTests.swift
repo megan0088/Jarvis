@@ -182,19 +182,3 @@ private struct StubBrain: Brain {
         AsyncThrowingStream { $0.finish() }
     }
 }
-
-@Suite("Sapaan dashboard")
-struct GreetingNameTests {
-
-    @Test func firstNameIsJustTheFirstWordOfTheAppleIDName() {
-        #expect(AccountStore.firstName(from: "Muhamad Ega Nugraha") == "Muhamad")
-    }
-
-    @Test func firstNameIsNilWhenAppleIDNameWasHidden() {
-        #expect(AccountStore.firstName(from: nil) == nil)
-    }
-
-    @Test func blankNameGreetsWithoutOne() {
-        #expect(AccountStore.firstName(from: "   ") == nil)
-    }
-}

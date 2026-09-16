@@ -184,7 +184,7 @@ final class WellnessViewModel {
                                       notifications: notifications)
     }
 
-    /// Diperlukan `DeleteAccountUseCase`; view tidak pernah memanggilnya.
+    /// Diperlukan `EraseAllDataUseCase`; view tidak pernah memanggilnya.
     var erasableStore: any LocallyErasable { store }
 }
 

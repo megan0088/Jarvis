@@ -2,39 +2,36 @@
 //  OnboardingView.swift
 //  AplMac
 //
-//  Alur perkenalan sekali jalan: sambutan → Sign in with Apple → izin
-//  notifikasi → status Apple Intelligence.
+//  Alur perkenalan sekali jalan: sambutan + nama panggilan → izin notifikasi
+//  → status Apple Intelligence. Tanpa akun.
+//
+//  Tampilan ini sementara; sub-project B memolesnya.
 //
 
 import SwiftUI
-import AuthenticationServices
 import UserNotifications
 
 struct OnboardingView: View {
 
-    @Bindable var account: AccountStore
+    let profile: ProfileStore
     let chat: ChatStore
 
-    /// Dipanggil saat user menekan "Allow notifications" dan macOS mengabulkan.
-    ///
-    /// Tanpa ini layar onboarding menampilkan "Notifications on" sementara nol
-    /// pengingat pernah dijadwalkan — janji yang tidak ditepati siapa pun.
+    /// Dipanggil saat pengguna menekan "Allow notifications" dan macOS mengabulkan.
     var onNotificationsGranted: () async -> Void = {}
 
     @State private var step: Step = .welcome
-    @State private var signInError: String?
+    @State private var nicknameDraft = ""
     @State private var notificationDecision: NotificationDecision = .undecided
     @State private var appleAvailability: BrainAvailability?
 
     enum Step: Int, CaseIterable {
-        case welcome, signIn, notifications, intelligence
+        case welcome, notifications, intelligence
 
         var title: String {
             switch self {
-            case .welcome:      "Meet your desk companion"
-            case .signIn:       "Sign in"
-            case .notifications: "Gentle nudges"
-            case .intelligence: "On-device intelligence"
+            case .welcome:       "Meet Apl"
+            case .notifications: "Reminders"
+            case .intelligence:  "On-device intelligence"
             }
         }
     }
@@ -68,52 +65,19 @@ struct OnboardingView: View {
             case .welcome:
                 icon("sparkles")
                 heading(step.title)
-                body("A small robot lives on your desktop, keeps you company, and "
-                     + "reminds you to drink, stretch, and step away from the screen. "
-                     + "Everything runs on this Mac.")
+                body("A small robot that lives on your desktop, chats with you, and keeps "
+                     + "your reminders. Everything runs on this Mac.")
 
-            case .signIn:
-                icon("person.crop.circle")
-                heading(step.title)
-                body("Apl uses your Apple ID to identify you. Nothing is sent "
-                     + "to a server — the identifier stays in this Mac's Keychain.")
-
-                SignInWithAppleButton(.signIn) { request in
-                    request.requestedScopes = [.fullName]
-                } onCompletion: { result in
-                    handleSignIn(result)
-                }
-                .signInWithAppleButtonStyle(.black)
-                .frame(width: 260, height: 44)
-
-                if let signInError {
-                    Text(signInError)
-                        .font(.footnote)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
-                }
-                if account.isSignedIn {
-                    Label("Signed in", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
-
-                #if DEBUG
-                // Build Debug tidak membawa entitlement Sign in with Apple —
-                // memerlukannya akan menggagalkan build sebelum provisioning
-                // profile bercapability SIWA tersedia. Skip ini TIDAK ada di
-                // rilis; di sana login tetap wajib.
-                Button("Skip (debug build only)") {
-                    account.debugBypassSignIn()
-                }
-                .buttonStyle(.link)
-                .font(.footnote)
-                #endif
+                TextField("What should I call you?", text: $nicknameDraft)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 260)
+                    .onSubmit { goForward() }
 
             case .notifications:
                 icon("bell.badge")
                 heading(step.title)
-                body("Reminders arrive as notifications. Without permission they still "
-                     + "show up inside the app, just not on screen while you work.")
+                body("Ask Apl to remind you about anything. Reminders arrive as "
+                     + "notifications, so Apl needs your permission to show them.")
 
                 switch notificationDecision {
                 case .undecided:
@@ -142,7 +106,7 @@ struct OnboardingView: View {
                     VStack(spacing: 6) {
                         Label(reason, systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
-                        Text("The character, reminders, and wellness tracking work regardless.")
+                        Text("The character and reminders work regardless.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -158,7 +122,7 @@ struct OnboardingView: View {
 
     private var footer: some View {
         HStack {
-            // Titik langkah, supaya user tahu alurnya pendek.
+            // Titik langkah, supaya pengguna tahu alurnya pendek.
             HStack(spacing: 6) {
                 ForEach(Step.allCases, id: \.rawValue) { s in
                     Circle()
@@ -175,21 +139,20 @@ struct OnboardingView: View {
 
             Button(step == .intelligence ? "Start" : "Continue") { goForward() }
                 .buttonStyle(.borderedProminent)
-                .disabled(!canAdvance)
         }
-    }
-
-    /// Login wajib: langkah `.signIn` tidak bisa dilewati tanpa kredensial.
-    private var canAdvance: Bool {
-        step != .signIn || account.isSignedIn
     }
 
     // MARK: - Actions
 
     private func goForward() {
-        if step == .intelligence {
-            account.completeOnboarding()
+        switch step {
+        case .welcome:
+            profile.setNickname(nicknameDraft)
+        case .intelligence:
+            profile.completeOnboarding()
             return
+        case .notifications:
+            break
         }
         if let next = Step(rawValue: step.rawValue + 1) {
             withAnimation(.easeInOut(duration: 0.18)) { step = next }
@@ -199,25 +162,6 @@ struct OnboardingView: View {
     private func goBack() {
         if let prev = Step(rawValue: step.rawValue - 1) {
             withAnimation(.easeInOut(duration: 0.18)) { step = prev }
-        }
-    }
-
-    private func handleSignIn(_ result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(let auth):
-            guard let credential = auth.credential as? ASAuthorizationAppleIDCredential else {
-                signInError = "Unexpected credential type."
-                return
-            }
-            signInError = nil
-            account.signIn(with: credential)
-        case .failure(let error):
-            // Pembatalan oleh user bukan kegagalan — jangan tampilkan pesan merah.
-            if (error as? ASAuthorizationError)?.code == .canceled {
-                signInError = nil
-            } else {
-                signInError = error.localizedDescription
-            }
         }
     }
 
@@ -250,5 +194,5 @@ struct OnboardingView: View {
 }
 
 #Preview {
-    OnboardingView(account: AccountStore(), chat: ChatStore(brains: [:]))
+    OnboardingView(profile: ProfileStore(), chat: ChatStore(brains: [:]))
 }

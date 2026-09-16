@@ -19,7 +19,7 @@ struct AppDependencies {
     let appLauncher: AppLaunching
     let launchAtLogin: LaunchAtLoginManaging
     let buddySettings: BuddySettingsStore
-    let account: AccountStore
+    let profile: ProfileStore
 
     /// Otak yang boleh dipilih. Rilis hanya memuat Apple Intelligence: Ollama
     /// butuh localhost, sementara build ini menyetel
@@ -59,7 +59,7 @@ struct AppDependencies {
             appLauncher: AppLauncherService(),
             launchAtLogin: LaunchAtLoginService(),
             buddySettings: BuddySettingsStore(),
-            account: AccountStore(),
+            profile: ProfileStore(),
             brains: brains,
             wellnessStore: WellnessStore(),
             erasableStores: erasable

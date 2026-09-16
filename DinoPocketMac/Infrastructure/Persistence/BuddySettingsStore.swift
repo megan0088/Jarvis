@@ -92,3 +92,19 @@ final class BuddySettingsStore {
         min(max(value, opacityRange.lowerBound), opacityRange.upperBound)
     }
 }
+
+extension BuddySettingsStore: LocallyErasable {
+    /// Preferensi kembali ke bawaan, dan kuncinya ikut dibuang. Mengeset nilai
+    /// memicu `didSet` yang menulis ulang kunci, jadi penghapusan kunci harus
+    /// terjadi SETELAH nilai dikembalikan.
+    @MainActor
+    func eraseAllStoredData() {
+        size = Self.defaultSize
+        opacity = 1.0
+        keepOnTop = true
+        strolling = false
+        for key in [Keys.size, Keys.opacity, Keys.keepOnTop, Keys.strolling] {
+            defaults.removeObject(forKey: key)
+        }
+    }
+}

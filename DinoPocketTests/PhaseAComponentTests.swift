@@ -129,6 +129,27 @@ struct BuddySettingsStoreTests {
         #expect(defaults.object(forKey: "buddy.keepOnTop") == nil)
         #expect(BuddySettingsStore(defaults: defaults).keepOnTop == true)
     }
+
+    /// Erase All Data mengembalikan preferensi karakter ke bawaan dan tidak
+    /// meninggalkan kuncinya di disk.
+    @MainActor @Test func eraseRestoresDefaultsAndRemovesKeys() {
+        let defaults = isolatedDefaults(#function)
+        let store = BuddySettingsStore(defaults: defaults)
+        store.size = 240
+        store.opacity = 0.5
+        store.keepOnTop = false
+        store.strolling = true
+
+        store.eraseAllStoredData()
+
+        #expect(store.size == BuddySettingsStore.defaultSize)
+        #expect(store.opacity == 1.0)
+        #expect(store.keepOnTop == true)
+        #expect(store.strolling == false)
+        for key in ["buddy.size", "buddy.opacity", "buddy.keepOnTop", "buddy.strolling"] {
+            #expect(defaults.object(forKey: key) == nil, "kunci \(key) tertinggal")
+        }
+    }
 }
 
 // MARK: - AppLauncherService

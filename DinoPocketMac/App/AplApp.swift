@@ -17,7 +17,7 @@ struct AplApp: App {
     // Catatan: wellness dibuat dari deps.wellnessStore yang sudah disimpan di
     // AppDependencies, sehingga hanya ada satu WellnessStore dalam seluruh app.
     @State private var buddySettings = deps.buddySettings
-    @State private var account = deps.account
+    @State private var profile = deps.profile
 
     @Environment(\.scenePhase) private var scenePhase
     @State var isBuddyMode = false
@@ -32,7 +32,6 @@ struct AplApp: App {
                 .task {
                     chat.createReminder = wellness.makeCreateReminderUseCase()
                     await wellness.prepare()
-                    await account.refreshCredentialState()
                 }
         }
         // Modifier Scene, bukan View. Tanpa ini jendela memakai ukuran bawaan
@@ -56,10 +55,10 @@ struct AplApp: App {
 
     @ViewBuilder
     private var rootView: some View {
-        if account.isSignedIn && account.hasCompletedOnboarding {
+        if profile.hasCompletedOnboarding {
             dashboard
         } else {
-            OnboardingView(account: account, chat: chat,
+            OnboardingView(profile: profile, chat: chat,
                            onNotificationsGranted: { await wellness.setRemindersEnabled(true) })
         }
     }
@@ -70,7 +69,7 @@ struct AplApp: App {
             wellness: wellness,
             chat: chat,
             buddySettings: buddySettings,
-            account: account,
+            profile: profile,
             extraErasableStores: Self.deps.erasableStores,
             onBuddyMode: toggleBuddyMode,
             isBuddyModeActive: isBuddyMode

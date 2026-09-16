@@ -11,12 +11,13 @@ struct SettingsPage: View {
     @Bindable var chat: ChatStore
     let wellness: WellnessViewModel
     @Bindable var buddySettings: BuddySettingsStore
-    @Bindable var account: AccountStore
+    let profile: ProfileStore
     /// Penyimpanan tambahan dari composition root (mis. transcript percakapan).
     var extraErasableStores: [any LocallyErasable] = []
 
     @State private var appleAvailability: BrainAvailability?
-    @State private var showDeleteConfirm = false
+    @State private var showEraseConfirm = false
+    @State private var nicknameDraft = ""
     @State private var launchAtLoginOn = false
     @State private var launchAtLoginError: String?
 
@@ -168,16 +169,15 @@ struct SettingsPage: View {
                         .foregroundStyle(.red)
                 }
             }
-            Section("Account") {
-                LabeledContent("Signed in as") {
-                    Text(account.displayName ?? "Apple ID")
-                        .foregroundStyle(.secondary)
-                }
+            Section("Profile") {
+                // Disimpan saat Return atau saat halaman ditutup, bukan setiap
+                // ketukan: normalisasi memangkas spasi, sehingga menyimpan per
+                // ketukan akan memakan spasi di tengah nama yang sedang diketik.
+                TextField("Nickname", text: $nicknameDraft, prompt: Text("What should Apl call you?"))
+                    .onSubmit { profile.setNickname(nicknameDraft) }
 
-                Button("Sign Out") { account.signOut() }
-
-                Button("Delete Account and Data", role: .destructive) {
-                    showDeleteConfirm = true
+                Button("Erase All Data…", role: .destructive) {
+                    showEraseConfirm = true
                 }
             }
 
@@ -203,34 +203,34 @@ struct SettingsPage: View {
                     .padding(.vertical, 2)
                 }
 
-                Text("Apl runs entirely on this Mac. No account data, wellness "
-                     + "history, or conversation ever leaves the device.")
+                Text("Apl runs entirely on this Mac. Nothing you tell it ever leaves the device.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
         .navigationTitle("Settings")
-        .confirmationDialog("Delete account and all local data?",
-                            isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-            Button("Delete Everything", role: .destructive) {
+        .confirmationDialog("Erase all data on this Mac?",
+                            isPresented: $showEraseConfirm, titleVisibility: .visible) {
+            Button("Erase Everything", role: .destructive) {
                 // Tiap penyimpanan memusnahkan miliknya sendiri; UseCase ini
                 // tidak tahu satu pun nama kunci atau suite.
-                DeleteAccountUseCase(
-                    stores: [account, wellness.erasableStore, chat] + extraErasableStores,
-                    signOut: { account.signOut() },
+                let stores: [any LocallyErasable] =
+                    [profile, wellness.erasableStore, chat, buddySettings] + extraErasableStores
+                let useCase = EraseAllDataUseCase(
+                    stores: stores,
                     clearNotifications: { await WellnessNotificationCenter.shared.clearScheduledReminders() }
-                ).execute()
+                )
+                Task { await useCase.execute() }
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            // Jujur soal batas kuasa app: mencabut izin Apple ID hanya bisa
-            // dilakukan user dari System Settings, bukan dari sini.
-            Text("This erases your wellness history, reminders, and chat from this Mac, "
-                 + "and signs you out. To revoke Apl's access to your Apple ID, "
-                 + "open System Settings › Apple Account › Sign in with Apple.")
+            Text("This removes your conversation, reminders, and preferences from this Mac. "
+                 + "It can't be undone.")
         }
+        .onDisappear { profile.setNickname(nicknameDraft) }
         .task {
+            nicknameDraft = profile.nickname ?? ""
             appleAvailability = await chat.availability(of: .apple)
             launchAtLoginOn = launchAtLogin.isEnabled
         }
@@ -239,6 +239,6 @@ struct SettingsPage: View {
 
 #Preview {
     NavigationStack {
-        SettingsPage(chat: ChatStore(brains: [:]), wellness: .preview, buddySettings: BuddySettingsStore(), account: AccountStore())
+        SettingsPage(chat: ChatStore(brains: [:]), wellness: .preview, buddySettings: BuddySettingsStore(), profile: ProfileStore())
     }
 }
