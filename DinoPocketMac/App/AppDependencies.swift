@@ -34,16 +34,24 @@ struct AppDependencies {
         // inti dari "asisten yang ingat kemarin".
         let brain: Brain
         var erasable: [any LocallyErasable] = []
+        var transcripts: (any LocallyErasable)?
         if #available(macOS 26.0, *) {
             let sessionStore = FileChatSessionStore()
             brain = AppleBrain(sessionStore: sessionStore)
             erasable.append(sessionStore)
+            transcripts = sessionStore
         } else {
             brain = AppleBrain()
         }
 
+        // Sebelum store apa pun membaca data: ChatStore memuat percakapan
+        // tersimpan saat dibuat, jadi pembersihan harus mendahuluinya.
+        let cleanup = LegacyDataCleanup(transcripts: transcripts)
+        cleanup.run()
+
         let reminderStore = ReminderStore()
         erasable.append(reminderStore)
+        erasable.append(cleanup)
 
         return AppDependencies(
             systemStatus: SystemStatusService(),

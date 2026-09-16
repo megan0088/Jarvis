@@ -3,9 +3,9 @@
 #
 # Ada karena satu bug nyata: `configs:` di project.yml sempat ter-indent satu
 # tingkat terlalu rendah, XcodeGen mengabaikannya diam-diam, dan
-# `xcodebuild archive` melaporkan ** ARCHIVE SUCCEEDED ** — hijau palsu, karena
-# entitlement Sign in with Apple tidak pernah ikut. App rilis akan mengunci user
-# di layar login yang mati, dan tidak ada satu pun error yang muncul.
+# `xcodebuild archive` melaporkan ** ARCHIVE SUCCEEDED ** — hijau palsu. Setiap
+# pemeriksaan di bawah menjaga keputusan yang, bila dilanggar, tetap
+# menghasilkan build hijau.
 set -uo pipefail
 
 PROJECT="${1:-DinoPocket}"
@@ -29,7 +29,6 @@ check() {   # check <config> <key> <pola-yang-diharapkan> <penjelasan>
 }
 
 echo "Konfigurasi Release:"
-check Release CODE_SIGN_ENTITLEMENTS  "*DinoPocketMac.entitlements" "Sign in with Apple tidak akan berfungsi"
 check Release ENABLE_APP_SANDBOX      "YES"  "wajib untuk Mac App Store"
 check Release ENABLE_HARDENED_RUNTIME "YES"  "wajib untuk notarization"
 check Release ENABLE_OUTGOING_NETWORK_CONNECTIONS "NO" "keputusan all-Apple"
@@ -44,23 +43,57 @@ check Release INFOPLIST_KEY_CFBundleDisplayName "Apl" "nama di Finder/Dock salah
 check Release INFOPLIST_KEY_ITSAppUsesNonExemptEncryption "NO" "App Store Connect akan menanyakan ekspor enkripsi tiap submit"
 
 echo "Hak cipta:"
-if xcodebuild -project "${PROJECT}.xcodeproj" -target "$TARGET" -showBuildSettings -configuration Release 2>/dev/null \
-   | grep -q "INFOPLIST_KEY_NSHumanReadableCopyright = ."; then
+if settings Release | grep -q "INFOPLIST_KEY_NSHumanReadableCopyright = ."; then
   echo "  ✅ NSHumanReadableCopyright terisi"
 else
   echo "  ❌ NSHumanReadableCopyright kosong — key-nya hilang total dari Info.plist"; fail=1
 fi
 
-echo "Isi berkas entitlements:"
-if grep -q "com.apple.developer.applesignin" DinoPocketMac/DinoPocketMac.entitlements 2>/dev/null; then
-  echo "  ✅ com.apple.developer.applesignin ada"
+echo "Tanpa akun (spec A §5):"
+entitlements=$(settings Release | grep -E "^\s+CODE_SIGN_ENTITLEMENTS = " | sed 's/.*= //' | tr -d ' ')
+if [ -z "$entitlements" ]; then
+  echo "  ✅ Release tanpa CODE_SIGN_ENTITLEMENTS"
 else
-  echo "  ❌ com.apple.developer.applesignin HILANG"; fail=1
+  echo "  ❌ Release masih menunjuk '$entitlements' — Sign in with Apple sudah dihapus"; fail=1
+fi
+siwa=$(grep -rl "applesignin" DinoPocketMac --include="*.entitlements" 2>/dev/null || true)
+if [ -z "$siwa" ]; then
+  echo "  ✅ tidak ada entitlement Sign in with Apple"
+else
+  echo "  ❌ masih ada entitlement Sign in with Apple:"; echo "$siwa"; fail=1
+fi
+
+echo "Brain tunggal (spec A §2 #7):"
+ollama=$(grep -rl "Ollama" SharedCore DinoPocketMac --include="*.swift" 2>/dev/null \
+  | grep -vE "/Legacy/|/ContentView|PetActivityWidgets\.swift|Haptics\.swift" || true)
+if [ -z "$ollama" ]; then
+  echo "  ✅ tidak ada Ollama di kode yang di-build"
+else
+  echo "  ❌ Ollama muncul lagi:"; echo "$ollama"; fail=1
 fi
 
 echo "Aset wajib:"
-for f in DinoPocketMac/Resources/PrivacyInfo.xcprivacy DinoPocketMac/Resources/Robot.usdz; do
-  [ -f "$f" ] && echo "  ✅ $f" || { echo "  ❌ $f hilang"; fail=1; }
+if [ -f DinoPocketMac/Resources/PrivacyInfo.xcprivacy ]; then
+  echo "  ✅ DinoPocketMac/Resources/PrivacyInfo.xcprivacy"
+else
+  echo "  ❌ DinoPocketMac/Resources/PrivacyInfo.xcprivacy hilang"; fail=1
+fi
+
+# Nama model dibaca dari CharacterAsset.robot, bukan disalin ke skrip ini:
+# daftar tangan di sini pernah basi (Robot.usdz) setelah asetnya diganti.
+models=$(awk '/static let robot = CharacterAsset\(/,/^    \)$/' \
+           DinoPocketMac/Presentation/Character/CharacterAsset.swift \
+         | grep -oE '"[A-Za-z0-9_]+"' | tr -d '"' | sort -u)
+if [ -z "$models" ]; then
+  echo "  ❌ tidak menemukan nama model di CharacterAsset.robot"; fail=1
+fi
+for name in $models; do
+  file="DinoPocketMac/Resources/$name.usdz"
+  if [ -f "$file" ]; then
+    echo "  ✅ $file"
+  else
+    echo "  ❌ $file hilang — dirujuk CharacterAsset.robot"; fail=1
+  fi
 done
 
 echo "Kompilasi Release:"
@@ -88,9 +121,8 @@ if xcodebuild build -project "${PROJECT}.xcodeproj" -scheme "$TARGET" \
 else
   BID=$(settings Release | grep -E "^\s+PRODUCT_BUNDLE_IDENTIFIER = " | sed 's/.*= //' | tr -d ' ')
   echo "  ⚠️  belum bisa ditandatangani untuk '$BID'"
-  echo "     Daftarkan App ID itu di developer.apple.com > Identifiers,"
-  echo "     aktifkan capability Sign In with Apple, lalu build dengan"
-  echo "     -allowProvisioningUpdates. TIDAK memblokir pekerjaan kode."
+  echo "     Daftarkan App ID itu di developer.apple.com > Identifiers, lalu build"
+  echo "     dengan -allowProvisioningUpdates. TIDAK memblokir pekerjaan kode."
 fi
 
 [ "$fail" -eq 0 ] && echo "✅ konfigurasi Release siap" || echo "❌ ada yang perlu diperbaiki"

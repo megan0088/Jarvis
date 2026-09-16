@@ -136,11 +136,15 @@ struct SettingsPage: View {
                 }
             }
             Section("Profile") {
-                // Disimpan saat Return atau saat halaman ditutup, bukan setiap
-                // ketukan: normalisasi memangkas spasi, sehingga menyimpan per
-                // ketukan akan memakan spasi di tengah nama yang sedang diketik.
+                // Disimpan setiap kali draft berubah. Normalisasi hanya mengenai
+                // nilai yang disimpan, bukan teks di kolom, jadi spasi yang sedang
+                // diketik tidak termakan.
+                //
+                // SENGAJA tidak menyimpan saat halaman ditutup: Erase All Data
+                // mengganti dashboard dengan onboarding, dan penyimpanan di
+                // `onDisappear` menulis ulang nama tepat setelah dihapus.
                 TextField("Nickname", text: $nicknameDraft, prompt: Text("What should Apl call you?"))
-                    .onSubmit { profile.setNickname(nicknameDraft) }
+                    .onChange(of: nicknameDraft) { _, draft in profile.setNickname(draft) }
 
                 Button("Erase All Data…", role: .destructive) {
                     showEraseConfirm = true
@@ -194,7 +198,6 @@ struct SettingsPage: View {
             Text("This removes your conversation, reminders, and preferences from this Mac. "
                  + "It can't be undone.")
         }
-        .onDisappear { profile.setNickname(nicknameDraft) }
         .task {
             nicknameDraft = profile.nickname ?? ""
             appleAvailability = await chat.availability()
