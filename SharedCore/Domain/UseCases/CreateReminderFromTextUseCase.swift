@@ -2,12 +2,12 @@
 //  CreateReminderFromTextUseCase.swift
 //  SharedCore
 //
-//  Bahasa alami → jadwal tersimpan → notifikasi terdaftar.
+//  Parse → simpan → jadwalkan, sebagai satu tanggung jawab.
 //
-//  Sebelumnya ketiga langkah ini tersebar: ChatStore memanggil parser, meneruskan
-//  hasilnya lewat closure `onCreateReminder`, dan penjadwalan notifikasi terjadi
-//  di tempat lain lagi. Closure itu membuat siapa yang bertanggung jawab
-//  menjadwalkan bergantung pada siapa yang kebetulan memasangnya.
+//  Dulu penjadwalan terjadi di tempat lain, sehingga apakah reminder
+//  benar-benar berbunyi bergantung pada siapa yang memasang closure-nya.
+//  Menyatukannya di sini membuat "reminder dibuat" dan "reminder
+//  dijadwalkan" tidak mungkin berbeda pendapat.
 //
 
 import Foundation
@@ -15,35 +15,58 @@ import Foundation
 @MainActor
 struct CreateReminderFromTextUseCase {
 
-    private let parser: ReminderParsing
-    private let store: any WellnessStoring
-    private let notifications: NotificationScheduling
-
-    init(parser: ReminderParsing,
-         store: any WellnessStoring,
-         notifications: NotificationScheduling) {
-        self.parser = parser
-        self.store = store
-        self.notifications = notifications
+    enum Output: Equatable {
+        case created(Reminder, confirmation: String)
+        case needsTime(title: String?, question: String)
+        case notAReminder
     }
 
-    struct Output: Equatable {
-        let schedule: ReminderSchedule
-        /// Kalimat konfirmasi siap tampil, dibangun dari jadwal yang BENAR-BENAR
-        /// tersimpan — bukan dari teks permintaan user.
-        var confirmation: String {
-            "Done — I set a reminder: \(schedule.title) at \(schedule.timeLabel)."
+    private let store: any ReminderStoring
+    private let notifications: any ReminderScheduling
+    private let now: () -> Date
+    private let calendar: Calendar
+    private let locale: Locale
+
+    init(store: any ReminderStoring,
+         notifications: any ReminderScheduling,
+         now: @escaping () -> Date = { .now },
+         calendar: Calendar = .current,
+         locale: Locale = .current) {
+        self.store = store
+        self.notifications = notifications
+        self.now = now
+        self.calendar = calendar
+        self.locale = locale
+    }
+
+    func execute(text: String) async -> Output {
+        let current = now()
+        switch ReminderParser.parse(text, now: current, calendar: calendar) {
+        case .reminder(let title, let rule):
+            return await create(title: title, rule: rule, at: current)
+        case .missingTime(let title):
+            return .needsTime(title: title, question: ReminderPhrasing.timeQuestion(title: title))
+        case .notAReminder:
+            return .notAReminder
         }
     }
 
-    /// Mengembalikan nil bila teks bukan permintaan pengingat; pemanggil lalu
-    /// meneruskannya ke otak AI seperti pesan biasa.
-    func execute(text: String) async -> Output? {
-        guard let schedule = parser.parse(text) else { return nil }
+    /// Melengkapi reminder yang tadi ditanyakan jamnya. nil bila `text` bukan
+    /// ungkapan waktu saja — pemanggil lalu memperlakukannya sebagai pesan biasa.
+    func complete(title: String?, timeText text: String) async -> Output? {
+        let current = now()
+        guard let rule = ReminderParser.parseTimeOnly(text, now: current, calendar: calendar) else {
+            return nil
+        }
+        return await create(title: title ?? ReminderParser.defaultTitle, rule: rule, at: current)
+    }
 
-        store.addCustomSchedule(schedule)
-        await notifications.schedule(store.reminderSchedules)
-
-        return Output(schedule: schedule)
+    private func create(title: String, rule: Reminder.Rule, at current: Date) async -> Output {
+        let reminder = Reminder(title: title, rule: rule, createdAt: current)
+        store.add(reminder)
+        await notifications.sync(store.reminders, now: current)
+        let confirmation = ReminderPhrasing.confirmation(title: title, rule: rule, now: current,
+                                                         calendar: calendar, locale: locale)
+        return .created(reminder, confirmation: confirmation)
     }
 }

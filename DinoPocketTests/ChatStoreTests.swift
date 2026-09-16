@@ -63,6 +63,10 @@ private final class GatedBrain: Brain, @unchecked Sendable {
 
 private struct StubStreamError: Error {}
 
+/// Serial: setiap test membaca dan menulis `jarvis.chat.recent` di
+/// `UserDefaults.standard`, jadi menjalankannya paralel membuat satu test
+/// memuat pesan milik test lain.
+@Suite(.serialized)
 struct ChatStoreTests {
     @MainActor @Test func sendAppendsUserAndStreamedAssistantMessage() async {
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
@@ -185,39 +189,74 @@ struct ChatStoreTests {
         #expect(store.isStreaming == false)
     }
 
-    /// Natural-language reminder requests must be handled locally: no brain
-    /// is consulted (brains: [:]), the closure fires exactly once with the
-    /// parsed schedule, and exactly one user + one assistant confirmation
-    /// message is appended. Also covers the reminder path clearing any
-    /// stale `noticeMessage` (e.g. a leftover "brain not ready" banner)
-    /// so it doesn't linger over a successful local reminder confirmation.
-    @MainActor @Test func sendCreatesReminderWithoutCallingBrain() async {
+    @MainActor
+    private func chatHandlingReminders(now: Date = TestTime.now)
+        -> (ChatStore, InMemoryReminderStore, SpyReminderScheduler) {
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
-        let store = ChatStore(brains: [:])
-        let wellness = FakeWellnessStore()
-        let notifications = FakeNotificationScheduler()
-        store.createReminder = CreateReminderFromTextUseCase(
-            parser: ReminderIntentParser(),
-            store: wellness,
-            notifications: notifications
-        )
-        store.noticeMessage = "stale banner"
+        let chat = ChatStore(brains: [:])
+        let reminders = InMemoryReminderStore()
+        let scheduler = SpyReminderScheduler()
+        chat.createReminder = CreateReminderFromTextUseCase(
+            store: reminders, notifications: scheduler, now: { now },
+            calendar: TestTime.calendar, locale: TestTime.locale)
+        return (chat, reminders, scheduler)
+    }
 
-        await store.send("remind me to drink water at 3pm")
+    /// Reminder ditangani lokal: tidak ada otak di test ini (`brains: [:]`),
+    /// jadi pesan yang sampai ke jalur AI akan mengisi `noticeMessage`.
+    @MainActor @Test func reminderRequestIsHandledWithoutTheBrain() async {
+        let (chat, reminders, scheduler) = chatHandlingReminders()
+        chat.noticeMessage = "stale banner"
 
-        #expect(wellness.added.count == 1)
-        #expect(wellness.added.first?.kind == .water)
-        #expect(wellness.added.first?.hour == 15)
-        // Bukti pengingat benar-benar DIJADWALKAN, bukan sekadar disimpan —
-        // pemisahan itu persis yang dulu membuatnya bisa senyap.
-        #expect(notifications.scheduleCallCount == 1)
-        #expect(store.messages.count == 2)
-        #expect(store.messages[0].role == .user)
-        #expect(store.messages[0].text == "remind me to drink water at 3pm")
-        #expect(store.messages[1].role == .assistant)
-        #expect(store.messages[1].text.contains("Drink water"))
-        #expect(store.isStreaming == false)
-        #expect(store.noticeMessage == nil)
+        await chat.send("remind me to drink water at 3pm")
+
+        #expect(reminders.reminders.map(\.title) == ["Drink water"])
+        #expect(reminders.reminders.first?.rule == .once(TestTime.date(2026, 9, 16, 15, 0)))
+        #expect(scheduler.syncCallCount == 1)
+        #expect(chat.messages.map(\.role) == [.user, .assistant])
+        #expect(chat.messages[1].text.hasPrefix("Done — I'll remind you to drink water today at"))
+        #expect(chat.isStreaming == false)
+        #expect(chat.noticeMessage == nil)
+    }
+
+    @MainActor @Test func missingTimeIsAskedThenCompletedOnTheNextTurn() async {
+        let (chat, reminders, _) = chatHandlingReminders()
+
+        await chat.send("remind me to call mom")
+
+        #expect(reminders.reminders.isEmpty)
+        #expect(chat.messages.last?.text == "What time should I remind you to call mom?")
+        #expect(chat.noticeMessage == nil)
+
+        await chat.send("5pm")
+
+        #expect(reminders.reminders.map(\.title) == ["Call mom"])
+        #expect(reminders.reminders.first?.rule == .once(TestTime.date(2026, 9, 16, 17, 0)))
+        #expect(chat.messages.count == 4)
+        #expect(chat.messages.last?.text.hasPrefix("Done — I'll remind you to call mom today at") == true)
+    }
+
+    /// Pertanyaan jam hanya berlaku satu giliran. Setelah pesan lain, "5pm"
+    /// tidak boleh diam-diam menjadi reminder yang sudah dilupakan pengguna.
+    @MainActor @Test func unansweredTimeQuestionExpiresAfterOneTurn() async {
+        let (chat, reminders, _) = chatHandlingReminders()
+
+        await chat.send("remind me to call mom")
+        await chat.send("tell me a joke")
+        #expect(chat.noticeMessage != nil)
+
+        await chat.send("5pm")
+
+        #expect(reminders.reminders.isEmpty)
+    }
+
+    @MainActor @Test func passedTimeIsConfirmedAsTomorrow() async {
+        let (chat, reminders, _) = chatHandlingReminders(now: TestTime.date(2026, 9, 16, 16, 0))
+
+        await chat.send("remind me to stretch at 3pm")
+
+        #expect(reminders.reminders.first?.rule == .once(TestTime.date(2026, 9, 17, 15, 0)))
+        #expect(chat.messages.last?.text.contains("tomorrow at") == true)
     }
 }
 

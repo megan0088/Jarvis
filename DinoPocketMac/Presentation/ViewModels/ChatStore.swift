@@ -19,6 +19,7 @@ final class ChatStore {
         messages = []
         noticeMessage = nil
         pendingPrompt = nil
+        reminderAwaitingTime = nil
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         UserDefaults.standard.removeObject(forKey: "jarvis.activeBrain")
     }
@@ -43,6 +44,14 @@ final class ChatStore {
     private let brains: [BrainKind: Brain]
     private var streamTask: Task<Void, Never>?
     private var streamGeneration = 0
+
+    /// Reminder yang sedang menunggu jawaban "jam berapa?". Hanya bertahan satu
+    /// giliran: pesan berikutnya yang bukan ungkapan waktu membuangnya.
+    private var reminderAwaitingTime: PendingReminder?
+
+    private struct PendingReminder {
+        let title: String?
+    }
 
     init(brains: [BrainKind: Brain]) {
         self.brains = brains
@@ -101,11 +110,10 @@ final class ChatStore {
         finalizeInterruptedAssistant()
         messages.append(ChatMessage(id: UUID(), role: .user, text: trimmed, date: .now))
 
-        if let createReminder, let result = await createReminder.execute(text: trimmed) {
+        if let reply = await localReminderReply(to: trimmed) {
             noticeMessage = nil
             streamGeneration += 1
-            messages.append(ChatMessage(id: UUID(), role: .assistant,
-                text: result.confirmation, date: .now))
+            messages.append(ChatMessage(id: UUID(), role: .assistant, text: reply, date: .now))
             persistRecent()
             return
         }
@@ -138,6 +146,33 @@ final class ChatStore {
         }
         streamTask = task
         await task.value
+    }
+
+    /// Jawaban reminder tanpa AI, atau nil bila pesan harus diteruskan ke otak.
+    ///
+    /// Selama ada "remind me", pesan TIDAK PERNAH sampai ke model: model bisa
+    /// menjawab "Sure!" tanpa membuat apa pun, dan reminder yang dijanjikan
+    /// tetapi tidak ada lebih buruk daripada pertanyaan balik.
+    private func localReminderReply(to text: String) async -> String? {
+        guard let createReminder else { return nil }
+
+        if let pending = reminderAwaitingTime {
+            reminderAwaitingTime = nil
+            if case .created(_, let confirmation)? = await createReminder.complete(title: pending.title,
+                                                                                 timeText: text) {
+                return confirmation
+            }
+        }
+
+        switch await createReminder.execute(text: text) {
+        case .created(_, let confirmation):
+            return confirmation
+        case .needsTime(let title, let question):
+            reminderAwaitingTime = PendingReminder(title: title)
+            return question
+        case .notAReminder:
+            return nil
+        }
     }
 
     /// Kalau stream sebelumnya diputus di tengah jalan, rapikan bubble asisten-nya

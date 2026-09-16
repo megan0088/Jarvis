@@ -22,9 +22,6 @@ enum AplError: Error, Equatable, LocalizedError {
     /// Permintaan diblokir guardrail model.
     case requestBlocked
 
-    /// Teks tidak bisa diurai jadi jadwal pengingat.
-    case unparseableReminder(input: String)
-
     var errorDescription: String? {
         switch self {
         case .noBrainAvailable(let reason):
@@ -33,8 +30,6 @@ enum AplError: Error, Equatable, LocalizedError {
             "This conversation got too long for the on-device model."
         case .requestBlocked:
             "That request was blocked before it reached the model."
-        case .unparseableReminder(let input):
-            "I couldn't turn “\(input)” into a reminder."
         }
     }
 }

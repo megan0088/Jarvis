@@ -177,13 +177,6 @@ final class WellnessViewModel {
         await store.syncReminderHistory()
     }
 
-    /// Dipakai `ChatStore` saat pengingat lahir dari percakapan.
-    func makeCreateReminderUseCase() -> CreateReminderFromTextUseCase {
-        CreateReminderFromTextUseCase(parser: ReminderIntentParser(),
-                                      store: store,
-                                      notifications: notifications)
-    }
-
     /// Diperlukan `EraseAllDataUseCase`; view tidak pernah memanggilnya.
     var erasableStore: any LocallyErasable { store }
 }

@@ -32,6 +32,11 @@ struct AppDependencies {
     /// akan menghasilkan dua sumber kebenaran untuk data yang sama.
     let wellnessStore: WellnessStore
 
+    /// Satu-satunya instance ReminderStore: chat dan daftar reminder harus
+    /// membaca daftar yang sama.
+    let reminderStore: ReminderStore
+    let reminderScheduler: any ReminderScheduling
+
     /// Didaftarkan eksplisit supaya penghapusan akun tidak melewatkannya.
     let erasableStores: [any LocallyErasable]
 
@@ -54,6 +59,9 @@ struct AppDependencies {
         let brains: [BrainKind: Brain] = [.apple: apple]
         #endif
 
+        let reminderStore = ReminderStore()
+        erasable.append(reminderStore)
+
         return AppDependencies(
             systemStatus: SystemStatusService(),
             appLauncher: AppLauncherService(),
@@ -62,6 +70,8 @@ struct AppDependencies {
             profile: ProfileStore(),
             brains: brains,
             wellnessStore: WellnessStore(),
+            reminderStore: reminderStore,
+            reminderScheduler: ReminderNotificationCenter.shared,
             erasableStores: erasable
         )
     }
@@ -78,5 +88,9 @@ struct AppDependencies {
         WellnessViewModel(store: wellnessStore,
                           notifications: WellnessNotificationCenter.shared,
                           idle: IdleTimeService())
+    }
+
+    func makeCreateReminderUseCase() -> CreateReminderFromTextUseCase {
+        CreateReminderFromTextUseCase(store: reminderStore, notifications: reminderScheduler)
     }
 }

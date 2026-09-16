@@ -23,14 +23,14 @@ struct AplApp: App {
     @State var isBuddyMode = false
 
     init() {
-        WellnessNotificationCenter.shared.configure()
+        ReminderNotificationCenter.shared.configure()
     }
 
     var body: some Scene {
         WindowGroup {
             rootView
                 .task {
-                    chat.createReminder = wellness.makeCreateReminderUseCase()
+                    chat.createReminder = Self.deps.makeCreateReminderUseCase()
                     await wellness.prepare()
                 }
         }
@@ -59,7 +59,10 @@ struct AplApp: App {
             dashboard
         } else {
             OnboardingView(profile: profile, chat: chat,
-                           onNotificationsGranted: { await wellness.setRemindersEnabled(true) })
+                           onNotificationsGranted: {
+                               // Reminder yang dibuat sebelum izin diberikan baru bisa dijadwalkan sekarang.
+                               await Self.deps.reminderScheduler.sync(Self.deps.reminderStore.reminders, now: .now)
+                           })
         }
     }
 

@@ -219,7 +219,10 @@ struct SettingsPage: View {
                     [profile, wellness.erasableStore, chat, buddySettings] + extraErasableStores
                 let useCase = EraseAllDataUseCase(
                     stores: stores,
-                    clearNotifications: { await WellnessNotificationCenter.shared.clearScheduledReminders() }
+                    clearNotifications: {
+                        await WellnessNotificationCenter.shared.clearScheduledReminders()
+                        await ReminderNotificationCenter.shared.cancelAll()
+                    }
                 )
                 Task { await useCase.execute() }
             }
