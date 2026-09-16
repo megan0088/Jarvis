@@ -1,13 +1,15 @@
 //
 //  USDZCharacterView.swift
-//  DinoPocketMac
+//  AplMac
 //
-//  Companion 3D dari Robot.usdz, dirender lewat RealityView (SwiftUI).
+//  Companion 3D HealthAssistantRobot, dirender lewat RealityView (SwiftUI).
+//  Satu berkas USDZ per ekspresi; berkas mana yang dimuat ditentukan
+//  `CharacterAsset.expressions`, bukan oleh view ini.
 //
-//  CATATAN — dua jalan buntu yang tidak perlu diulang.
+//  CATATAN — tiga jalan buntu yang tidak perlu diulang.
 //
 //  1. Latar buram di Buddy Mode BUKAN berasal dari view ini, melainkan dari
-//     `SKView` overlay selebar layar di `JarvisBuddyWindowController` (SKView
+//     `SKView` overlay selebar layar di `AplBuddyWindowController` (SKView
 //     tanpa scene merender latar buram). Sudah diganti `NSView` polos.
 //
 //  2. Sempat diganti ke `ARView` demi `Environment.Background.color(.clear)`,
@@ -17,8 +19,10 @@
 //     butuh kamera ~90 unit untuk memuatnya — perubahan ke 5.0 memang tak
 //     terlihat. Kamera berfungsi normal di kedua view.
 //
-//  Di Wave 1 view ini menjadi implementasi `CharacterPresenting`, dan angka
-//  framing di bawah pindah ke `CharacterAsset`.
+//  3. Mengganti ekspresi dengan `.id(resourceName)` pada RealityView memang
+//     bekerja, tetapi membangun ulang seluruh scene: karakter berkedip hilang
+//     setiap kali mood berubah. Yang ditukar sekarang hanya isi `stage`,
+//     dan model lama tetap terlihat sampai model baru selesai dimuat.
 //
 
 import SwiftUI
@@ -30,29 +34,12 @@ struct USDZCharacterView: View {
     var asset: CharacterAsset = .robot
     var behavior: CharacterBehavior = .idle
 
+    /// Wadah yang hidup selama view ada; hanya isinya yang berganti.
+    @State private var stage = Entity()
+
     var body: some View {
         RealityView { content in
-            guard let robot = try? await Entity(named: asset.resourceName, in: Bundle.main) else { return }
-
-            // Normalisasi ke ukuran layar yang konsisten dan pusatkan di origin.
-            // Origin Robot.usdz ada di kaki (bounds.center.y = 0.505), jadi
-            // recentering inilah yang menahannya agar tidak tenggelam.
-            let bounds = robot.visualBounds(relativeTo: nil)
-            let maxDim = max(bounds.extents.x, bounds.extents.y, bounds.extents.z, 0.0001)
-            let target: Float = asset.targetExtent
-            let factor = target / maxDim
-
-            // KALIKAN skala, jangan timpa. Robot.usdz datang dengan
-            // `scale = 0.01` bawaan (khas ekspor USDZ yang mengonversi cm ke m),
-            // dan `visualBounds` sudah memperhitungkannya. Menulis
-            // `robot.scale = factor` membuang skala 0.01 itu sehingga model
-            // membengkak 31.9× — extents jadi 35.0 × 32.3 × 10.2 alih-alih
-            // 0.35 × 0.32 × 0.10, dan karakter memenuhi layar sebagai close-up
-            // yang tak terkenali. Diukur, bukan ditebak.
-            robot.scale *= factor
-            robot.position = -bounds.center * factor
-
-            content.add(robot)
+            content.add(stage)
 
             // Key light so the white body reads with some shading.
             let key = DirectionalLight()
@@ -67,22 +54,85 @@ struct USDZCharacterView: View {
             camera.position = eye
             camera.look(at: [0, 0, 0], from: eye, relativeTo: nil)
             content.add(camera)
-
-            // Klip dipilih lewat nama yang didaftarkan aset. Jatuh ke klip
-            // pertama bila namanya tidak ketemu — model baru yang belum lengkap
-            // animasinya tetap bergerak alih-alih membeku.
-            let wanted = asset.clipName(for: behavior)
-            let clip = robot.availableAnimations.first { $0.name == wanted }
-                ?? robot.availableAnimations.first
-            if let clip {
-                robot.playAnimation(clip.repeat(), transitionDuration: 0.3, startsPaused: false)
-            }
+        }
+        // Dikunci ke nama berkas, bukan ke `behavior`: dua perilaku yang
+        // memakai wajah sama tidak perlu memuat ulang apa pun.
+        .task(id: asset.resourceName(for: behavior)) {
+            await show(asset.resourceName(for: behavior))
         }
         .frame(width: size, height: size)
     }
+
+    /// Memuat satu ekspresi dan menukarnya ke dalam `stage`.
+    ///
+    /// Gagal muat tidak mengosongkan panggung — wajah sebelumnya dipertahankan.
+    /// Itu juga yang terjadi saat `.task` dibatalkan karena mood berubah dua
+    /// kali beruntun.
+    @MainActor
+    private func show(_ resourceName: String) async {
+        guard let character = try? await Entity(named: resourceName, in: Bundle.main) else { return }
+
+        // Normalisasi ke ukuran layar yang konsisten dan pusatkan di origin.
+        // Origin model ada di kaki, jadi recentering inilah yang menahannya
+        // agar tidak tenggelam.
+        let bounds = character.visualBounds(relativeTo: nil)
+        let maxDim = max(bounds.extents.x, bounds.extents.y, bounds.extents.z, 0.0001)
+        let factor = asset.targetExtent / maxDim
+
+        // KALIKAN skala, jangan timpa. Ekspor USDZ kerap membawa skala bawaan
+        // (robot lama datang dengan `scale = 0.01`, khas konversi cm ke m), dan
+        // `visualBounds` sudah memperhitungkannya. Menulis `character.scale =
+        // factor` membuang skala itu sehingga model membengkak puluhan kali —
+        // extents jadi 35.0 × 32.3 × 10.2 alih-alih 0.35 × 0.32 × 0.10, dan
+        // karakter memenuhi layar sebagai close-up yang tak terkenali.
+        // Diukur, bukan ditebak.
+        character.scale *= factor
+        character.position = -bounds.center * factor
+
+        playIdleMotion(on: character)
+
+        stage.children.removeAll()
+        stage.addChild(character)
+    }
+
+    /// Klip bawaan kalau ada; kalau tidak, napas buatan.
+    ///
+    /// Kelima ekspor HealthAssistantRobot statis — `availableAnimations`
+    /// kosong — jadi cabang kedua inilah yang benar-benar jalan hari ini.
+    /// Cabang pertama dibiarkan supaya ekspor beranimasi nanti langsung
+    /// dipakai tanpa menyentuh view ini.
+    @MainActor
+    private func playIdleMotion(on character: Entity) {
+        if let baked = character.availableAnimations.first {
+            character.playAnimation(baked.repeat(), transitionDuration: 0.3, startsPaused: false)
+            return
+        }
+
+        guard asset.idleBobHeight > 0 else { return }
+
+        var lifted = character.transform
+        lifted.translation.y += asset.idleBobHeight
+
+        let bob = FromToByAnimation(
+            to: lifted,
+            duration: asset.idleBobDuration,
+            timing: .easeInOut,
+            bindTarget: .transform,
+            repeatMode: .autoReverse
+        )
+
+        if let motion = try? AnimationResource.generate(with: bob) {
+            character.playAnimation(motion.repeat(), transitionDuration: 0.3, startsPaused: false)
+        }
+    }
 }
 
-#Preview {
+#Preview("Idle") {
     USDZCharacterView(size: 160)
+        .padding()
+}
+
+#Preview("Celebrate") {
+    USDZCharacterView(size: 160, behavior: .celebrate)
         .padding()
 }

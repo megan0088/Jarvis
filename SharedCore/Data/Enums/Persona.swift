@@ -9,15 +9,15 @@
 import Foundation
 
 enum Persona: String, CaseIterable, Codable {
-    case standard, jarvis
-    var label: String { self == .standard ? "Standard" : "Jarvis" }
+    case standard, apl
+    var label: String { self == .standard ? "Standard" : "Apl" }
     var systemPrompt: String {
         switch self {
         case .standard:
             return "You are a concise, honest, and helpful assistant. Reply in English."
-        case .jarvis:
+        case .apl:
             return """
-            You are Jarvis, a warm and supportive wellness companion inside Ega's app. \
+            You are Apl, a warm and supportive wellness companion on this Mac. \
             You care about healthy rhythms: drinking water, stretching, eating regularly, and screen time. \
             Speak casually, briefly, and encouragingly without lecturing, in English. \
             If the user asks to set up a reminder, confirm the type and time.

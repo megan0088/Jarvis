@@ -1,10 +1,14 @@
-# DinoPocket
+# Apl
 
 Companion AI on-device untuk Mac — karakter 3D di desktop, chat Apple Intelligence,
 dan pengingat kebiasaan sehat. Seluruhnya berjalan lokal, tanpa server.
 
-> Nama produk masih codename. Titik-titik yang harus berubah saat nama final
-> ditetapkan terkumpul di spec §14.
+Nama produk final: **Apl** · bundle id `com.ega.apl` · produk build `Apl.app`.
+
+> Nama TARGET, FOLDER, dan project (`DinoPocketMac/`, `DinoPocketTests/`,
+> `DinoPocket.xcodeproj`) masih memakai codename lama. Itu disengaja: keduanya
+> tidak terlihat pengguna maupun App Review, dan menggantinya berarti memindah
+> direktori plus menyetel ulang skema. Sisa daftarnya ada di spec §14.
 
 ## Build
 
@@ -19,7 +23,7 @@ open DinoPocket.xcodeproj
 ## Test
 
 ```bash
-./scripts/test.sh DinoPocket DinoPocketMac   # 28 test, 6 suite
+./scripts/test.sh DinoPocket DinoPocketMac   # 77 test, 19 suite
 ./scripts/verify-boundaries.sh               # batas SharedCore
 ```
 

@@ -1,5 +1,5 @@
 //
-//  DinoPocketError.swift
+//  AplError.swift
 //  SharedCore
 //
 //  Kesalahan domain yang perlu dibedakan oleh UI.
@@ -11,7 +11,7 @@
 
 import Foundation
 
-enum DinoPocketError: Error, Equatable, LocalizedError {
+enum AplError: Error, Equatable, LocalizedError {
 
     /// Tidak ada otak yang siap. UI menampilkan `AIUnavailableCard`.
     case noBrainAvailable(reason: String)

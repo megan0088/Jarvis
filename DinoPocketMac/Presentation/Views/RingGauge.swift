@@ -1,6 +1,6 @@
 //
 //  RingGauge.swift
-//  Jarvis
+//  Apl
 //
 //  Atom: circular progress ring with a centered "value/total" readout.
 //

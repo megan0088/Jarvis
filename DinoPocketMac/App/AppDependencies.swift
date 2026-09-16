@@ -1,6 +1,6 @@
 //
 //  AppDependencies.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Composition root, mengikuti pola Taggo: satu tempat yang tahu implementasi
 //  konkret mana yang dipakai, dan pabrik untuk ViewModel.
@@ -26,6 +26,11 @@ struct AppDependencies {
     /// ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO, dan app yang bergantung pada
     /// software eksternal berisiko ditolak App Review.
     let brains: [BrainKind: Brain]
+
+    /// Satu-satunya instance WellnessStore dalam app — disimpan di sini agar
+    /// makeWellnessViewModel() tidak membuat store baru setiap dipanggil, yang
+    /// akan menghasilkan dua sumber kebenaran untuk data yang sama.
+    let wellnessStore: WellnessStore
 
     /// Didaftarkan eksplisit supaya penghapusan akun tidak melewatkannya.
     let erasableStores: [any LocallyErasable]
@@ -56,6 +61,7 @@ struct AppDependencies {
             buddySettings: BuddySettingsStore(),
             account: AccountStore(),
             brains: brains,
+            wellnessStore: WellnessStore(),
             erasableStores: erasable
         )
     }
@@ -66,14 +72,10 @@ struct AppDependencies {
         ChatStore(brains: brains)
     }
 
-    func makeWellnessStore() -> WellnessStore {
-        WellnessStore()
-    }
-
-    /// View model dibuat dari store yang sama supaya tidak ada dua sumber
-    /// kebenaran wellness di dalam satu app.
-    func makeWellnessViewModel(store: WellnessStore? = nil) -> WellnessViewModel {
-        WellnessViewModel(store: store ?? WellnessStore(),
+    /// View model selalu dibungkus di atas wellnessStore yang sama, sehingga
+    /// hanya ada satu sumber kebenaran data wellness dalam satu sesi app.
+    func makeWellnessViewModel() -> WellnessViewModel {
+        WellnessViewModel(store: wellnessStore,
                           notifications: WellnessNotificationCenter.shared,
                           idle: IdleTimeService())
     }

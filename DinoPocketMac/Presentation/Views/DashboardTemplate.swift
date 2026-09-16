@@ -1,6 +1,6 @@
 //
 //  DashboardTemplate.swift
-//  Jarvis
+//  Apl
 //
 //  Template: NavigationSplitView shell — sidebar section switcher plus the
 //  detail pages, and the chat sheet reachable from anywhere in the dashboard.
@@ -27,7 +27,8 @@ struct DashboardTemplate: View {
         } detail: {
             switch selection {
             case .home:
-                HomePage(wellness: wellness, chat: chat, onBuddyMode: onBuddyMode, showChat: $showChat)
+                HomePage(wellness: wellness, chat: chat, greetingName: account.firstName,
+                         onBuddyMode: onBuddyMode, showChat: $showChat)
             case .chat:
                 ChatPage(chat: chat)
             case .wellness:

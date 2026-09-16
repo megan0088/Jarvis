@@ -1,7 +1,7 @@
 name: DinoPocket
 
 options:
-  bundleIdPrefix: com.Jarvis
+  bundleIdPrefix: com.ega
   createIntermediateGroups: true
   deploymentTarget:
     macOS: "26.2"
@@ -40,28 +40,37 @@ targets:
           - "Infrastructure/Services/Haptics.swift"
           # Karakter SpriteKit 2D, dikarantina — lihat DinoPocketMac/Legacy/README.md
           - "Legacy/**"
+          # PNG icon iOS lepas, tidak dirujuk kode mana pun, tapi ikut tersalin
+          # ~1,2 MB ke dalam bundle karena `sources:` menyapu seluruh folder.
+          - "images/**"
           - "DinoPocketMac.entitlements"
           - "DinoPocket.entitlements"
     settings:
       base:
-        # PRODUCT_NAME sengaja TIDAK disetel: XcodeGen menurunkan TEST_HOST dari
-        # nama target, sehingga PRODUCT_NAME yang berbeda membuat bundle test host
-        # tidak ketemu. Nama produk mengikuti nama target selama Wave 0 dan ikut
-        # daftar rename terpusat (spec §14).
+        # Nama produk final (spec §14). Bundle jadi Apl.app dan CFBundleName jadi
+        # Apl — GENERATE_INFOPLIST_FILE memaku CFBundleName ke $(PRODUCT_NAME),
+        # jadi INFOPLIST_KEY_CFBundleName tidak berpengaruh dan PRODUCT_NAME
+        # inilah satu-satunya jalannya.
         #
-        # Nama modul SENGAJA dipertahankan sebagai Jarvis sepanjang Wave 0.
-        # Keenam file test memakai `@testable import Jarvis`; mengubah nama modul
-        # akan mematahkan 28 test sekaligus — justru jaring pengaman yang dipakai
-        # setiap task — dan membuat Jarvis.xcodeproj lama tidak bisa lagi
-        # mengompilasi test-nya, sehingga properti "dua project sama-sama hijau"
-        # yang menjadi jalan mundur ikut hilang.
-        # Nama modul masuk daftar rename terpusat (spec §14), bukan Wave 0.
-        PRODUCT_MODULE_NAME: Jarvis
-        PRODUCT_BUNDLE_IDENTIFIER: com.Jarvis.Ega
+        # KONSEKUENSI: XcodeGen menurunkan TEST_HOST dari nama TARGET, bukan dari
+        # PRODUCT_NAME. Begitu keduanya berbeda, TEST_HOST bawaan menunjuk bundle
+        # yang tidak ada dan seluruh test gagal dimuat — karena itu ia disetel
+        # eksplisit di target DinoPocketTests di bawah.
+        PRODUCT_NAME: Apl
+        #
+        # Nama modul ikut rename terpusat (spec §14). Alasan menahannya di Wave 0
+        # — menjaga Jarvis.xcodeproj lama tetap bisa mengompilasi test sebagai
+        # jalan mundur — sudah gugur sejak project itu dipensiunkan di Task 8.
+        PRODUCT_MODULE_NAME: Apl
+        PRODUCT_BUNDLE_IDENTIFIER: com.ega.apl
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        INFOPLIST_KEY_CFBundleDisplayName: Apl
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Muhamad Ega Nugraha. All rights reserved."
+        # Tanpa kunci ini App Store Connect menanyakan kepatuhan ekspor
+        # enkripsi di SETIAP submit. App ini tidak memakai kriptografi di
+        # luar yang disediakan sistem (Keychain), jadi jawabannya NO.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         # Kategori App Store. Health & Fitness dipilih karena inti produknya
         # ritme sehat (minum, stretch, istirahat), bukan produktivitas.
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.healthcare-fitness
@@ -97,6 +106,9 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        # Wajib eksplisit: PRODUCT_NAME app (Apl) berbeda dari nama targetnya
+        # (DinoPocketMac), dan TEST_HOST bawaan XcodeGen memakai nama target.
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Apl.app/Contents/MacOS/Apl"
 
 schemes:
   DinoPocketMac:

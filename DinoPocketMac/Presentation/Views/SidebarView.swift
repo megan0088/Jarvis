@@ -1,6 +1,6 @@
 //
 //  SidebarView.swift
-//  Jarvis
+//  Apl
 //
 //  Organism: dashboard navigation sidebar + active-brain switcher.
 //
@@ -9,7 +9,7 @@ import SwiftUI
 
 enum DashboardSection: String, CaseIterable, Identifiable {
     case home = "Home"
-    case chat = "Jarvis AI"
+    case chat = "Apl AI"
     case wellness = "Wellness"
     case history = "History"
     case settings = "Settings"

@@ -1,6 +1,6 @@
 //
-//  JarvisApp.swift
-//  Jarvis
+//  AplApp.swift
+//  Apl
 //
 //  Created by Codex on 13/03/26.
 //
@@ -8,12 +8,14 @@
 import SwiftUI
 
 @main
-struct JarvisApp: App {
+struct AplApp: App {
     /// Satu-satunya tempat implementasi konkret dipilih.
     private static let deps = AppDependencies.live()
 
     @State private var wellness = deps.makeWellnessViewModel()
     @State private var chat = deps.makeChatStore()
+    // Catatan: wellness dibuat dari deps.wellnessStore yang sudah disimpan di
+    // AppDependencies, sehingga hanya ada satu WellnessStore dalam seluruh app.
     @State private var buddySettings = deps.buddySettings
     @State private var account = deps.account
 
@@ -57,7 +59,8 @@ struct JarvisApp: App {
         if account.isSignedIn && account.hasCompletedOnboarding {
             dashboard
         } else {
-            OnboardingView(account: account, chat: chat)
+            OnboardingView(account: account, chat: chat,
+                           onNotificationsGranted: { await wellness.setRemindersEnabled(true) })
         }
     }
 
@@ -76,31 +79,41 @@ struct JarvisApp: App {
         // supaya kontrol di Settings terasa hidup saat digeser.
         .onChange(of: buddySettings.size) { _, value in
             guard isBuddyMode else { return }
-            JarvisBuddyWindowController.shared.updateCharacterSize(CGFloat(value))
+            AplBuddyWindowController.shared.updateCharacterSize(CGFloat(value))
         }
         .onChange(of: buddySettings.opacity) { _, value in
             guard isBuddyMode else { return }
-            JarvisBuddyWindowController.shared.apply(opacity: value)
+            AplBuddyWindowController.shared.apply(opacity: value)
         }
         .onChange(of: buddySettings.keepOnTop) { _, value in
             guard isBuddyMode else { return }
-            JarvisBuddyWindowController.shared.apply(keepOnTop: value)
+            AplBuddyWindowController.shared.apply(keepOnTop: value)
         }
         .onChange(of: buddySettings.strolling) { _, value in
             guard isBuddyMode else { return }
-            JarvisBuddyWindowController.shared.apply(strolling: value)
+            AplBuddyWindowController.shared.apply(strolling: value)
         }
         .onChange(of: isBuddyMode) { _, active in
             if active {
-                JarvisBuddyWindowController.shared.startBuddyMode(
+                AplBuddyWindowController.shared.startBuddyMode(
                     settings: buddySettings,
                     onDismiss: { dismissFromBuddy() }
                 )
-                hidePrimaryWindows()
             } else {
-                JarvisBuddyWindowController.shared.stopBuddyMode()
-                showPrimaryWindows()
+                AplBuddyWindowController.shared.stopBuddyMode()
             }
+        }
+        // Buddy Mode menyala sendiri begitu dashboard tampil.
+        //
+        // Sebelumnya ia hanya bisa dinyalakan lewat tombol di HomePage, dan
+        // janji di layar onboarding — "a small robot lives on your desktop" —
+        // baru terjadi kalau user menemukan tombol itu lebih dulu.
+        //
+        // Dijalankan sekali per kemunculan dashboard; menyalakan ulang saat
+        // sudah aktif akan membangun ulang jendelanya tanpa alasan.
+        .task {
+            guard !isBuddyMode else { return }
+            isBuddyMode = true
         }
     }
 }

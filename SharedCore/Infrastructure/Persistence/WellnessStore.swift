@@ -1,6 +1,6 @@
 //
 //  WellnessStore.swift
-//  Jarvis
+//  Apl
 //
 //  Created by Codex on 13/03/26.
 //
@@ -8,15 +8,24 @@
 import Foundation
 import Observation
 
+/// Penyimpanan wellness — LOKAL saja.
+///
+/// Sempat ada jalur `NSUbiquitousKeyValueStore` di sini. Jalur itu dibuang
+/// karena diukur mati: tanpa entitlement `com.apple.developer.ubiquity-kvstore-identifier`
+/// `synchronize()` mengembalikan `false` dan nilai yang baru ditulis dibaca
+/// kembali sebagai `nil`. Kodenya tampak seperti sync lintas perangkat padahal
+/// tidak melakukan apa pun — termasuk pada `eraseAllStoredData()`, sehingga
+/// klaim "hapus akun memusnahkan semua data" ikut bergantung pada sesuatu yang
+/// tidak berjalan. Kalau sync memang diinginkan (mis. saat companion iPhone
+/// tiba), aktifkan capability iCloud dulu, lalu kembalikan jalurnya.
 @MainActor
 @Observable
 final class WellnessStore {
     private enum AppGroup {
-        static let id = "group.com.example.jarvis"
+        static let id = "group.com.ega.apl"
     }
 
     private let defaults = UserDefaults(suiteName: AppGroup.id) ?? .standard
-    private let ubiquitous = NSUbiquitousKeyValueStore.default
     private let calendar = Calendar.current
 
     private enum Keys {
@@ -55,9 +64,7 @@ final class WellnessStore {
     func eraseAllStoredData() {
         for key in Keys.all {
             defaults.removeObject(forKey: key)
-            ubiquitous.removeObject(forKey: key)
         }
-        ubiquitous.synchronize()
     }
 
     private let encoder = JSONEncoder()
@@ -98,15 +105,6 @@ final class WellnessStore {
         if energy == 0 { energy = 70 }
         if affection == 0 { affection = 55 }
         resetGoalsIfNeeded()
-
-        Task { @MainActor in
-            syncFromCloudIfAvailable()
-        }
-        NotificationCenter.default.addObserver(forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: ubiquitous, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated {
-                self?.syncFromCloudIfAvailable()
-            }
-        }
     }
 
     var todayScreenTime: TimeInterval {
@@ -250,6 +248,47 @@ final class WellnessStore {
         screenTime(on: date) + activeSessionDuration(at: date)
     }
 
+    /// Menyimpan saklar pengingat tanpa menyentuh notifikasi.
+    ///
+    /// Orkestrasi izin dan penjadwalan pindah ke `WellnessViewModel`, yang
+    /// menerima `NotificationScheduling` lewat injeksi. `toggleReminders()` di
+    /// bawah memanggil `WellnessNotificationCenter.shared` langsung — itulah
+    /// sebabnya alurnya tidak pernah bisa diuji, dan mengapa nol orang sadar
+    /// satu-satunya pemanggilnya ada di berkas yang dikecualikan dari build.
+    func setRemindersEnabled(_ enabled: Bool) {
+        remindersEnabled = enabled
+        saveWellness()
+    }
+
+    /// `BuddyReminder` untuk satu jadwal pada hari tertentu.
+    ///
+    /// Kuncinya dibentuk sama persis dengan `buddyReminder(at:)`, sehingga
+    /// menandai selesai dari kartu dashboard dan dari pengingat yang berbunyi
+    /// menghasilkan entri riwayat yang sama — bukan dua entri untuk satu minum.
+    func reminder(for schedule: ReminderSchedule, on date: Date = .now) -> BuddyReminder {
+        var components = calendar.dateComponents([.year, .month, .day], from: date)
+        components.hour = schedule.hour
+        components.minute = schedule.minute
+        return BuddyReminder(
+            key: "\(schedule.id).\(calendar.startOfDay(for: date).timeIntervalSince1970)",
+            schedule: schedule,
+            scheduledDate: calendar.date(from: components) ?? date
+        )
+    }
+
+    func isCompleted(_ schedule: ReminderSchedule, on date: Date = .now) -> Bool {
+        seenReminderEventIDs.contains(reminder(for: schedule, on: date).key + ".done")
+    }
+
+    /// Menyalakan/mematikan pengingat dengan orkestrasi izin langsung.
+    ///
+    /// - Warning: Method ini memanggil `WellnessNotificationCenter.shared`
+    ///   secara langsung (bukan lewat injeksi) sehingga tidak bisa diuji.
+    ///   Gunakan `WellnessViewModel.setRemindersEnabled(_:)` sebagai gantinya —
+    ///   ia menerima `NotificationScheduling` lewat injeksi dan merupakan
+    ///   satu-satunya path yang aktif di build macOS.
+    @available(*, deprecated, renamed: "WellnessViewModel.setRemindersEnabled(_:)",
+               message: "Tidak pernah dipanggil di build macOS. Gunakan WellnessViewModel.setRemindersEnabled(_:) yang menerima NotificationScheduling lewat injeksi.")
     func toggleReminders() async {
         remindersEnabled.toggle()
         if remindersEnabled {
@@ -265,6 +304,9 @@ final class WellnessStore {
         saveWellness()
     }
 
+    /// - Warning: Memanggil `WellnessNotificationCenter.shared` langsung.
+    ///   Dipakai internal oleh `addCustomSchedule()`. Untuk path yang testable,
+    ///   gunakan `WellnessViewModel.setRemindersEnabled(_:)`.
     func scheduleReminders() async {
         guard remindersEnabled else { return }
         await WellnessNotificationCenter.shared.schedule(reminderSchedules)
@@ -445,12 +487,6 @@ final class WellnessStore {
         defaults.set(energy, forKey: Keys.energy)
         defaults.set(affection, forKey: Keys.affection)
         defaults.set(lastFed, forKey: Keys.lastFed)
-        ubiquitous.set(mood.rawValue, forKey: Keys.mood)
-        ubiquitous.set(hunger, forKey: Keys.hunger)
-        ubiquitous.set(energy, forKey: Keys.energy)
-        ubiquitous.set(affection, forKey: Keys.affection)
-        ubiquitous.set(lastFed.timeIntervalSince1970, forKey: Keys.lastFed)
-        ubiquitous.synchronize()
     }
 
     private func saveWellness() {
@@ -463,23 +499,6 @@ final class WellnessStore {
         defaults.set(try? encoder.encode(customSchedules), forKey: Keys.customSchedules)
     }
 
-    private func syncFromCloudIfAvailable() {
-        if let moodRaw = ubiquitous.string(forKey: Keys.mood), let cloudMood = Mood(rawValue: moodRaw) {
-            mood = cloudMood
-        }
-        if ubiquitous.object(forKey: Keys.hunger) != nil {
-            hunger = Int(ubiquitous.longLong(forKey: Keys.hunger))
-        }
-        if ubiquitous.object(forKey: Keys.energy) != nil {
-            energy = Int(ubiquitous.longLong(forKey: Keys.energy))
-        }
-        if ubiquitous.object(forKey: Keys.affection) != nil {
-            affection = Int(ubiquitous.longLong(forKey: Keys.affection))
-        }
-        if ubiquitous.object(forKey: Keys.lastFed) != nil {
-            lastFed = Date(timeIntervalSince1970: ubiquitous.double(forKey: Keys.lastFed))
-        }
-    }
 
     private func recalcMood() {
         if hunger > 80 {

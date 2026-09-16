@@ -1,6 +1,6 @@
 //
 //  AppColors.swift
-//  Jarvis
+//  Apl
 //
 //  Semantic HIG color tokens for the macOS dashboard design system.
 //

@@ -1,6 +1,6 @@
 //
 //  DeskTimeCard.swift
-//  Jarvis
+//  Apl
 //
 //  Organism: waktu hadir di depan Mac hari ini.
 //
@@ -16,15 +16,15 @@ import SwiftUI
 struct DeskTimeCard: View {
     let wellness: WellnessViewModel
 
-    private var todayLabel: String {
-        let secs = wellness.screenTimeHistory.first(where: { Calendar.current.isDateInToday($0.date) })?.duration ?? 0
-        let h = Int(secs) / 3600
-        let m = (Int(secs) % 3600) / 60
-        return "\(h)h \(m)m"
-    }
+    /// Sumbernya `summary`, sama dengan yang dipakai "Summarize my day".
+    ///
+    /// Sebelumnya kartu ini membaca `screenTimeHistory` — hanya sesi yang SUDAH
+    /// tersimpan — sehingga tertulis "0h 0m" sepanjang app dipakai, sementara
+    /// ringkasan di layar yang sama menyebut angka lain untuk hal yang sama.
+    private var todayLabel: String { wellness.summary.deskTimeText }
 
     var body: some View {
-        DashCard(title: "Screen time", systemImage: "desktopcomputer") {
+        DashCard(title: "Desk time", systemImage: "desktopcomputer") {
             Text(todayLabel)
                 .font(.system(size: 26, weight: .medium))
         }

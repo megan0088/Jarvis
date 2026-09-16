@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 import FoundationModels
-@testable import Jarvis
+@testable import Apl
 
 // Deployment target sudah macOS 26.2, jadi tidak perlu anotasi @available —
 // dan Swift Testing memang menolak @Test pada fungsi yang punya anotasi itu.

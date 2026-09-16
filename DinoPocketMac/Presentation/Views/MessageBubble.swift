@@ -1,6 +1,6 @@
 //
 //  MessageBubble.swift
-//  Jarvis
+//  Apl
 //
 //  Molecule: role-styled chat bubble. User messages align trailing with an
 //  accent tint; assistant messages align leading on the card background.
@@ -26,7 +26,7 @@ struct MessageBubble: View {
 
 #Preview {
     VStack(spacing: Spacing.sm) {
-        MessageBubble(message: ChatMessage(id: UUID(), role: .user, text: "Hello Jarvis!", date: .now))
+        MessageBubble(message: ChatMessage(id: UUID(), role: .user, text: "Hello Apl!", date: .now))
         MessageBubble(message: ChatMessage(id: UUID(), role: .assistant, text: "Hi Ega, how can I help?", date: .now))
     }
     .padding()

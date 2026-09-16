@@ -1,6 +1,6 @@
 //
 //  SettingsPage.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Page: assistant preferences and Buddy Mode appearance.
 //
@@ -21,6 +21,7 @@ struct SettingsPage: View {
     @State private var launchAtLoginError: String?
 
     private let launchAtLogin = LaunchAtLoginService()
+    private let launcher = AppLauncherService()
 
     private var launchAtLoginNeedsApproval: Bool { launchAtLogin.needsUserApproval }
 
@@ -86,6 +87,35 @@ struct SettingsPage: View {
                 }
             }
 
+            Section("Reminders") {
+                // Satu-satunya jalan menyalakan pengingat di app ini.
+                // Sebelumnya tombolnya cuma ada di `ContentView.swift` yang
+                // DIKECUALIKAN dari target macOS, jadi `remindersEnabled`
+                // selamanya false dan nol notifikasi pernah terdaftar.
+                Toggle("Daily wellness reminders", isOn: Binding(
+                    get: { wellness.remindersEnabled },
+                    set: { wanted in Task { await wellness.setRemindersEnabled(wanted) } }
+                ))
+
+                if wellness.authorizationWasDenied {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("macOS is blocking notifications for Apl, so reminders "
+                             + "cannot be scheduled.")
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                        Button("Open Notification Settings") {
+                            launcher.open(.notifications)
+                        }
+                        .controlSize(.small)
+                    }
+                } else if wellness.remindersEnabled {
+                    Text("\(wellness.reminderSchedules.count) reminders scheduled: water, "
+                         + "stretch breaks, and meals.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Buddy") {
                 LabeledContent("Character size") {
                     HStack(spacing: 12) {
@@ -128,7 +158,7 @@ struct SettingsPage: View {
                     // Status .requiresApproval berarti user pernah menolak app ini
                     // di Login Items; registrasi "berhasil" tanpa app pernah
                     // diluncurkan, jadi toggle menyala akan berbohong.
-                    Text("Approve DinoPocket in System Settings › General › Login Items.")
+                    Text("Approve Apl in System Settings › General › Login Items.")
                         .font(.footnote)
                         .foregroundStyle(.orange)
                 }
@@ -173,7 +203,7 @@ struct SettingsPage: View {
                     .padding(.vertical, 2)
                 }
 
-                Text("DinoPocket runs entirely on this Mac. No account data, wellness "
+                Text("Apl runs entirely on this Mac. No account data, wellness "
                      + "history, or conversation ever leaves the device.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -188,7 +218,8 @@ struct SettingsPage: View {
                 // tidak tahu satu pun nama kunci atau suite.
                 DeleteAccountUseCase(
                     stores: [account, wellness.erasableStore, chat] + extraErasableStores,
-                    signOut: { account.signOut() }
+                    signOut: { account.signOut() },
+                    clearNotifications: { await WellnessNotificationCenter.shared.clearScheduledReminders() }
                 ).execute()
             }
             Button("Cancel", role: .cancel) { }
@@ -196,7 +227,7 @@ struct SettingsPage: View {
             // Jujur soal batas kuasa app: mencabut izin Apple ID hanya bisa
             // dilakukan user dari System Settings, bukan dari sini.
             Text("This erases your wellness history, reminders, and chat from this Mac, "
-                 + "and signs you out. To revoke DinoPocket's access to your Apple ID, "
+                 + "and signs you out. To revoke Apl's access to your Apple ID, "
                  + "open System Settings › Apple Account › Sign in with Apple.")
         }
         .task {

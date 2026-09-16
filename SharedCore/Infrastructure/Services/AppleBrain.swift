@@ -18,23 +18,19 @@ final class AppleBrain: Brain {
     nonisolated var kind: BrainKind { .apple }
 
     #if canImport(FoundationModels)
-    @available(macOS 26.0, iOS 26.0, *)
-    private var sessionBox: SessionBox {
-        if let box = _sessionBox as? SessionBox { return box }
-        let box = SessionBox()
-        _sessionBox = box
-        return box
-    }
-    private var _sessionBox: AnyObject?
-
     /// Wadah sesi hidup beserta persona yang membentuknya. Persona yang berubah
     /// harus memulai sesi baru — instructions hanya bisa ditetapkan saat sesi
     /// dibuat, jadi mempertahankan sesi lama berarti persona di UI berbohong.
+    ///
+    /// Deployment target sudah macOS 26.2 sehingga `@available` wrapper tidak
+    /// lagi diperlukan; stored property bisa dideklarasikan langsung.
     @available(macOS 26.0, iOS 26.0, *)
     final class SessionBox {
         var session: LanguageModelSession?
         var persona: Persona?
     }
+
+    private var sessionBox = SessionBox()
     #endif
 
     private let sessions: (any Sendable)?
@@ -50,10 +46,10 @@ final class AppleBrain: Brain {
     /// Meniru perilaku multi-turn OllamaBrain yang meneruskan seluruh history.
     nonisolated static func buildPrompt(from history: [ChatMessage]) -> String {
         let turns = history.map { msg in
-            let who = msg.role == .user ? "User" : "Jarvis"
+            let who = msg.role == .user ? "User" : "Apl"
             return "\(who): \(msg.text)"
         }
-        return (turns + ["Jarvis:"]).joined(separator: "\n")
+        return (turns + ["Apl:"]).joined(separator: "\n")
     }
 
     nonisolated func availability() async -> BrainAvailability {
@@ -95,7 +91,7 @@ final class AppleBrain: Brain {
                 return
             }
             #endif
-            continuation.finish(throwing: DinoPocketError.noBrainAvailable(
+            continuation.finish(throwing: AplError.noBrainAvailable(
                 reason: "Apple Intelligence isn't available."))
         }
     }
@@ -159,8 +155,8 @@ final class AppleBrain: Brain {
     private static func mapped(_ error: Error) -> Error {
         guard let generation = error as? LanguageModelSession.GenerationError else { return error }
         switch generation {
-        case .exceededContextWindowSize: return DinoPocketError.conversationTooLong
-        case .guardrailViolation:        return DinoPocketError.requestBlocked
+        case .exceededContextWindowSize: return AplError.conversationTooLong
+        case .guardrailViolation:        return AplError.requestBlocked
         default:                         return error
         }
     }

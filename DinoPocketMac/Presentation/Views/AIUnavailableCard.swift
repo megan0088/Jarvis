@@ -1,6 +1,6 @@
 //
 //  AIUnavailableCard.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Ditampilkan ChatPage saat Apple Intelligence tidak siap.
 //

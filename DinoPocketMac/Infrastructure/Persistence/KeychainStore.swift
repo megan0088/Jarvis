@@ -1,6 +1,6 @@
 //
 //  KeychainStore.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Pembungkus tipis Keychain untuk rahasia kecil.
 //
@@ -18,7 +18,7 @@ enum KeychainStore {
         case unexpectedStatus(OSStatus)
     }
 
-    private static let service = "com.Jarvis.Ega.account"
+    private static let service = "com.ega.apl.account"
 
     static func set(_ value: String, for key: String) throws {
         let data = Data(value.utf8)

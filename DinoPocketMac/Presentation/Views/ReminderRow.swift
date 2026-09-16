@@ -1,6 +1,6 @@
 //
 //  ReminderRow.swift
-//  Jarvis
+//  Apl
 //
 //  Molecule: an icon chip + title/time + done/skip actions for one reminder.
 //

@@ -728,22 +728,32 @@ dipilih user.
 
 ## 14. Rename terpusat
 
-Nama produk final belum diputuskan. Semua titik yang harus berubah, terkumpul di sini:
+**Nama produk final: `Apl`** (diputuskan 2026-08-26). Bundle id `com.ega.apl`.
 
-| Titik | Nilai sekarang |
+Status tiap titik:
+
+| Titik | Status |
 |---|---|
-| Nama folder repo | `DinoPocket` |
-| Repo GitHub | `megan0088/Jarvis` — rename di GitHub mempertahankan riwayat + redirect |
-| `project.yml` nama target | `DinoPocketMac`, `SharedCore`, `DinoPocketTests` |
-| Bundle identifier | `com.Jarvis.Ega` → reverse-DNS milik developer |
-| Nama entry point | `JarvisApp.swift` |
-| Entitlements | `Jarvis/DinoPocket.entitlements`, `JarvisIOS.entitlements` |
-| App group + kvstore | `group.com.Jarvis`, `$(TeamIdentifierPrefix)com.Jarvis` |
-| Persona `.jarvis` + system prompt | `BrainTypes.swift` |
-| Nama tampilan App Store | belum ada |
+| Bundle identifier | ✅ `com.ega.apl` |
+| `CFBundleName` + `CFBundleDisplayName` | ✅ `Apl` — lewat `PRODUCT_NAME`, produk jadi `Apl.app` |
+| Nama modul Swift | ✅ `Apl` (`PRODUCT_MODULE_NAME`) |
+| Nama entry point | ✅ `AplApp.swift` / `struct AplApp` |
+| App group | ✅ `group.com.ega.apl` |
+| kvstore iCloud | ✅ dibuang — terukur mati tanpa entitlement, lihat `WellnessStore` |
+| Keychain service | ✅ `com.ega.apl.account` |
+| Folder transcript chat | ✅ `Application Support/Apl` |
+| Persona `.apl` + system prompt | ✅ |
+| Seluruh string UI | ✅ tidak ada lagi "Jarvis"/"DinoPocket" yang terlihat pengguna |
+| Nama tampilan App Store | ✅ `Apl` |
+| Nama folder repo | ⬜ masih `DinoPocket` — tidak terlihat pengguna |
+| Repo GitHub | ⬜ `megan0088/Jarvis` — rename di GitHub mempertahankan riwayat + redirect |
+| `project.yml` nama target | ⬜ `DinoPocketMac`, `DinoPocketTests` — `TEST_HOST` kini eksplisit karena `PRODUCT_NAME` berbeda dari nama target |
+| Kunci UserDefaults | ⬜ masih berawalan `jarvis.` / `pet.` — invisible, dan menggantinya membuang data yang sudah tersimpan tanpa manfaat |
 
-Spec fase A mencatat "Jarvis" berisiko bentrok di App Store dan menyerempet merek pihak
-ketiga. Keputusan nama harus diambil sebelum App Store Connect record dibuat.
+⚠️ "Apl" sangat dekat dengan "Apple" secara visual dan fonetik. App Review ketat soal
+nama yang mengesankan asosiasi dengan Apple (Guideline 5.2.5), dan app ini seluruhnya
+dibangun di atas Apple Intelligence — kombinasi yang memperbesar kesan itu. Risiko
+penolakan nyata; keputusan diambil sadar oleh pemilik produk.
 
 ---
 

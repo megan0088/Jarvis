@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Jarvis
+@testable import Apl
 
 struct BrainTypesTests {
     @Test func brainKindHasBothBackends() {
@@ -9,8 +9,8 @@ struct BrainTypesTests {
 
     @Test func personasHaveNonEmptyDistinctPrompts() {
         #expect(!Persona.standard.systemPrompt.isEmpty)
-        #expect(!Persona.jarvis.systemPrompt.isEmpty)
-        #expect(Persona.standard.systemPrompt != Persona.jarvis.systemPrompt)
+        #expect(!Persona.apl.systemPrompt.isEmpty)
+        #expect(Persona.standard.systemPrompt != Persona.apl.systemPrompt)
     }
 
     @Test func chatMessageRoundTripsThroughCodable() throws {

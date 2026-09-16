@@ -1,6 +1,6 @@
 //
 //  LaunchAtLoginService.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Pembungkus `SMAppService.mainApp`.
 //

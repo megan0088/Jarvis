@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Jarvis
+@testable import Apl
 
 private struct StubBrain: Brain {
     let kind: BrainKind
@@ -246,11 +246,16 @@ final class FakeWellnessStore: WellnessStoring {
 
 final class FakeNotificationScheduler: NotificationScheduling, @unchecked Sendable {
     private(set) var scheduleCallCount = 0
+    private(set) var clearCallCount = 0
     private(set) var lastScheduled: [ReminderSchedule] = []
+    var authorizationAnswer = true
 
     func schedule(_ reminders: [ReminderSchedule]) async {
         scheduleCallCount += 1
         lastScheduled = reminders
     }
-    func requestAuthorization() async -> Bool { true }
+    func clearScheduledReminders() async {
+        clearCallCount += 1
+    }
+    func requestAuthorization() async -> Bool { authorizationAnswer }
 }

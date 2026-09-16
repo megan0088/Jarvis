@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Jarvis
+@testable import Apl
 
 struct OllamaBrainTests {
     @Test func deltaExtractsContentFromChunk() {

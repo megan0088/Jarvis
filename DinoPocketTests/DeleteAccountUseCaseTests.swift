@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Jarvis
+@testable import Apl
 
 @MainActor
 private final class SpyStore: LocallyErasable {
@@ -51,7 +51,7 @@ struct WellnessStoreErasureTests {
     /// dijaga: penghapusan harus mengenai suite tempat data benar-benar ada,
     /// bukan suite mana pun yang kebetulan dipegang pemanggil.
     @Test func eraseTargetsTheAppGroupSuiteNotStandard() throws {
-        let suiteName = "group.com.example.jarvis"
+        let suiteName = "group.com.ega.apl"
         let suite = try #require(UserDefaults(suiteName: suiteName))
 
         let probeKey = "wellness.goalProgress"
@@ -67,7 +67,7 @@ struct WellnessStoreErasureTests {
     /// Setiap kunci yang didaftarkan store ikut terhapus — kunci baru yang lupa
     /// dimasukkan ke `Keys.all` akan ketahuan di sini.
     @Test func eraseClearsEveryDeclaredKey() throws {
-        let suite = try #require(UserDefaults(suiteName: "group.com.example.jarvis"))
+        let suite = try #require(UserDefaults(suiteName: "group.com.ega.apl"))
         for key in WellnessStore.persistenceKeys {
             suite.set(Data([0x01]), forKey: key)
         }

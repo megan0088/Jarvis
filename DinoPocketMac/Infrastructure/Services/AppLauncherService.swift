@@ -1,6 +1,6 @@
 //
 //  AppLauncherService.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Membuka pane System Settings dan URL scheme umum.
 //

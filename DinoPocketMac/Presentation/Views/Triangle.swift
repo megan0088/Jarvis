@@ -1,6 +1,6 @@
 //
 //  Triangle.swift
-//  Jarvis
+//  Apl
 //
 //  Created by Codex on 13/03/26.
 //

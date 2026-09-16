@@ -1,6 +1,6 @@
 //
 //  SystemStatusService.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Membaca kondisi mesin dan menerjemahkannya jadi `SystemMood`.
 //

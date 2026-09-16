@@ -1,13 +1,13 @@
 //
-//  JarvisTests.swift
-//  JarvisTests
+//  WellnessStoreTests.swift
+//  AplTests
 //
 //  Created by Muhamad Ega Nugraha on 13/03/26.
 //
 
 import Foundation
 import Testing
-@testable import Jarvis
+@testable import Apl
 
 struct JarvisTests {
     @MainActor

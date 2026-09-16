@@ -1,6 +1,6 @@
 //
 //  PillButton.swift
-//  Jarvis
+//  Apl
 //
 //  Atom: capsule-shaped labeled button, primary or secondary.
 //
@@ -30,7 +30,7 @@ struct PillButton: View {
 
 #Preview {
     HStack(spacing: Spacing.sm) {
-        PillButton(title: "Ask Jarvis", systemImage: "sparkles", isPrimary: true) {}
+        PillButton(title: "Ask Apl", systemImage: "sparkles", isPrimary: true) {}
         PillButton(title: "Buddy Mode", systemImage: "figure.walk") {}
     }
     .padding()

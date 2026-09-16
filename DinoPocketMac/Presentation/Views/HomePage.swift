@@ -1,6 +1,6 @@
 //
 //  HomePage.swift
-//  Jarvis
+//  Apl
 //
 //  Page: dashboard home — greeting, quick actions, and the metric card grid.
 //
@@ -10,6 +10,9 @@ import SwiftUI
 struct HomePage: View {
     let wellness: WellnessViewModel
     @Bindable var chat: ChatStore
+    /// Nama dari Sign in with Apple. `nil` saat user menyembunyikan namanya —
+    /// sapaannya lalu jatuh ke bentuk tanpa nama, bukan ke nama orang lain.
+    var greetingName: String?
     var onBuddyMode: (() -> Void)?
     @Binding var showChat: Bool
 
@@ -20,7 +23,7 @@ struct HomePage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.lg) {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("Hello, Ega")
+                    Text(greetingName.map { "Hello, \($0)" } ?? "Hello")
                         .font(.largeTitle.weight(.medium))
                     Text("How can I help you today?")
                         .font(.title3)
@@ -28,7 +31,7 @@ struct HomePage: View {
                 }
 
                 HStack(spacing: Spacing.sm) {
-                    PillButton(title: "Ask Jarvis", systemImage: "sparkles", isPrimary: true) {
+                    PillButton(title: "Ask Apl", systemImage: "sparkles", isPrimary: true) {
                         showChat = true
                     }
                     PillButton(title: "Buddy Mode", systemImage: "figure.walk") {
@@ -72,6 +75,7 @@ struct HomePage: View {
 
 #Preview {
     NavigationStack {
-        HomePage(wellness: .preview, chat: ChatStore(brains: [:]), onBuddyMode: nil, showChat: .constant(false))
+        HomePage(wellness: .preview, chat: ChatStore(brains: [:]), greetingName: "Ega",
+                 onBuddyMode: nil, showChat: .constant(false))
     }
 }

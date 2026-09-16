@@ -1,6 +1,6 @@
 //
 //  DashCard.swift
-//  Jarvis
+//  Apl
 //
 //  Organism: shared card container (title + SF Symbol header + content)
 //  used by all dashboard cards.

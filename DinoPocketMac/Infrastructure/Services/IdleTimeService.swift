@@ -1,6 +1,6 @@
 //
 //  IdleTimeService.swift
-//  DinoPocketMac
+//  AplMac
 //
 
 import Foundation

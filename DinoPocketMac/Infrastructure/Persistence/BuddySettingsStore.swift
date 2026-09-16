@@ -1,6 +1,6 @@
 //
 //  BuddySettingsStore.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Preferensi tampilan Buddy Mode, dipersist ke UserDefaults.
 //

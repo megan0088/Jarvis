@@ -1,6 +1,6 @@
 //
 //  BrainSegmentedPicker.swift
-//  Jarvis
+//  Apl
 //
 //  Molecule: segmented picker over the available brain backends.
 //

@@ -35,6 +35,22 @@ check Release ENABLE_HARDENED_RUNTIME "YES"  "wajib untuk notarization"
 check Release ENABLE_OUTGOING_NETWORK_CONNECTIONS "NO" "keputusan all-Apple"
 check Release INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.*" "App Store butuh kategori"
 
+# Identitas produk. Bundle id PERMANEN begitu record App Store Connect dibuat —
+# ketiganya pernah kosong atau memakai codename, dan tidak satu pun menghasilkan
+# error saat build.
+check Release PRODUCT_BUNDLE_IDENTIFIER "com.ega.apl" "bundle id salah — permanen setelah submit pertama"
+check Release PRODUCT_NAME "Apl" "nama produk masih codename; CFBundleName ikut PRODUCT_NAME"
+check Release INFOPLIST_KEY_CFBundleDisplayName "Apl" "nama di Finder/Dock salah"
+check Release INFOPLIST_KEY_ITSAppUsesNonExemptEncryption "NO" "App Store Connect akan menanyakan ekspor enkripsi tiap submit"
+
+echo "Hak cipta:"
+if xcodebuild -project "${PROJECT}.xcodeproj" -target "$TARGET" -showBuildSettings -configuration Release 2>/dev/null \
+   | grep -q "INFOPLIST_KEY_NSHumanReadableCopyright = ."; then
+  echo "  ✅ NSHumanReadableCopyright terisi"
+else
+  echo "  ❌ NSHumanReadableCopyright kosong — key-nya hilang total dari Info.plist"; fail=1
+fi
+
 echo "Isi berkas entitlements:"
 if grep -q "com.apple.developer.applesignin" DinoPocketMac/DinoPocketMac.entitlements 2>/dev/null; then
   echo "  ✅ com.apple.developer.applesignin ada"
@@ -52,12 +68,29 @@ echo "Kompilasi Release:"
 # balik #if DEBUG lolos begitu saja — sampai archive. Itu pernah terjadi: helper
 # .preview dibungkus #if DEBUG padahal blok #Preview ikut dikompilasi di Release.
 # Kompilasi Release di sini menangkapnya sebelum langkah submit.
+# CODE_SIGNING_ALLOWED=NO disengaja: yang diperiksa di sini adalah KODE, dan
+# menggabungkannya dengan penandatanganan membuat kegagalan provisioning
+# menyamar sebagai kegagalan kompilasi — dua masalah yang perbaikannya sama
+# sekali berbeda. Provisioning diperiksa terpisah di bawah.
 if xcodebuild build -project "${PROJECT}.xcodeproj" -scheme "$TARGET" \
-     -configuration Release -derivedDataPath /tmp/dp-verify-release 2>&1 \
-     | grep -q "BUILD SUCCEEDED"; then
+     -configuration Release -derivedDataPath /tmp/dp-verify-release \
+     CODE_SIGNING_ALLOWED=NO 2>&1 | grep -q "BUILD SUCCEEDED"; then
   echo "  ✅ konfigurasi Release terkompilasi"
 else
   echo "  ❌ konfigurasi Release GAGAL dikompilasi"; fail=1
+fi
+
+echo "Provisioning (prasyarat submit, bukan masalah kode):"
+if xcodebuild build -project "${PROJECT}.xcodeproj" -scheme "$TARGET" \
+     -configuration Release -derivedDataPath /tmp/dp-verify-signed 2>&1 \
+     | grep -q "BUILD SUCCEEDED"; then
+  echo "  ✅ Release bisa ditandatangani"
+else
+  BID=$(settings Release | grep -E "^\s+PRODUCT_BUNDLE_IDENTIFIER = " | sed 's/.*= //' | tr -d ' ')
+  echo "  ⚠️  belum bisa ditandatangani untuk '$BID'"
+  echo "     Daftarkan App ID itu di developer.apple.com > Identifiers,"
+  echo "     aktifkan capability Sign In with Apple, lalu build dengan"
+  echo "     -allowProvisioningUpdates. TIDAK memblokir pekerjaan kode."
 fi
 
 [ "$fail" -eq 0 ] && echo "✅ konfigurasi Release siap" || echo "❌ ada yang perlu diperbaiki"

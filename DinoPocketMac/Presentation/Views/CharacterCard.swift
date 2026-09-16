@@ -1,6 +1,6 @@
 //
 //  CharacterCard.swift
-//  Jarvis
+//  Apl
 //
 //  Organism: Jarvis status + energy level from WellnessStore.
 //
@@ -11,7 +11,7 @@ struct CharacterCard: View {
     let wellness: WellnessViewModel
 
     var body: some View {
-        DashCard(title: "Jarvis", systemImage: "face.smiling") {
+        DashCard(title: "Apl", systemImage: "face.smiling") {
             HStack(spacing: Spacing.md) {
                 AvatarBadge(systemImage: "sparkles")
                 VStack(alignment: .leading, spacing: Spacing.xs) {

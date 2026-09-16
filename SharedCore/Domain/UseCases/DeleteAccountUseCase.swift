@@ -39,14 +39,21 @@ struct DeleteAccountUseCase {
 
     private let stores: [any LocallyErasable]
     private let signOut: () -> Void
+    private let clearNotifications: (() async -> Void)?
 
     /// - Parameters:
     ///   - stores: setiap penyimpanan yang memegang data pribadi.
     ///   - signOut: pembuangan kredensial; dipisah karena Keychain bukan store
     ///     yang bisa "dihapus semua isinya" tanpa merusak milik app lain.
-    init(stores: [any LocallyErasable], signOut: @escaping () -> Void) {
+    ///   - clearNotifications: closure opsional untuk membatalkan notifikasi
+    ///     wellness yang masih terjadwal. Diperlukan agar pengingat lama tidak
+    ///     tetap berbunyi setelah akun dihapus.
+    init(stores: [any LocallyErasable],
+         signOut: @escaping () -> Void,
+         clearNotifications: (() async -> Void)? = nil) {
         self.stores = stores
         self.signOut = signOut
+        self.clearNotifications = clearNotifications
     }
 
     struct Output: Equatable {
@@ -61,6 +68,9 @@ struct DeleteAccountUseCase {
             store.eraseAllStoredData()
         }
         signOut()
+        if let clearNotifications {
+            Task { await clearNotifications() }
+        }
         return Output(erasedStoreCount: stores.count)
     }
 }

@@ -1,6 +1,6 @@
 //
 //  AvatarBadge.swift
-//  Jarvis
+//  Apl
 //
 //  Atom: circular tinted avatar badge with a centered SF Symbol.
 //

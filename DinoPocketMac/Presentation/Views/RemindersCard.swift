@@ -1,6 +1,6 @@
 //
 //  RemindersCard.swift
-//  Jarvis
+//  Apl
 //
 //  Organism: up to 3 upcoming reminders for the rest of today, from WellnessStore.
 //
@@ -10,19 +10,10 @@ import SwiftUI
 struct RemindersCard: View {
     let wellness: WellnessViewModel
 
-    private var upcoming: [ReminderSchedule] {
-        let now = Calendar.current.dateComponents([.hour, .minute], from: .now)
-        let minutesNow = (now.hour ?? 0) * 60 + (now.minute ?? 0)
-        return wellness.reminderSchedules
-            .filter { ($0.hour * 60 + $0.minute) >= minutesNow }
-            .sorted { ($0.hour * 60 + $0.minute) < ($1.hour * 60 + $1.minute) }
-            .prefix(3)
-            .map { $0 }
-    }
-
     var body: some View {
         DashCard(title: "Reminders", systemImage: "bell") {
             VStack(spacing: Spacing.sm) {
+                let upcoming = wellness.upcomingReminders()
                 if upcoming.isEmpty {
                     Text("No more reminders today.")
                         .font(.caption)
@@ -33,10 +24,20 @@ struct RemindersCard: View {
                             icon: s.kind.icon,
                             title: s.title,
                             timeLabel: s.timeLabel,
-                            onDone: {},
-                            onSkip: {}
+                            onDone: { wellness.complete(s) },
+                            onSkip: { wellness.snooze(s) }
                         )
                     }
+                }
+
+                if !wellness.remindersEnabled {
+                    // Baris ini jujur soal keadaan: jadwalnya terlihat, tapi
+                    // tanpa saklar menyala tidak ada notifikasi yang berbunyi.
+                    Label("Notifications are off — turn them on in Settings.",
+                          systemImage: "bell.slash")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }

@@ -1,6 +1,6 @@
 //
 //  WellnessCard.swift
-//  Jarvis
+//  Apl
 //
 //  Organism: today's wellness metrics (water/stretch/meal) from WellnessStore.
 //

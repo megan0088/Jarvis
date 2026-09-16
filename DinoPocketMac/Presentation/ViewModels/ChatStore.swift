@@ -6,7 +6,7 @@ import Observation
 final class ChatStore {
     var messages: [ChatMessage] = []
     var isStreaming = false
-    var persona: Persona = .jarvis
+    var persona: Persona = .apl
     var noticeMessage: String?
 
     /// Prompt yang dititipkan quick action di Home, diambil ChatPage saat muncul.
@@ -61,6 +61,21 @@ final class ChatStore {
     func availability(of kind: BrainKind) async -> BrainAvailability? {
         guard let brain = brains[kind] else { return nil }
         return await brain.availability()
+    }
+
+    /// Ketersediaan terbaik dari SELURUH otak yang terpasang.
+    ///
+    /// `ChatPage` dulu bertanya `availability(of: .apple)` saja, sehingga layar
+    /// chat menutup diri saat Apple Intelligence mati — padahal `resolveBrain()`
+    /// akan dengan senang hati memakai otak lain yang siap. Gerbang layar dan
+    /// gerbang pengiriman jadi berbeda pendapat; ini menyamakannya.
+    func bestAvailability() async -> BrainAvailability {
+        let appleStatus = await availability(of: .apple)
+        if appleStatus == .ready { return .ready }
+        for kind in BrainKind.allCases where kind != .apple {
+            if await availability(of: kind) == .ready { return .ready }
+        }
+        return appleStatus ?? .unavailable("No AI backend is configured in this build.")
     }
 
     /// Pilih otak aktif kalau siap, jika tidak fallback ke otak lain yang siap.

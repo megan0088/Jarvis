@@ -1,6 +1,6 @@
 //
 //  StatusDot.swift
-//  Jarvis
+//  Apl
 //
 //  Atom: small filled status indicator dot.
 //

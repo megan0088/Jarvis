@@ -31,11 +31,11 @@ enum ReminderKind: String, CaseIterable, Codable, Identifiable {
     var researchNote: String {
         switch self {
         case .water:
-            "NHS recommends about 6-8 glasses of fluid a day. Jarvis default: a reminder every 2 hours."
+            "NHS recommends about 6-8 glasses of fluid a day. Apl default: a reminder every 2 hours."
         case .stretch:
-            "AHA recommends moving at least every 30 minutes when sitting a lot. Jarvis default: a reminder every 45 minutes."
+            "AHA recommends moving at least every 30 minutes when sitting a lot. Apl default: a reminder every 45 minutes."
         case .meal:
-            "Heart-healthy nutrition guidelines recommend regular meals throughout the day. Jarvis default: breakfast, lunch, dinner."
+            "Heart-healthy nutrition guidelines recommend regular meals throughout the day. Apl default: breakfast, lunch, dinner."
         }
     }
 }

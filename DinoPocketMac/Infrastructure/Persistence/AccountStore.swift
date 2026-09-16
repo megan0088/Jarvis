@@ -1,6 +1,6 @@
 //
 //  AccountStore.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Status akun Sign in with Apple.
 //
@@ -31,6 +31,20 @@ final class AccountStore {
 
     var isSignedIn: Bool { userID != nil }
 
+    /// Nama depan untuk sapaan dashboard.
+    ///
+    /// Fungsi murni yang dipisah, bukan hanya properti, supaya bisa diuji tanpa
+    /// menyentuh Keychain atau UserDefaults — dan supaya tidak ada jalan masuk
+    /// khusus-test yang perlu ditambahkan ke kelas ini.
+    nonisolated static func firstName(from displayName: String?) -> String? {
+        guard let first = displayName?
+            .split(separator: " ", omittingEmptySubsequences: true)
+            .first else { return nil }
+        return String(first)
+    }
+
+    var firstName: String? { Self.firstName(from: displayName) }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -42,15 +56,29 @@ final class AccountStore {
 
     // MARK: - Sign in
 
+    private static let nameFormatter: PersonNameComponentsFormatter = {
+        let f = PersonNameComponentsFormatter()
+        return f
+    }()
+
     func signIn(with credential: ASAuthorizationAppleIDCredential) {
         let id = credential.user
-        try? KeychainStore.set(id, for: Keys.userID)
+
+        // Jika Keychain gagal, kita tidak memperbarui in-memory state —
+        // dibiarkan tidak login daripada menampilkan state yang berbohong
+        // (isSignedIn = true padahal kredensial tidak tersimpan).
+        do {
+            try KeychainStore.set(id, for: Keys.userID)
+        } catch {
+            // Gagal simpan Keychain: jangan update userID supaya state konsisten.
+            return
+        }
         userID = id
 
         // fullName hanya dikirim Apple pada otorisasi PERTAMA. Login berikutnya
         // mengembalikan nil, jadi nama yang sudah tersimpan tidak boleh ditimpa.
         if let name = credential.fullName,
-           let formatted = PersonNameComponentsFormatter().string(for: name).flatMap({
+           let formatted = Self.nameFormatter.string(for: name).flatMap({
                $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0
            }) {
             displayName = formatted
@@ -87,12 +115,12 @@ final class AccountStore {
     /// kredensial, nama, dan data wellness/chat. Kredensial Sign in with Apple
     /// di sisi Apple dicabut user lewat System Settings — di luar kuasa app,
     /// jadi UI harus menyebutkannya, bukan berpura-pura sudah menanganinya.
-    /// Hanya membereskan miliknya sendiri: kredensial, nama, dan status
-    /// onboarding. Data wellness dan chat dimusnahkan pemiliknya masing-masing
-    /// lewat `DeleteAccountUseCase` — store ini tidak tahu, dan tidak boleh
-    /// menebak, kunci maupun suite milik komponen lain.
+    ///
+    /// Store ini HANYA membersihkan miliknya sendiri: nama dan status onboarding.
+    /// Pembersihan kredensial (signOut) dilakukan SETELAH eraseAllStoredData()
+    /// oleh DeleteAccountUseCase, bukan di sini — supaya signOut() tidak
+    /// dipanggil dua kali (sekali dari sini, sekali dari closure signOut: UseCase).
     func eraseAllStoredData() {
-        signOut()
         displayName = nil
         defaults.removeObject(forKey: Keys.displayName)
         hasCompletedOnboarding = false

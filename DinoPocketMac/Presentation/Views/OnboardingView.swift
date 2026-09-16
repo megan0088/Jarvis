@@ -1,6 +1,6 @@
 //
 //  OnboardingView.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Alur perkenalan sekali jalan: sambutan → Sign in with Apple → izin
 //  notifikasi → status Apple Intelligence.
@@ -14,6 +14,12 @@ struct OnboardingView: View {
 
     @Bindable var account: AccountStore
     let chat: ChatStore
+
+    /// Dipanggil saat user menekan "Allow notifications" dan macOS mengabulkan.
+    ///
+    /// Tanpa ini layar onboarding menampilkan "Notifications on" sementara nol
+    /// pengingat pernah dijadwalkan — janji yang tidak ditepati siapa pun.
+    var onNotificationsGranted: () async -> Void = {}
 
     @State private var step: Step = .welcome
     @State private var signInError: String?
@@ -69,7 +75,7 @@ struct OnboardingView: View {
             case .signIn:
                 icon("person.crop.circle")
                 heading(step.title)
-                body("DinoPocket uses your Apple ID to identify you. Nothing is sent "
+                body("Apl uses your Apple ID to identify you. Nothing is sent "
                      + "to a server — the identifier stays in this Mac's Keychain.")
 
                 SignInWithAppleButton(.signIn) { request in
@@ -219,6 +225,7 @@ struct OnboardingView: View {
         let center = UNUserNotificationCenter.current()
         let granted = (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
         notificationDecision = granted ? .granted : .denied
+        if granted { await onNotificationsGranted() }
     }
 
     // MARK: - Bits

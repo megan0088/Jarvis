@@ -1,6 +1,6 @@
 //
 //  ChatPage.swift
-//  Jarvis
+//  Apl
 //
 //  Page: functional chat surface — message history, persona switcher, and
 //  a streaming-aware input row wired to ChatStore.
@@ -28,7 +28,7 @@ struct ChatPage: View {
             }
         }
         .task {
-            availability = await chat.availability(of: .apple)
+            availability = await chat.bestAvailability()
             // Prompt titipan dari quick action di Home.
             if let pending = chat.consumePendingPrompt() {
                 draft = pending
@@ -69,7 +69,7 @@ struct ChatPage: View {
             Divider()
 
             HStack(spacing: Spacing.sm) {
-                TextField("Message Jarvis…", text: $draft)
+                TextField("Message Apl…", text: $draft)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit(send)
                 Button(action: send) {

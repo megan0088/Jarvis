@@ -41,7 +41,7 @@ struct FileChatSessionStore: ChatSessionStoring {
                                                       in: .userDomainMask,
                                                       appropriateFor: nil,
                                                       create: true) else { return nil }
-        let folder = base.appendingPathComponent("DinoPocket", isDirectory: true)
+        let folder = base.appendingPathComponent("Apl", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         return folder.appendingPathComponent(fileName)
     }

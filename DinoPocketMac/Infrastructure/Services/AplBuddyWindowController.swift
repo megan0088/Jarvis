@@ -1,6 +1,6 @@
 //
-//  JarvisBuddyWindowController.swift
-//  DinoPocketMac
+//  AplBuddyWindowController.swift
+//  AplMac
 //
 //  Jendela melayang tembus pandang yang menampung karakter 3D di atas desktop,
 //  melintasi seluruh layar yang terpasang.
@@ -33,9 +33,9 @@ private final class BuddyOverlayView: NSView {
 }
 
 @MainActor
-final class JarvisBuddyWindowController: NSWindowController {
+final class AplBuddyWindowController: NSWindowController {
 
-    static let shared = JarvisBuddyWindowController()
+    static let shared = AplBuddyWindowController(systemStatus: SystemStatusService())
 
     // MARK: - State
 
@@ -46,6 +46,7 @@ final class JarvisBuddyWindowController: NSWindowController {
     private var hoverTimer: Timer?
     private var strollTimer: Timer?
     private var moodTimer: Timer?
+    private var greetingTimer: Timer?
     private var escMonitor: Any?
 
     private var characterSize: CGFloat = CGFloat(BuddySettingsStore.defaultSize)
@@ -53,15 +54,16 @@ final class JarvisBuddyWindowController: NSWindowController {
     private var mood: SystemMood = .normal
     private var greeting: String?
 
-    private let systemStatus: SystemStatusProviding = SystemStatusService()
+    private let systemStatus: SystemStatusProviding
 
     /// Posisi karakter saat berkeliaran. `nil` berarti diam di sudut kanan bawah.
     private var strollOrigin: CGPoint?
 
     // MARK: - Lifecycle
 
-    private init() {
-        let totalFrame = JarvisBuddyWindowController.totalScreenFrame()
+    init(systemStatus: SystemStatusProviding) {
+        self.systemStatus = systemStatus
+        let totalFrame = AplBuddyWindowController.totalScreenFrame()
         let win = NSPanel(
             contentRect: totalFrame,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -146,8 +148,8 @@ final class JarvisBuddyWindowController: NSWindowController {
         robotHostingView?.removeFromSuperview()
         robotHostingView = nil
 
-        [hoverTimer, strollTimer, moodTimer].forEach { $0?.invalidate() }
-        hoverTimer = nil; strollTimer = nil; moodTimer = nil
+        [hoverTimer, strollTimer, moodTimer, greetingTimer].forEach { $0?.invalidate() }
+        hoverTimer = nil; strollTimer = nil; moodTimer = nil; greetingTimer = nil
 
         if let escMonitor {
             NSEvent.removeMonitor(escMonitor)
@@ -328,13 +330,19 @@ final class JarvisBuddyWindowController: NSWindowController {
 
     /// Dipanggil karakter saat diklik: balon sapaan singkat yang menghilang
     /// sendiri. Tidak ada UI reminder di sini — Buddy Mode tetap bersih.
+    ///
+    /// Timer di-invalidate sebelum dibuat baru supaya klik cepat berturut-turut
+    /// tidak menumpuk beberapa timer yang saling bertabrakan, yang akan
+    /// memotong greeting lebih awal dari yang diharapkan.
     fileprivate func characterTapped() {
         greeting = Self.greetings.randomElement()
         refreshCharacter()
 
-        Timer.scheduledTimer(withTimeInterval: 2.6, repeats: false) { [weak self] _ in
+        greetingTimer?.invalidate()
+        greetingTimer = Timer.scheduledTimer(withTimeInterval: 2.6, repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.greeting = nil
+                self?.greetingTimer = nil
                 self?.refreshCharacter()
             }
         }
@@ -359,12 +367,22 @@ struct BuddyCharacterHost: View {
     let greeting: String?
 
     /// Mood mesin dipetakan ke perilaku karakter di sini, bukan di dalam view
-    /// aset — pemilihan klip animasi adalah urusan aset, penerjemahan kondisi
+    /// aset — pemilihan ekspresi adalah urusan aset, penerjemahan kondisi
     /// sistem adalah urusan buddy.
+    ///
+    /// Sapaan selalu menang: apa pun keadaan mesin, karakter yang sedang
+    /// menyapa harus terlihat ramah, bukan sibuk atau lesu.
+    ///
+    /// `.busy` sengaja dibedakan dari `.normal`. Sebelumnya keduanya
+    /// menghasilkan perilaku yang sama persis, sehingga perbedaan yang sudah
+    /// susah payah dihitung `SystemMood.from(thermalState:...)` tidak pernah
+    /// sampai ke layar.
     private var behavior: CharacterBehavior {
-        switch mood {
+        guard greeting == nil else { return .greet }
+        return switch mood {
         case .hot, .lowBattery: .sleepy
-        case .busy, .normal:    greeting == nil ? .idle : .greet
+        case .busy:             .thinking
+        case .normal:           .idle
         }
     }
 
@@ -391,7 +409,7 @@ struct BuddyCharacterHost: View {
         .frame(width: size, height: size)
         .contentShape(Rectangle())
         .onTapGesture {
-            JarvisBuddyWindowController.shared.characterTapped()
+            AplBuddyWindowController.shared.characterTapped()
         }
         .animation(.easeInOut(duration: 0.2), value: greeting)
     }

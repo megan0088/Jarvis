@@ -1,6 +1,6 @@
 //
 //  HistoryPage.swift
-//  DinoPocketMac
+//  AplMac
 //
 //  Menggantikan placeholder "History coming soon." — App Store Guideline 2.1
 //  menolak fungsi yang belum jadi, dan placeholder adalah bentuk paling
@@ -61,7 +61,7 @@ struct HistoryPage: View {
         ContentUnavailableView(
             "Nothing yet",
             systemImage: "clock",
-            description: Text("Your desk time and reminders will appear here as you use DinoPocket.")
+            description: Text("Your desk time and reminders will appear here as you use Apl.")
         )
     }
 
