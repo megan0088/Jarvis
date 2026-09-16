@@ -70,21 +70,6 @@ struct SettingsPage: View {
                         ProgressView().controlSize(.small)
                     }
                 }
-
-                #if DEBUG
-                // Ollama hanya tersedia di build DEBUG; tidak pernah ikut rilis.
-                Picker("Brain (debug)", selection: $chat.activeBrain) {
-                    ForEach(BrainKind.allCases) { kind in
-                        Text(kind.displayName).tag(kind)
-                    }
-                }
-                #endif
-
-                Picker("Persona", selection: $chat.persona) {
-                    ForEach(Persona.allCases, id: \.self) { persona in
-                        Text(persona.label).tag(persona)
-                    }
-                }
             }
 
             Section("Reminders") {
@@ -212,7 +197,7 @@ struct SettingsPage: View {
         .onDisappear { profile.setNickname(nicknameDraft) }
         .task {
             nicknameDraft = profile.nickname ?? ""
-            appleAvailability = await chat.availability(of: .apple)
+            appleAvailability = await chat.availability()
             launchAtLoginOn = launchAtLogin.isEnabled
         }
     }
@@ -220,6 +205,6 @@ struct SettingsPage: View {
 
 #Preview {
     NavigationStack {
-        SettingsPage(chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), profile: ProfileStore())
+        SettingsPage(chat: ChatStore(brain: nil), buddySettings: BuddySettingsStore(), profile: ProfileStore())
     }
 }

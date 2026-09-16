@@ -2,7 +2,7 @@
 //  ChatPage.swift
 //  Apl
 //
-//  Page: functional chat surface — message history, persona switcher, and
+//  Page: functional chat surface — message history and
 //  a streaming-aware input row wired to ChatStore.
 //
 
@@ -28,11 +28,7 @@ struct ChatPage: View {
             }
         }
         .task {
-            availability = await chat.bestAvailability()
-            // Prompt titipan dari quick action di Home.
-            if let pending = chat.consumePendingPrompt() {
-                draft = pending
-            }
+            availability = await chat.availability()
         }
     }
 
@@ -81,16 +77,6 @@ struct ChatPage: View {
             }
             .padding()
         }
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Picker("Persona", selection: $chat.persona) {
-                    ForEach(Persona.allCases, id: \.self) { persona in
-                        Text(persona.label).tag(persona)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-        }
         .navigationTitle("Chat")
     }
 
@@ -104,6 +90,6 @@ struct ChatPage: View {
 
 #Preview {
     NavigationStack {
-        ChatPage(chat: ChatStore(brains: [:]))
+        ChatPage(chat: ChatStore(brain: nil))
     }
 }

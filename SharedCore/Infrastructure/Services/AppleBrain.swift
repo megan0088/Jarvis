@@ -15,19 +15,15 @@ import FoundationModels
 @MainActor
 final class AppleBrain: Brain {
 
-    nonisolated var kind: BrainKind { .apple }
-
     #if canImport(FoundationModels)
-    /// Wadah sesi hidup beserta persona yang membentuknya. Persona yang berubah
-    /// harus memulai sesi baru — instructions hanya bisa ditetapkan saat sesi
-    /// dibuat, jadi mempertahankan sesi lama berarti persona di UI berbohong.
+    /// Wadah sesi hidup. Instructions ditetapkan saat sesi dibuat dan tidak
+    /// pernah berubah (`AplInstructions`), jadi satu sesi bertahan selama app hidup.
     ///
     /// Deployment target sudah macOS 26.2 sehingga `@available` wrapper tidak
     /// lagi diperlukan; stored property bisa dideklarasikan langsung.
     @available(macOS 26.0, iOS 26.0, *)
     final class SessionBox {
         var session: LanguageModelSession?
-        var persona: Persona?
     }
 
     private var sessionBox = SessionBox()
@@ -42,8 +38,7 @@ final class AppleBrain: Brain {
     }
 
     /// Gabungkan riwayat percakapan menjadi satu prompt untuk Foundation Models
-    /// (streamResponse menerima satu String; persona sudah di-set via instructions).
-    /// Meniru perilaku multi-turn OllamaBrain yang meneruskan seluruh history.
+    /// (streamResponse menerima satu String; instructions sudah di-set saat sesi dibuat).
     nonisolated static func buildPrompt(from history: [ChatMessage]) -> String {
         let turns = history.map { msg in
             let who = msg.role == .user ? "User" : "Apl"
@@ -73,13 +68,13 @@ final class AppleBrain: Brain {
         #endif
     }
 
-    nonisolated func reply(to history: [ChatMessage], persona: Persona) -> AsyncThrowingStream<String, Error> {
+    nonisolated func reply(to history: [ChatMessage]) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
             #if canImport(FoundationModels)
             if #available(macOS 26.0, *) {
                 let task = Task { @MainActor in
                     do {
-                        try await self.stream(history: history, persona: persona) { chunk in
+                        try await self.stream(history: history) { chunk in
                             continuation.yield(chunk)
                         }
                         continuation.finish()
@@ -99,21 +94,17 @@ final class AppleBrain: Brain {
     #if canImport(FoundationModels)
     @available(macOS 26.0, iOS 26.0, *)
     private func stream(history: [ChatMessage],
-                        persona: Persona,
                         onChunk: @escaping (String) -> Void) async throws {
 
         let store = sessions as? any ChatSessionStoring
         let box = sessionBox
-
-        // Persona berubah -> sesi harus lahir ulang (lihat catatan di SessionBox).
-        if box.persona != persona { box.session = nil; box.persona = persona }
 
         var isResumed = true
         if box.session == nil {
             if let transcript = store?.loadTranscript(), !transcript.isEmpty {
                 box.session = LanguageModelSession(transcript: transcript)
             } else {
-                box.session = LanguageModelSession(instructions: persona.systemPrompt)
+                box.session = LanguageModelSession(instructions: AplInstructions.text)
                 isResumed = false
             }
         }

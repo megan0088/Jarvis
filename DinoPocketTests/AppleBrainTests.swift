@@ -16,8 +16,4 @@ struct AppleBrainTests {
     @Test func buildPromptEmptyHistoryIsJustCue() {
         #expect(AppleBrain.buildPrompt(from: []) == "Apl:")
     }
-
-    @MainActor @Test func kindIsApple() {
-        #expect(AppleBrain().kind == .apple)
-    }
 }

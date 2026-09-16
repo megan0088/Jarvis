@@ -51,7 +51,7 @@ struct OnboardingView: View {
                 .padding(20)
         }
         .frame(width: 520, height: 460)
-        .task { appleAvailability = await chat.availability(of: .apple) }
+        .task { appleAvailability = await chat.availability() }
     }
 
     // MARK: - Steps
@@ -194,5 +194,5 @@ struct OnboardingView: View {
 }
 
 #Preview {
-    OnboardingView(profile: ProfileStore(), chat: ChatStore(brains: [:]))
+    OnboardingView(profile: ProfileStore(), chat: ChatStore(brain: nil))
 }

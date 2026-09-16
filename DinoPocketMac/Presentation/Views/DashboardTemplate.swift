@@ -23,7 +23,7 @@ struct DashboardTemplate: View {
 
     var body: some View {
         NavigationSplitView {
-            SidebarView(selection: $selection, chat: chat)
+            SidebarView(selection: $selection)
                 .frame(minWidth: 190)
         } detail: {
             switch selection {
@@ -48,5 +48,5 @@ struct DashboardTemplate: View {
 }
 
 #Preview {
-    DashboardTemplate(chat: ChatStore(brains: [:]), buddySettings: BuddySettingsStore(), profile: ProfileStore())
+    DashboardTemplate(chat: ChatStore(brain: nil), buddySettings: BuddySettingsStore(), profile: ProfileStore())
 }

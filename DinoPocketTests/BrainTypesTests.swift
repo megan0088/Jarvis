@@ -3,14 +3,11 @@ import Testing
 @testable import Apl
 
 struct BrainTypesTests {
-    @Test func brainKindHasBothBackends() {
-        #expect(BrainKind.allCases == [.ollama, .apple])
-    }
 
-    @Test func personasHaveNonEmptyDistinctPrompts() {
-        #expect(!Persona.standard.systemPrompt.isEmpty)
-        #expect(!Persona.apl.systemPrompt.isEmpty)
-        #expect(Persona.standard.systemPrompt != Persona.apl.systemPrompt)
+    /// Reminder dibuat parser, bukan model. Instructions harus melarang model
+    /// mengaku membuat reminder, supaya ia tidak menjawab "Sure!" tanpa bukti.
+    @Test func instructionsForbidTheModelFromClaimingReminders() {
+        #expect(AplInstructions.text.contains("cannot create, change, or cancel reminders"))
     }
 
     @Test func chatMessageRoundTripsThroughCodable() throws {

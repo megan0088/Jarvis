@@ -2,7 +2,7 @@
 //  SidebarView.swift
 //  Apl
 //
-//  Organism: dashboard navigation sidebar + active-brain switcher.
+//  Organism: dashboard navigation sidebar.
 //
 
 import SwiftUI
@@ -23,19 +23,11 @@ enum DashboardSection: String, CaseIterable, Identifiable {
 
 struct SidebarView: View {
     @Binding var selection: DashboardSection
-    @Bindable var chat: ChatStore
 
     var body: some View {
         List(selection: $selection) {
             ForEach(DashboardSection.allCases) { section in
                 Label(section.rawValue, systemImage: section.icon).tag(section)
-            }
-
-            Section {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Label("Active brain", systemImage: "bolt").font(.caption)
-                    BrainSegmentedPicker(selection: $chat.activeBrain)
-                }
             }
         }
         .listStyle(.sidebar)
@@ -43,6 +35,6 @@ struct SidebarView: View {
 }
 
 #Preview {
-    SidebarView(selection: .constant(.chat), chat: ChatStore(brains: [:]))
+    SidebarView(selection: .constant(.chat))
         .frame(width: 220, height: 400)
 }

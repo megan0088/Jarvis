@@ -3,11 +3,10 @@ import Testing
 @testable import Apl
 
 private struct StubBrain: Brain {
-    let kind: BrainKind
     var chunks: [String]
     var available: BrainAvailability = .ready
     func availability() async -> BrainAvailability { available }
-    func reply(to history: [ChatMessage], persona: Persona) -> AsyncThrowingStream<String, Error> {
+    func reply(to history: [ChatMessage]) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { c in
             for chunk in chunks { c.yield(chunk) }
             c.finish()
@@ -23,17 +22,14 @@ private struct StubBrain: Brain {
 /// mutated all the shared state we want to assert on), then drive
 /// completion of each call's stream at a time of the test's choosing.
 private final class GatedBrain: Brain, @unchecked Sendable {
-    let kind: BrainKind
     var available: BrainAvailability = .ready
     private var continuations: [AsyncThrowingStream<String, Error>.Continuation] = []
     private var starters: [CheckedContinuation<Void, Never>] = []
     private var startedCount = 0
 
-    init(kind: BrainKind) { self.kind = kind }
-
     func availability() async -> BrainAvailability { available }
 
-    func reply(to history: [ChatMessage], persona: Persona) -> AsyncThrowingStream<String, Error> {
+    func reply(to history: [ChatMessage]) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
             self.continuations.append(continuation)
             self.startedCount += 1
@@ -70,8 +66,7 @@ private struct StubStreamError: Error {}
 struct ChatStoreTests {
     @MainActor @Test func sendAppendsUserAndStreamedAssistantMessage() async {
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
-        let store = ChatStore(brains: [.ollama: StubBrain(kind: .ollama, chunks: ["A", "AB", "ABC"])])
-        store.activeBrain = .ollama
+        let store = ChatStore(brain: StubBrain(chunks: ["A", "AB", "ABC"]))
         await store.send("halo")
         #expect(store.messages.count == 2)
         #expect(store.messages[0].role == .user)
@@ -80,14 +75,13 @@ struct ChatStoreTests {
         #expect(store.isStreaming == false)
     }
 
-    @MainActor @Test func fallsBackWhenActiveBrainUnavailable() async {
+    @MainActor @Test func unavailableAppleIntelligenceLeavesANoticeAndNoReply() async {
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
-        let apple = StubBrain(kind: .apple, chunks: ["X"], available: .unavailable("nope"))
-        let ollama = StubBrain(kind: .ollama, chunks: ["dari ollama"], available: .ready)
-        let store = ChatStore(brains: [.apple: apple, .ollama: ollama])
-        store.activeBrain = .apple
+        let store = ChatStore(brain: StubBrain(chunks: ["X"], available: .unavailable("nope")))
+
         await store.send("tes")
-        #expect(store.messages.last?.text == "dari ollama")
+
+        #expect(store.messages.map(\.role) == [.user])
         #expect(store.noticeMessage != nil)
     }
 
@@ -102,9 +96,8 @@ struct ChatStoreTests {
     ///   a stale snapshot while the newer stream is still active.
     @MainActor @Test func overlappingSendFinalizesStalePlaceholderAndIgnoresStaleCleanup() async {
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
-        let brain = GatedBrain(kind: .ollama)
-        let store = ChatStore(brains: [.ollama: brain])
-        store.activeBrain = .ollama
+        let brain = GatedBrain()
+        let store = ChatStore(brain: brain)
 
         let firstSend = Task { await store.send("pertama") }
         await brain.waitUntilStreamStarted(1)
@@ -151,9 +144,8 @@ struct ChatStoreTests {
     /// by the same generation check as the success path.
     @MainActor @Test func staleStreamErrorAfterSupersessionDoesNotCorruptNewerMessage() async {
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
-        let brain = GatedBrain(kind: .ollama)
-        let store = ChatStore(brains: [.ollama: brain])
-        store.activeBrain = .ollama
+        let brain = GatedBrain()
+        let store = ChatStore(brain: brain)
 
         let firstSend = Task { await store.send("pertama") }
         await brain.waitUntilStreamStarted(1)
@@ -193,7 +185,7 @@ struct ChatStoreTests {
     private func chatHandlingReminders(now: Date = TestTime.now)
         -> (ChatStore, InMemoryReminderStore, SpyReminderScheduler) {
         UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
-        let chat = ChatStore(brains: [:])
+        let chat = ChatStore(brain: nil)
         let reminders = InMemoryReminderStore()
         let scheduler = SpyReminderScheduler()
         chat.createReminder = CreateReminderFromTextUseCase(

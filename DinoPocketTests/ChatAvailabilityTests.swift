@@ -2,42 +2,39 @@ import Foundation
 import Testing
 @testable import Apl
 
-@Suite("Ketersediaan otak untuk layar chat")
+@Suite("Ketersediaan Apple Intelligence untuk layar chat")
 struct ChatAvailabilityTests {
 
     @MainActor
-    @Test func chatIsUsableWhenAppleIsDownButAnotherBrainIsReady() async {
-        let chat = ChatStore(brains: [
-            .apple: StubBrain(kind: .apple, availability: .unavailable("Enable Apple Intelligence in System Settings.")),
-            .ollama: StubBrain(kind: .ollama, availability: .ready)
-        ])
+    @Test func chatReportsWhyAppleIntelligenceIsUnavailable() async {
+        let chat = ChatStore(brain: StubBrain(availability: .unavailable("Enable Apple Intelligence in System Settings.")))
 
-        #expect(await chat.bestAvailability() == .ready)
+        #expect(await chat.availability() == .unavailable("Enable Apple Intelligence in System Settings."))
     }
 
     @MainActor
-    @Test func chatReportsAppleReasonWhenNoBrainIsReady() async {
-        let chat = ChatStore(brains: [
-            .apple: StubBrain(kind: .apple, availability: .unavailable("Enable Apple Intelligence in System Settings.")),
-            .ollama: StubBrain(kind: .ollama, availability: .needsSetup("Ollama isn't running."))
-        ])
+    @Test func chatWithoutABrainIsUnavailable() async {
+        let chat = ChatStore(brain: nil)
 
-        #expect(await chat.bestAvailability() == .unavailable("Enable Apple Intelligence in System Settings."))
+        let availability = await chat.availability()
+
+        guard case .unavailable = availability else {
+            Issue.record("expected .unavailable, got \(availability)")
+            return
+        }
     }
 }
 
 private struct StubBrain: Brain {
-    let kind: BrainKind
     let stubbed: BrainAvailability
 
-    init(kind: BrainKind, availability: BrainAvailability) {
-        self.kind = kind
+    init(availability: BrainAvailability) {
         self.stubbed = availability
     }
 
     func availability() async -> BrainAvailability { stubbed }
 
-    func reply(to history: [ChatMessage], persona: Persona) -> AsyncThrowingStream<String, Error> {
+    func reply(to history: [ChatMessage]) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { $0.finish() }
     }
 }
