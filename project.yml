@@ -64,6 +64,10 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ega.apl
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Aksen merek (spec B §7). Toggle, focus ring, dan tombol default ikut
+        # teal tanpa kode tambahan — kecuali pengguna memilih accent sendiri di
+        # System Settings, yang memang harus dihormati kontrol sistem.
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_KEY_CFBundleDisplayName: Apl
         INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Muhamad Ega Nugraha. All rights reserved."
         # Tanpa kunci ini App Store Connect menanyakan kepatuhan ekspor

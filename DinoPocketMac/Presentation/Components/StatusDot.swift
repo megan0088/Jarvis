@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct StatusDot: View {
-    var color: Color = AppColor.online
+    var color: Color = AppColor.statusOK
 
     var body: some View {
         Circle()
@@ -17,11 +17,19 @@ struct StatusDot: View {
     }
 }
 
-#Preview {
+#Preview("Light") {
     HStack(spacing: Spacing.sm) {
         StatusDot()
-        StatusDot(color: .orange)
-        StatusDot(color: .red)
+        StatusDot(color: AppColor.statusWarning)
     }
     .padding()
+}
+
+#Preview("Dark") {
+    HStack(spacing: Spacing.sm) {
+        StatusDot()
+        StatusDot(color: AppColor.statusWarning)
+    }
+    .padding()
+    .preferredColorScheme(.dark)
 }
