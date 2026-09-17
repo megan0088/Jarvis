@@ -81,10 +81,17 @@ struct ConversationView: View {
             }
             .defaultScrollAnchor(.bottom)
             .defaultScrollAnchor(.bottom, for: .sizeChanges)
-            .onChange(of: chat.messages.last?.id) { _, id in
-                guard let id else { return }
-                withAnimation(.easeOut(duration: 0.2)) {
-                    proxy.scrollTo(id, anchor: .bottom)
+            // Mengikuti pesan terakhir, termasuk saat ia memanjang (teks yang
+            // sedang ditulis, label "Stopped", baris gagal). Anchor bawaan untuk
+            // perubahan ukuran tidak cukup: LazyVStack tidak tetap di bawah.
+            .onChange(of: chat.messages.last) { old, new in
+                guard let new else { return }
+                if old?.id == new.id {
+                    proxy.scrollTo(new.id, anchor: .bottom)
+                } else {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        proxy.scrollTo(new.id, anchor: .bottom)
+                    }
                 }
             }
             .overlay {
