@@ -66,10 +66,15 @@ struct AplApp: App {
         if profile.hasCompletedOnboarding {
             mainWindow
         } else {
-            OnboardingView(profile: profile, chat: chat,
-                           onNotificationsGranted: {
-                               // Reminder yang dibuat sebelum izin diberikan baru bisa dijadwalkan sekarang.
-                               await Self.deps.reminderScheduler.sync(Self.deps.reminderStore.reminders, now: .now)
+            OnboardingView(profile: profile, chat: chat, launcher: Self.deps.appLauncher,
+                           requestNotifications: {
+                               let scheduler = Self.deps.reminderScheduler
+                               let granted = await scheduler.requestAuthorization()
+                               if granted {
+                                   // Reminder yang dibuat sebelum izin diberikan baru bisa dijadwalkan sekarang.
+                                   await scheduler.sync(Self.deps.reminderStore.reminders, now: .now)
+                               }
+                               return granted
                            })
         }
     }
