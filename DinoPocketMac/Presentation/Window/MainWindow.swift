@@ -92,7 +92,7 @@ struct MainWindow: View {
                 await reminders.refreshPermission()
             }
         }
-        .focusedSceneValue(\.clearConversation, clearAction)
+        .focusedSceneValue(\.clearConversationRequest, chat.messages.isEmpty ? nil : $isConfirmingClear)
         .confirmationDialog("Clear this conversation?", isPresented: $isConfirmingClear,
                             titleVisibility: .visible) {
             Button("Clear Conversation", role: .destructive) {
@@ -123,11 +123,6 @@ struct MainWindow: View {
               case .reminderCreated(let id) = event.kind,
               let reminder = reminders.reminder(withID: id) else { return nil }
         return reminder.nextOccurrence(after: event.at)
-    }
-
-    private var clearAction: (() -> Void)? {
-        guard !chat.messages.isEmpty else { return nil }
-        return { isConfirmingClear = true }
     }
 }
 

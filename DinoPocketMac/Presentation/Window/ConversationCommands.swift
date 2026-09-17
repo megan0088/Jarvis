@@ -9,20 +9,26 @@
 import SwiftUI
 
 extension FocusedValues {
-    /// Diisi jendela utama yang sedang aktif; nil saat percakapan kosong.
-    @Entry var clearConversation: (() -> Void)?
+    /// Membuka konfirmasi Clear Conversation di jendela utama yang sedang
+    /// aktif; nil saat percakapan kosong.
+    ///
+    /// Binding, bukan closure: closure tidak bisa dibandingkan, sehingga
+    /// SwiftUI menganggap nilainya berubah di setiap render.
+    @Entry var clearConversationRequest: Binding<Bool>?
 }
 
 struct ConversationCommands: Commands {
-    @FocusedValue(\.clearConversation) private var clearConversation
+    @FocusedValue(\.clearConversationRequest) private var clearConversationRequest
 
     var body: some Commands {
         CommandMenu("Conversation") {
             Button("Clear Conversation…") {
-                clearConversation?()
+                if let request = clearConversationRequest {
+                    request.wrappedValue = true
+                }
             }
             .keyboardShortcut("k", modifiers: .command)
-            .disabled(clearConversation == nil)
+            .disabled(clearConversationRequest == nil)
         }
     }
 }

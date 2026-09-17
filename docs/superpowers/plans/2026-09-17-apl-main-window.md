@@ -4677,7 +4677,7 @@ EOF
   - `enum MainWindowLayout`: `defaultSize`, `minimumSize`, `compactThreshold`, `stageInset`, `static func isCompact(width:) -> Bool`
   - `ConversationView(chat:reminders:availability:showsDateHeader:onOpenIntelligenceSettings:)`, dengan `nonisolated static func dayLabel(for:now:calendar:) -> String`
   - `MainWindow(chat:reminders:launcher:isBuddyModeOn:onToggleBuddy:)`
-  - `FocusedValues.clearConversation: (() -> Void)?`
+  - `FocusedValues.clearConversationRequest: Binding<Bool>?` (Binding, bukan closure: `@Entry` memperingatkan closure yang tidak bisa dibandingkan)
   - `ConversationCommands: Commands`
   - `AppDependencies.makeReminderListViewModel() -> ReminderListViewModel`
 
@@ -4755,20 +4755,26 @@ Buat `DinoPocketMac/Presentation/Window/ConversationCommands.swift`:
 import SwiftUI
 
 extension FocusedValues {
-    /// Diisi jendela utama yang sedang aktif; nil saat percakapan kosong.
-    @Entry var clearConversation: (() -> Void)?
+    /// Membuka konfirmasi Clear Conversation di jendela utama yang sedang
+    /// aktif; nil saat percakapan kosong.
+    ///
+    /// Binding, bukan closure: closure tidak bisa dibandingkan, sehingga
+    /// SwiftUI menganggap nilainya berubah di setiap render.
+    @Entry var clearConversationRequest: Binding<Bool>?
 }
 
 struct ConversationCommands: Commands {
-    @FocusedValue(\.clearConversation) private var clearConversation
+    @FocusedValue(\.clearConversationRequest) private var clearConversationRequest
 
     var body: some Commands {
         CommandMenu("Conversation") {
             Button("Clear Conversation…") {
-                clearConversation?()
+                if let request = clearConversationRequest {
+                    request.wrappedValue = true
+                }
             }
             .keyboardShortcut("k", modifiers: .command)
-            .disabled(clearConversation == nil)
+            .disabled(clearConversationRequest == nil)
         }
     }
 }
@@ -5020,7 +5026,7 @@ struct MainWindow: View {
                 await reminders.refreshPermission()
             }
         }
-        .focusedSceneValue(\.clearConversation, clearAction)
+        .focusedSceneValue(\.clearConversationRequest, chat.messages.isEmpty ? nil : $isConfirmingClear)
         .confirmationDialog("Clear this conversation?", isPresented: $isConfirmingClear,
                             titleVisibility: .visible) {
             Button("Clear Conversation", role: .destructive) {
@@ -5051,11 +5057,6 @@ struct MainWindow: View {
               case .reminderCreated(let id) = event.kind,
               let reminder = reminders.reminder(withID: id) else { return nil }
         return reminder.nextOccurrence(after: event.at)
-    }
-
-    private var clearAction: (() -> Void)? {
-        guard !chat.messages.isEmpty else { return nil }
-        return { isConfirmingClear = true }
     }
 }
 
