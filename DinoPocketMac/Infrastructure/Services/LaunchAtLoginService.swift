@@ -10,6 +10,8 @@ import ServiceManagement
 
 protocol LaunchAtLoginManaging {
     var isEnabled: Bool { get }
+    /// Pengguna pernah menolak Apl di Login Items; lihat `LaunchAtLoginService`.
+    var needsUserApproval: Bool { get }
     /// Melempar bila sistem menolak; pemanggil harus mengembalikan toggle-nya.
     func setEnabled(_ enabled: Bool) throws
 }

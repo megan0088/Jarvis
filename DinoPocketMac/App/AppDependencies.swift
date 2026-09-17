@@ -32,17 +32,25 @@ struct AppDependencies {
     static func live() -> AppDependencies {
         // Transcript dipersist supaya percakapan bertahan lintas peluncuran —
         // inti dari "asisten yang ingat kemarin".
-        let brain: Brain
+        let appleBrain: Brain
         var erasable: [any LocallyErasable] = []
         var transcripts: (any LocallyErasable)?
         if #available(macOS 26.0, *) {
             let sessionStore = FileChatSessionStore()
-            brain = AppleBrain(sessionStore: sessionStore)
+            appleBrain = AppleBrain(sessionStore: sessionStore)
             erasable.append(sessionStore)
             transcripts = sessionStore
         } else {
-            brain = AppleBrain()
+            appleBrain = AppleBrain()
         }
+
+        #if DEBUG
+        // Tab Debug di Settings bisa memaksa status Apple Intelligence untuk
+        // menguji state AI mati tanpa menyentuh pengaturan sistem (spec B §8).
+        let brain: Brain = DebugAvailabilityBrain(base: appleBrain, defaults: .standard)
+        #else
+        let brain = appleBrain
+        #endif
 
         // Sebelum store apa pun membaca data: ChatStore memuat percakapan
         // tersimpan saat dibuat, jadi pembersihan harus mendahuluinya.

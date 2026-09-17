@@ -43,13 +43,22 @@ struct AplApp: App {
             ConversationCommands()
         }
 
-        // SEMENTARA: halaman Settings lama ditampung jendela ⌘, sampai
-        // jendela Settings bertab menggantikannya.
         Settings {
-            SettingsPage(chat: chat, buddySettings: buddySettings, profile: profile,
-                         extraErasableStores: Self.deps.erasableStores)
-                .frame(width: 480, height: 560)
+            SettingsWindow(profile: profile,
+                           buddySettings: buddySettings,
+                           launchAtLogin: Self.deps.launchAtLogin,
+                           eraseAllData: { await eraseAllData() })
         }
+    }
+
+    /// Erase All Data (spec B §8). Tiap penyimpanan memusnahkan miliknya
+    /// sendiri; UseCase ini tidak tahu satu pun nama kunci atau suite.
+    private func eraseAllData() async {
+        if isBuddyMode { dismissFromBuddy() }
+        let stores: [any LocallyErasable] = [profile, chat, buddySettings] + Self.deps.erasableStores
+        await EraseAllDataUseCase(stores: stores,
+                                  clearNotifications: { await Self.deps.reminderScheduler.cancelAll() })
+            .execute()
     }
 
     @ViewBuilder
