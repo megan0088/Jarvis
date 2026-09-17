@@ -237,8 +237,8 @@ utamanya, dalam light dan dark.
 ### Aksesibilitas & keyboard
 
 - Robot punya label VoiceOver yang mengikuti ekspresi ("Apl, thinking")
-- Return kirim · ⇧Return baris baru (di akhir draft; ⌥Return di posisi kursor) · Esc
-  menghentikan jawaban yang sedang ditulis · ⌘K Clear Conversation…
+- Return kirim · ⇧Return (atau ⌥Return) baris baru · Esc menghentikan jawaban yang sedang
+  ditulis · ⌘K Clear Conversation…
 - Reduce Motion mematikan gerak bob dan pop
 - Seluruh copy UI dalam bahasa Inggris
 
@@ -338,7 +338,7 @@ Ditemukan saat menulis rencana implementasi. Rinciannya ada di rencana, bagian "
 |---|---|---|
 | 1 | Elemen merek memakai `Color("AccentColor")`, bukan `Color.accentColor` | Accent pilihan pengguna menimpa accent app di macOS; kontrol sistem tetap mengikutinya |
 | 2 | `.sleepy` karena jawaban gagal berstatus "Something went wrong" | "Apple Intelligence is off" menyesatkan bila AI sebenarnya menyala |
-| 3 | ⇧Return menambah baris di akhir draft; ⌥Return di posisi kursor | SwiftUI tidak memberi akses ke posisi kursor |
+| 3 | ⇧Return ditangani monitor keyboard lokal yang menyisipkan baris lewat field editor, di posisi kursor, hanya saat composer fokus | `onKeyPress` tidak pernah menerima ⇧Return di TextField macOS (ditemukan saat verifikasi) |
 | 4 | Clear Conversation dan Erase All Data juga mengosongkan sesi Apple Intelligence (`Brain.resetConversation()`) | Tanpa itu, model tetap ingat dan menyimpan ulang percakapan yang sudah dihapus |
 | 5 | `ChatStore` menerima `defaults` dan `now` | Test host adalah Apl.app; test tidak boleh menulis ke data app sungguhan |
 | 6 | Jawaban yang dihentikan berstatus `.stopped` | Menggantikan sufiks teks " (cancelled)", sejalan dengan "nol teks peringatan di isi pesan" |
@@ -350,3 +350,10 @@ Ditemukan saat menulis rencana implementasi. Rinciannya ada di rencana, bagian "
 | 12 | `ReminderChip` punya status ketiga, "Reminder passed" | Reminder sekali jalan yang lewat, atau sudah dibuang setelah sehari, bukan "removed" |
 | 13 | `CompactStageHeader` punya tombol lonceng ke popover reminder | Up next tidak terlihat dalam mode compact |
 | 14 | Clear Conversation memakai ⌘K | Shortcut untuk menu yang ditambahkan §4 |
+| 15 | Esc yang ditujukan ke jendela biasa tidak lagi mematikan Buddy Mode; Buddy dimatikan lewat Hide Buddy | Monitor Esc Buddy menelan Esc di jendela utama, sehingga Esc tidak pernah menghentikan jawaban (§7) |
+| 16 | Permukaan stage memakai `tertiarySystemFill` | `underPageBackgroundColor` bernilai #969696 di light; stage tampil sebagai blok abu-abu berat (risiko §12) |
+| 17 | Minimum konten jendela dikurangi tinggi area judul dari AppKit | Dengan judul tersembunyi, SwiftUI tetap menambahkan area judul ke minimum, sehingga jendela tertahan di 720×552 |
+| 18 | Popover reminder tanpa `ScrollView` untuk daftar ≤ 4; lebih dari itu digulir dalam 340pt | Tinggi `ScrollView` di popover tidak ikut bertambah, sehingga editor terpotong |
+| 19 | Daftar pesan menggulir ke bawah setiap kali pesan terakhir berubah | Anchor bawaan tidak menahan `LazyVStack` di bawah saat jawaban memanjang |
+
+Butir 15–19 ditemukan saat verifikasi manual di app sungguhan (Task 14), setelah rencana ditulis.

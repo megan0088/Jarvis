@@ -92,7 +92,7 @@ Semua deviasi di bawah juga dicatat di spec B §13.
 
 1. **Aksen merek memakai `Color("AccentColor")`, bukan `Color.accentColor`.** Di macOS, accent yang dipilih pengguna di System Settings menimpa accent app. Kontrol sistem tetap mengikuti pilihan pengguna, sedangkan elemen merek (bubble, glow, tombol kirim) tetap teal.
 2. **Teks status `.sleepy` bergantung penyebabnya.** Saat stream gagal, teksnya "Something went wrong". "Apple Intelligence is off" hanya dipakai bila AI memang mati.
-3. **⇧Return menambah baris baru di akhir draft.** SwiftUI tidak memberi akses ke posisi kursor. ⌥Return (bawaan field editor macOS) tetap menyisipkan baris di posisi kursor.
+3. **⇧Return menambah baris baru di akhir draft.** SwiftUI tidak memberi akses ke posisi kursor. ⌥Return (bawaan field editor macOS) tetap menyisipkan baris di posisi kursor. *(Diganti saat eksekusi: `onKeyPress` ternyata tidak menerima ⇧Return, jadi dipakai monitor keyboard lokal yang menyisipkan baris di posisi kursor. Lihat "Catatan eksekusi".)*
 4. **Clear Conversation dan Erase All Data juga mengosongkan sesi Apple Intelligence** (`Brain.resetConversation()`). Tanpa ini, model tetap ingat percakapan yang sudah dihapus dari layar dan menyimpannya lagi ke disk.
 5. **`ChatStore` menerima `defaults` dan `now`.** Tujuannya agar test tidak menulis ke data app sungguhan dan waktu kejadian bisa diuji.
 6. **Pesan yang dihentikan memakai `status: .stopped`**, menggantikan sufiks teks " (cancelled)".
@@ -104,6 +104,22 @@ Semua deviasi di bawah juga dicatat di spec B §13.
 12. **`ReminderChip` punya status ketiga, "Reminder passed".** Status ini dipakai untuk reminder sekali jalan yang sudah lewat atau sudah dibuang karena lewat lebih dari sehari. Spec hanya mendefinisikan status terjadwal dan "Reminder removed".
 13. **`CompactStageHeader` punya tombol lonceng** yang membuka popover reminder, karena Up next tidak terlihat dalam mode compact.
 14. **Clear Conversation memakai shortcut ⌘K.**
+
+## Catatan eksekusi
+
+Kode di task-task di bawah adalah rencana awal. Perbaikan berikut ditemukan saat eksekusi, terutama di verifikasi manual Task 14. Masing-masing di-commit terpisah, dan kode di repo yang berlaku (spec B §13 butir 3 dan 15–19):
+
+| Commit | Perbaikan |
+|---|---|
+| `fix(b11)` menu Clear Conversation | `FocusedValues` membawa `Binding<Bool>` (`clearConversationRequest`), bukan closure. `@Entry` memperingatkan closure yang tidak bisa dibandingkan |
+| `fix(b11)` 720×520 | Minimum konten dikurangi tinggi area judul dari AppKit (`MainWindowLayout.minimumContentSize`) |
+| `fix(b1)` stage di mode terang | `AppColor.raisedSurface` = `tertiarySystemFill` |
+| `fix(b10)` editor popover | Daftar ≤ 4 tanpa `ScrollView`; lebih dari itu digulir dalam 340pt |
+| `fix(b)` Esc | Monitor Esc Buddy melewatkan Esc yang ditujukan ke jendela biasa |
+| `fix(b11)` auto-scroll | Daftar pesan menggulir setiap kali pesan terakhir berubah |
+| `fix(b9)` ⇧Return | Monitor keyboard lokal `ShiftReturnNewline` menggantikan `onKeyPress` |
+
+Alat verifikasi: argumen `-AppleInterfaceStyle Light` **tidak** memaksa mode terang saat sistem memakai mode gelap. Gunakan `-NSRequiresAquaSystemAppearance YES`, yang juga hanya berlaku untuk proses Apl.
 
 ## Peta berkas
 
