@@ -13,7 +13,7 @@ import Foundation
 
 enum AplError: Error, Equatable, LocalizedError {
 
-    /// Tidak ada otak yang siap. UI menampilkan `AIUnavailableCard`.
+    /// Tidak ada otak yang siap. UI menampilkan `AIUnavailableBanner`.
     case noBrainAvailable(reason: String)
 
     /// Jendela konteks penuh dan pemangkasan pun tidak menolong.

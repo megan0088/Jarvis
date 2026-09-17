@@ -13,6 +13,7 @@ struct AplApp: App {
     private static let deps = AppDependencies.live()
 
     @State private var chat = deps.makeChatStore()
+    @State private var reminders = deps.makeReminderListViewModel()
     @State private var buddySettings = deps.buddySettings
     @State private var profile = deps.profile
 
@@ -27,18 +28,34 @@ struct AplApp: App {
             rootView
                 .task {
                     chat.createReminder = Self.deps.makeCreateReminderUseCase()
+                    // Kelima ekspresi dimuat di awal, supaya pergantian wajah
+                    // pertama pun tidak menunggu disk (spec B §6).
+                    await CharacterExpressionCache.shared.preload(.robot)
                 }
         }
-        // Modifier Scene, bukan View. Tanpa ini jendela memakai ukuran bawaan
-        // yang bisa memotong sidebar dan halaman chat.
-        .defaultSize(width: 1000, height: 680)
+        // Judul jendela disembunyikan: stage dan header percakapan mengisi
+        // bagian atas, dan latar jendela bisa diseret untuk memindahkannya.
+        .windowStyle(.hiddenTitleBar)
+        .windowBackgroundDragBehavior(.enabled)
+        .defaultSize(MainWindowLayout.defaultSize)
         .windowResizability(.contentMinSize)
+        .commands {
+            ConversationCommands()
+        }
+
+        // SEMENTARA: halaman Settings lama ditampung jendela ⌘, sampai
+        // jendela Settings bertab menggantikannya.
+        Settings {
+            SettingsPage(chat: chat, buddySettings: buddySettings, profile: profile,
+                         extraErasableStores: Self.deps.erasableStores)
+                .frame(width: 480, height: 560)
+        }
     }
 
     @ViewBuilder
     private var rootView: some View {
         if profile.hasCompletedOnboarding {
-            dashboard
+            mainWindow
         } else {
             OnboardingView(profile: profile, chat: chat,
                            onNotificationsGranted: {
@@ -49,15 +66,9 @@ struct AplApp: App {
     }
 
     @ViewBuilder
-    private var dashboard: some View {
-        DashboardTemplate(
-            chat: chat,
-            buddySettings: buddySettings,
-            profile: profile,
-            extraErasableStores: Self.deps.erasableStores,
-            onBuddyMode: toggleBuddyMode,
-            isBuddyModeActive: isBuddyMode
-        )
+    private var mainWindow: some View {
+        MainWindow(chat: chat, reminders: reminders, launcher: Self.deps.appLauncher,
+                   isBuddyModeOn: isBuddyMode, onToggleBuddy: toggleBuddyMode)
         // Setiap preferensi buddy diterapkan langsung tanpa memulai ulang mode,
         // supaya kontrol di Settings terasa hidup saat digeser.
         .onChange(of: buddySettings.size) { _, value in
@@ -86,10 +97,10 @@ struct AplApp: App {
                 AplBuddyWindowController.shared.stopBuddyMode()
             }
         }
-        // Buddy Mode menyala sendiri begitu dashboard tampil.
+        // Buddy Mode menyala sendiri begitu jendela utama tampil.
         //
-        // Dijalankan sekali per kemunculan dashboard; menyalakan ulang saat
-        // sudah aktif akan membangun ulang jendelanya tanpa alasan.
+        // Dijalankan sekali per kemunculan; menyalakan ulang saat sudah aktif
+        // akan membangun ulang jendelanya tanpa alasan.
         .task {
             guard !isBuddyMode else { return }
             isBuddyMode = true

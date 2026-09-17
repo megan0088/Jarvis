@@ -34,7 +34,7 @@ targets:
           - "Presentation/Views/ContentView.swift"
           - "Presentation/Views/ContentView+iOS.swift"
           # Extension dari ContentView (UI retro), bukan file produk macOS —
-          # jalur macOS memakai DashboardTemplate. Ikut dibekukan.
+          # jalur macOS memakai MainWindow. Ikut dibekukan.
           - "Presentation/Views/ContentView+macOS.swift"
           - "Presentation/Views/PetActivityWidgets.swift"
           - "Infrastructure/Services/Haptics.swift"

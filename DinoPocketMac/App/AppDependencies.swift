@@ -75,4 +75,10 @@ struct AppDependencies {
     func makeCreateReminderUseCase() -> CreateReminderFromTextUseCase {
         CreateReminderFromTextUseCase(store: reminderStore, notifications: reminderScheduler)
     }
+
+    /// Membaca ReminderStore yang sama dengan chat, supaya reminder dari chat
+    /// langsung muncul di Up next.
+    func makeReminderListViewModel() -> ReminderListViewModel {
+        ReminderListViewModel(store: reminderStore, notifications: reminderScheduler)
+    }
 }
