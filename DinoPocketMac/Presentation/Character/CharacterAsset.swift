@@ -73,6 +73,11 @@ struct CharacterAsset: Equatable, Sendable {
     func resourceName(for behavior: CharacterBehavior) -> String {
         expressions[behavior] ?? defaultExpression
     }
+
+    /// Semua berkas yang mungkin tampil, tanpa duplikat — untuk dimuat di awal.
+    var allResourceNames: [String] {
+        Set(expressions.values).union([defaultExpression]).sorted()
+    }
 }
 
 extension CharacterAsset {

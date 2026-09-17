@@ -4,7 +4,8 @@
 //
 //  Companion 3D HealthAssistantRobot, dirender lewat RealityView (SwiftUI).
 //  Satu berkas USDZ per ekspresi; berkas mana yang dimuat ditentukan
-//  `CharacterAsset.expressions`, bukan oleh view ini.
+//  `CharacterAsset.expressions`, bukan oleh view ini. Model diambil dari
+//  `CharacterExpressionCache`, bukan dibaca dari disk setiap kali.
 //
 //  CATATAN — tiga jalan buntu yang tidak perlu diulang.
 //
@@ -22,7 +23,7 @@
 //  3. Mengganti ekspresi dengan `.id(resourceName)` pada RealityView memang
 //     bekerja, tetapi membangun ulang seluruh scene: karakter berkedip hilang
 //     setiap kali mood berubah. Yang ditukar sekarang hanya isi `stage`,
-//     dan model lama tetap terlihat sampai model baru selesai dimuat.
+//     dan model lama tetap terlihat sampai model baru siap.
 //
 
 import SwiftUI
@@ -33,9 +34,24 @@ struct USDZCharacterView: View {
     var size: CGFloat = 90
     var asset: CharacterAsset = .robot
     var behavior: CharacterBehavior = .idle
+    /// Menjeda gerak napas tanpa membongkar scene — saat jendela tidak aktif
+    /// atau Low Power Mode (spec B §12).
+    var isPaused = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Wadah yang hidup selama view ada; hanya isinya yang berganti.
     @State private var stage = Entity()
+    @State private var motion: AnimationPlaybackController?
+    /// Naik setiap kali ekspresi berganti, memicu efek "pop".
+    @State private var swapCount = 0
+
+    /// Model dipasang ulang saat berkasnya ATAU Reduce Motion berubah, karena
+    /// gerak napas dipasang bersama model.
+    private struct Appearance: Hashable {
+        let resourceName: String
+        let reduceMotion: Bool
+    }
 
     var body: some View {
         RealityView { content in
@@ -57,20 +73,38 @@ struct USDZCharacterView: View {
         }
         // Dikunci ke nama berkas, bukan ke `behavior`: dua perilaku yang
         // memakai wajah sama tidak perlu memuat ulang apa pun.
-        .task(id: asset.resourceName(for: behavior)) {
+        .task(id: Appearance(resourceName: asset.resourceName(for: behavior), reduceMotion: reduceMotion)) {
             await show(asset.resourceName(for: behavior))
         }
+        .onChange(of: isPaused) { _, paused in
+            if paused { motion?.pause() } else { motion?.resume() }
+        }
+        // "Pop" singkat saat wajah berganti, supaya pergantian terbaca
+        // sebagai reaksi, bukan kedipan.
+        .keyframeAnimator(initialValue: CGFloat(1), trigger: swapCount) { content, scale in
+            content.scaleEffect(scale)
+        } keyframes: { _ in
+            KeyframeTrack {
+                CubicKeyframe(0.92, duration: 0.05)
+                SpringKeyframe(1, duration: 0.13)
+            }
+        }
         .frame(width: size, height: size)
+        .accessibilityElement()
+        .accessibilityLabel(CharacterStatusText.accessibilityLabel(for: behavior))
+        .accessibilityAddTraits(.isImage)
     }
 
-    /// Memuat satu ekspresi dan menukarnya ke dalam `stage`.
+    /// Mengambil satu ekspresi dari cache dan menukarnya ke dalam `stage`.
     ///
-    /// Gagal muat tidak mengosongkan panggung — wajah sebelumnya dipertahankan.
-    /// Itu juga yang terjadi saat `.task` dibatalkan karena mood berubah dua
-    /// kali beruntun.
+    /// Gagal muat tidak mengosongkan panggung — wajah sebelumnya dipertahankan,
+    /// dan stage tetap menampilkan nama, status, serta Up next (spec B §9).
+    /// Task yang sudah dibatalkan tidak boleh menukar apa pun: dengan cache,
+    /// permintaan lama bisa selesai SETELAH permintaan yang lebih baru.
     @MainActor
     private func show(_ resourceName: String) async {
-        guard let character = try? await Entity(named: resourceName, in: Bundle.main) else { return }
+        guard let character = await CharacterExpressionCache.shared.entity(named: resourceName),
+              !Task.isCancelled else { return }
 
         // Normalisasi ke ukuran layar yang konsisten dan pusatkan di origin.
         // Origin model ada di kaki, jadi recentering inilah yang menahannya
@@ -89,10 +123,14 @@ struct USDZCharacterView: View {
         character.scale *= factor
         character.position = -bounds.center * factor
 
-        playIdleMotion(on: character)
-
+        let isSwap = !stage.children.isEmpty
         stage.children.removeAll()
         stage.addChild(character)
+
+        // Reduce Motion mematikan napas dan pop (spec B §7).
+        motion = reduceMotion ? nil : playIdleMotion(on: character)
+        if isPaused { motion?.pause() }
+        if isSwap && !reduceMotion { swapCount += 1 }
     }
 
     /// Klip bawaan kalau ada; kalau tidak, napas buatan.
@@ -102,13 +140,12 @@ struct USDZCharacterView: View {
     /// Cabang pertama dibiarkan supaya ekspor beranimasi nanti langsung
     /// dipakai tanpa menyentuh view ini.
     @MainActor
-    private func playIdleMotion(on character: Entity) {
+    private func playIdleMotion(on character: Entity) -> AnimationPlaybackController? {
         if let baked = character.availableAnimations.first {
-            character.playAnimation(baked.repeat(), transitionDuration: 0.3, startsPaused: false)
-            return
+            return character.playAnimation(baked.repeat(), transitionDuration: 0.3, startsPaused: false)
         }
 
-        guard asset.idleBobHeight > 0 else { return }
+        guard asset.idleBobHeight > 0 else { return nil }
 
         var lifted = character.transform
         lifted.translation.y += asset.idleBobHeight
@@ -121,15 +158,20 @@ struct USDZCharacterView: View {
             repeatMode: .autoReverse
         )
 
-        if let motion = try? AnimationResource.generate(with: bob) {
-            character.playAnimation(motion.repeat(), transitionDuration: 0.3, startsPaused: false)
-        }
+        guard let resource = try? AnimationResource.generate(with: bob) else { return nil }
+        return character.playAnimation(resource.repeat(), transitionDuration: 0.3, startsPaused: false)
     }
 }
 
-#Preview("Idle") {
+#Preview("Idle · Light") {
     USDZCharacterView(size: 160)
         .padding()
+}
+
+#Preview("Thinking · Dark") {
+    USDZCharacterView(size: 160, behavior: .thinking)
+        .padding()
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Celebrate") {
