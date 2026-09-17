@@ -305,16 +305,20 @@ khusus `DEBUG`.
 
 ## 11. Definition of Done — B
 
-- [ ] Jendela utama sesuai artboard A dalam dark, dan light mengikuti token §7
-- [ ] `DashboardTemplate`, `HomePage`, `SidebarView`, dan sheet chat tidak lagi ada di build
-- [ ] Ekspresi robot mengikuti `CharacterMoodResolver`; pergantian tanpa kedip dan tanpa jeda muat
-- [ ] Up next menampilkan, membatalkan, dan meng-undo reminder dari chat
-- [ ] Onboarding 3 langkah tanpa akun; Settings (⌘,) dengan tiga tab
-- [ ] Clear Conversation dan Erase All Data dengan konfirmasi
-- [ ] Nol teks peringatan di dalam isi pesan; kegagalan tampil sebagai `FailedMessage`
-- [ ] Setiap komponen baru punya `#Preview`
-- [ ] Test §10 lulus; test lama tidak regresi
-- [ ] Verifikasi manual §10 selesai dengan screenshot
+- [x] Jendela utama sesuai artboard A dalam dark, dan light mengikuti token §7
+- [x] `DashboardTemplate`, `HomePage`, `SidebarView`, dan sheet chat tidak lagi ada di build
+- [x] Ekspresi robot mengikuti `CharacterMoodResolver`; pergantian tanpa kedip dan tanpa jeda muat
+- [x] Up next menampilkan, membatalkan, dan meng-undo reminder dari chat
+- [x] Onboarding 3 langkah tanpa akun; Settings (⌘,) dengan tiga tab
+- [x] Clear Conversation dan Erase All Data dengan konfirmasi
+- [x] Nol teks peringatan di dalam isi pesan; kegagalan tampil sebagai `FailedMessage`
+  (jalur gagal dibuktikan lewat unit test dan preview — stream yang gagal tidak bisa dipicu
+  di app sungguhan tanpa merusak model)
+- [x] Setiap komponen baru punya `#Preview`
+- [x] Test §10 lulus; test lama tidak regresi (154 test)
+- [ ] Verifikasi manual §10 selesai dengan screenshot — dark/light pada 1000×680 dan 740×520
+  serta state AI mati selesai (2026-09-17); VoiceOver dan Reduce Motion menunggu pengecekan
+  pemilik produk
 
 ---
 
