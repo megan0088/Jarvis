@@ -94,6 +94,7 @@ struct FailedMessage: View {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(AppColor.statusWarning)
+                    .accessibilityHidden(true)
                 Text("Apl couldn't finish this reply.")
                     .foregroundStyle(.secondary)
                 if let onRetry {

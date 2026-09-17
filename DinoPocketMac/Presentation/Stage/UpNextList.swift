@@ -40,6 +40,7 @@ struct UpNextList: View {
                         HStack(alignment: .firstTextBaseline, spacing: Spacing.sm) {
                             Image(systemName: row.repeatsDaily ? "repeat" : "bell")
                                 .foregroundStyle(AppColor.accent)
+                                .accessibilityHidden(true)
                                 .frame(width: 16)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(row.reminder.title)
@@ -58,6 +59,7 @@ struct UpNextList: View {
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "bell.slash")
                             .foregroundStyle(AppColor.statusWarning)
+                            .accessibilityHidden(true)
                         Text("Notifications are off")
                         Button("Turn On…", action: onOpenNotificationSettings)
                             .buttonStyle(.link)

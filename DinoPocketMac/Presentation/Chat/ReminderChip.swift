@@ -18,6 +18,7 @@ struct ReminderChip: View {
             case .scheduled(let title, let whenText):
                 Image(systemName: "bell.fill")
                     .foregroundStyle(AppColor.accent)
+                    .accessibilityHidden(true)
                 Text(title)
                     .fontWeight(.medium)
                     .lineLimit(1)
@@ -29,11 +30,13 @@ struct ReminderChip: View {
             case .past:
                 Image(systemName: "checkmark.circle")
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
                 Text("Reminder passed")
                     .foregroundStyle(.secondary)
             case .removed:
                 Image(systemName: "bell.slash")
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
                 Text("Reminder removed")
                     .foregroundStyle(.secondary)
             }

@@ -35,6 +35,7 @@ struct AIUnavailableBanner: View {
             Image(systemName: isPreparing ? "arrow.down.circle" : "apple.intelligence")
                 .font(.title3)
                 .foregroundStyle(isPreparing ? Color.secondary : AppColor.statusWarning)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(isPreparing ? "Getting Apple Intelligence ready" : "Chat needs Apple Intelligence")
                     .font(.callout.weight(.semibold))

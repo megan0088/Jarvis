@@ -77,6 +77,7 @@ struct RemindersPopover: View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: row.repeatsDaily ? "repeat" : "bell")
                 .foregroundStyle(AppColor.accent)
+                .accessibilityHidden(true)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.reminder.title)
