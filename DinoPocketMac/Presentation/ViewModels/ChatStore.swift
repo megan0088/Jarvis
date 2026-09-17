@@ -9,6 +9,15 @@ final class ChatStore {
     /// percakapan yang sudah ada tidak hilang.
     nonisolated static let recentKey = "jarvis.chat.recent"
 
+    /// Jawaban saat guardrail model menolak. Netral, bukan gaya error: tidak
+    /// ada yang rusak, dan Retry tidak akan mengubah hasilnya (spec B §9).
+    nonisolated static let blockedReply = "I can't help with that one."
+
+    /// Ditampilkan di bawah percakapan saat pesan biasa dikirim tanpa Apple
+    /// Intelligence. Tidak pernah masuk ke isi pesan.
+    nonisolated static let unavailableNotice =
+        "Apple Intelligence isn't available yet. Enable it in System Settings to chat."
+
     var messages: [ChatMessage] = []
     var isStreaming = false
     var noticeMessage: String?
@@ -33,6 +42,8 @@ final class ChatStore {
     private let defaults: UserDefaults
     private let now: () -> Date
     private var streamTask: Task<Void, Never>?
+    /// Naik setiap kali jawaban baru dimulai atau yang berjalan dihentikan.
+    /// Task stream yang generasinya sudah lewat tidak boleh menyentuh state.
     private var streamGeneration = 0
 
     /// Reminder yang sedang menunggu jawaban "jam berapa?". Hanya bertahan satu
@@ -60,15 +71,6 @@ final class ChatStore {
         }
     }
 
-    /// Membuang riwayat percakapan yang tersimpan beserta yang ada di memori.
-    func eraseAllStoredData() {
-        messages = []
-        noticeMessage = nil
-        reminderAwaitingTime = nil
-        lastEvent = nil
-        defaults.removeObject(forKey: Self.recentKey)
-    }
-
     /// Ketersediaan Apple Intelligence, tanpa efek samping — untuk jendela
     /// utama, onboarding, dan karakter.
     func availability() async -> BrainAvailability {
@@ -77,6 +79,8 @@ final class ChatStore {
         }
         return await brain.availability()
     }
+
+    // MARK: - Percakapan
 
     func send(_ text: String) async {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -97,13 +101,55 @@ final class ChatStore {
             return
         }
 
+        await streamReply()
+    }
+
+    /// Mengulang jawaban yang gagal. Hanya jawaban TERAKHIR yang bisa diulang:
+    /// jawaban baru selalu menanggapi pesan pengguna terakhir, jadi mengulang
+    /// jawaban di tengah percakapan akan menjawab pertanyaan yang salah.
+    func retry(_ failedID: ChatMessage.ID) async {
+        guard !isStreaming, let last = messages.last,
+              last.id == failedID, last.status == .failed else { return }
+        messages.removeLast()
+        await streamReply()
+    }
+
+    /// Esc atau tombol stop. Teks yang sudah tertulis dipertahankan dan
+    /// ditandai `.stopped`.
+    func stopStreaming() {
+        guard isStreaming else { return }
+        streamTask?.cancel()
+        streamGeneration += 1
+        finalizeInterruptedAssistant()
+        persistRecent()
+    }
+
+    /// Menu Conversation › Clear Conversation…. Reminder tidak ikut terhapus.
+    func clearConversation() async {
+        resetConversationState()
+        await brain?.resetConversation()
+    }
+
+    /// Membuang riwayat percakapan yang tersimpan beserta yang ada di memori,
+    /// termasuk ingatan model — kalau tidak, sesi lama tersimpan lagi ke disk
+    /// pada pesan berikutnya.
+    func eraseAllStoredData() {
+        resetConversationState()
+        Task { await self.brain?.resetConversation() }
+    }
+
+    // MARK: - Internal
+
+    private func streamReply() async {
         guard let brain, await brain.availability() == .ready else {
-            noticeMessage = "Apple Intelligence isn't available yet. Enable it in System Settings to chat."
+            noticeMessage = Self.unavailableNotice
+            persistRecent()
             return
         }
         noticeMessage = nil
 
-        let history = messages
+        // Jawaban gagal tidak dianggap bagian percakapan.
+        let history = messages.filter { $0.status != .failed }
         var assistant = ChatMessage(role: .assistant, text: "", date: now())
         messages.append(assistant)
         let index = messages.count - 1
@@ -116,11 +162,18 @@ final class ChatStore {
                 for try await cumulative in brain.reply(to: history) {
                     if Task.isCancelled { break }
                     assistant.text = cumulative
-                    if messages.indices.contains(index) { messages[index] = assistant }
+                    if generation == self.streamGeneration, messages.indices.contains(index) {
+                        messages[index] = assistant
+                    }
                 }
             } catch {
                 if generation == self.streamGeneration, messages.indices.contains(index) {
-                    messages[index].text += (messages[index].text.isEmpty ? "" : "\n\n") + "⚠️ Connection lost."
+                    if (error as? AplError) == .requestBlocked {
+                        messages[index].text = Self.blockedReply
+                    } else {
+                        messages[index].status = .failed
+                        lastEvent = ChatEvent(kind: .failed, at: now())
+                    }
                 }
             }
             guard generation == self.streamGeneration else { return }
@@ -159,16 +212,29 @@ final class ChatStore {
     }
 
     /// Kalau stream sebelumnya diputus di tengah jalan, rapikan bubble asisten-nya
-    /// supaya tidak nyangkut di UI dan tidak ikut ke history berikutnya.
+    /// supaya tidak nyangkut di UI: yang masih kosong dibuang, yang sudah
+    /// berisi ditandai `.stopped`.
     private func finalizeInterruptedAssistant() {
-        guard isStreaming, let last = messages.indices.last,
-              messages[last].role == .assistant else { return }
+        guard isStreaming else { return }
+        isStreaming = false
+        guard let last = messages.indices.last, messages[last].role == .assistant else { return }
         if messages[last].text.isEmpty {
             messages.remove(at: last)
         } else {
-            messages[last].text += " (cancelled)"
+            messages[last].status = .stopped
         }
+    }
+
+    private func resetConversationState() {
+        streamTask?.cancel()
+        streamTask = nil
+        streamGeneration += 1
         isStreaming = false
+        messages = []
+        noticeMessage = nil
+        reminderAwaitingTime = nil
+        lastEvent = nil
+        defaults.removeObject(forKey: Self.recentKey)
     }
 
     private func persistRecent() {

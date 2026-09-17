@@ -23,6 +23,7 @@ private struct StubBrain: Brain {
 /// completion of each call's stream at a time of the test's choosing.
 private final class GatedBrain: Brain, @unchecked Sendable {
     var available: BrainAvailability = .ready
+    private(set) var resetCount = 0
     private var continuations: [AsyncThrowingStream<String, Error>.Continuation] = []
     private var starters: [CheckedContinuation<Void, Never>] = []
     private var startedCount = 0
@@ -37,10 +38,20 @@ private final class GatedBrain: Brain, @unchecked Sendable {
         }
     }
 
+    func resetConversation() async {
+        resetCount += 1
+    }
+
     /// Suspends until the Nth (1-based) call to `reply` has begun.
     func waitUntilStreamStarted(_ n: Int) async {
         if startedCount >= n { return }
         await withCheckedContinuation { starters.append($0) }
+    }
+
+    /// Yields one cumulative chunk on the Nth (1-based) call's stream.
+    func yield(_ n: Int, _ chunk: String) {
+        guard continuations.indices.contains(n - 1) else { return }
+        continuations[n - 1].yield(chunk)
     }
 
     /// Completes the Nth (1-based) call's stream, optionally yielding chunks first.
@@ -51,9 +62,9 @@ private final class GatedBrain: Brain, @unchecked Sendable {
     }
 
     /// Fails the Nth (1-based) call's stream with an error, without yielding chunks.
-    func throwStream(_ n: Int) {
+    func throwStream(_ n: Int, error: Error = StubStreamError()) {
         guard continuations.indices.contains(n - 1) else { return }
-        continuations[n - 1].finish(throwing: StubStreamError())
+        continuations[n - 1].finish(throwing: error)
     }
 }
 
@@ -66,6 +77,17 @@ private func isolatedDefaults(_ name: String) -> UserDefaults {
     let defaults = UserDefaults(suiteName: suite)!
     defaults.removePersistentDomain(forName: suite)
     return defaults
+}
+
+/// Menunggu kondisi yang dipenuhi task lain di MainActor. Batasnya satu
+/// detik, supaya test yang salah gagal di `#expect`, bukan menggantung.
+@MainActor
+private func waitUntil(_ condition: () -> Bool) async {
+    var attempts = 0
+    while !condition(), attempts < 200 {
+        attempts += 1
+        try? await Task.sleep(for: .milliseconds(5))
+    }
 }
 
 struct ChatStoreTests {
@@ -296,5 +318,109 @@ struct ChatStoreTests {
 
         #expect(defaults.data(forKey: ChatStore.recentKey) != nil)
         #expect(restored.messages == first.messages)
+    }
+
+    // MARK: - Gagal, stop, retry, clear (spec B §9)
+
+    /// Guardrail bukan kesalahan pengguna maupun jaringan: jawabannya netral.
+    @MainActor @Test func blockedRequestGetsANeutralReply() async {
+        let brain = GatedBrain()
+        let store = ChatStore(brain: brain, defaults: isolatedDefaults(#function))
+
+        let sending = Task { await store.send("something") }
+        await brain.waitUntilStreamStarted(1)
+        brain.throwStream(1, error: AplError.requestBlocked)
+        await sending.value
+
+        #expect(store.messages.last?.text == ChatStore.blockedReply)
+        #expect(store.messages.last?.status == .complete)
+        #expect(store.lastEvent == nil)
+    }
+
+    @MainActor @Test func failedStreamIsMarkedFailedWithoutWarningText() async {
+        let brain = GatedBrain()
+        let store = ChatStore(brain: brain, defaults: isolatedDefaults(#function), now: { TestTime.now })
+
+        let sending = Task { await store.send("hello") }
+        await brain.waitUntilStreamStarted(1)
+        brain.yield(1, "Half an ans")
+        await waitUntil { store.messages.last?.text == "Half an ans" }
+        brain.throwStream(1)
+        await sending.value
+
+        #expect(store.messages.last?.text == "Half an ans")
+        #expect(store.messages.last?.status == .failed)
+        #expect(store.lastEvent == ChatEvent(kind: .failed, at: TestTime.now))
+        #expect(store.isStreaming == false)
+    }
+
+    /// Retry mengganti jawaban yang gagal di tempat, tanpa menggandakan pesan pengguna.
+    @MainActor @Test func retryReplacesTheFailedReply() async {
+        let brain = GatedBrain()
+        let store = ChatStore(brain: brain, defaults: isolatedDefaults(#function))
+        let first = Task { await store.send("hello") }
+        await brain.waitUntilStreamStarted(1)
+        brain.throwStream(1)
+        await first.value
+        let failedID = store.messages[1].id
+
+        let retrying = Task { await store.retry(failedID) }
+        await brain.waitUntilStreamStarted(2)
+        brain.finishStream(2, with: ["Hi!"])
+        await retrying.value
+
+        #expect(store.messages.map(\.role) == [.user, .assistant])
+        #expect(store.messages[0].text == "hello")
+        #expect(store.messages[1].text == "Hi!")
+        #expect(store.messages[1].status == .complete)
+    }
+
+    @MainActor @Test func stopKeepsWhatWasWrittenAndMarksItStopped() async {
+        let brain = GatedBrain()
+        let store = ChatStore(brain: brain, defaults: isolatedDefaults(#function))
+
+        let sending = Task { await store.send("tell me a story") }
+        await brain.waitUntilStreamStarted(1)
+        brain.yield(1, "Once upon")
+        await waitUntil { store.messages.last?.text == "Once upon" }
+
+        store.stopStreaming()
+        brain.finishStream(1, with: ["Once upon a time"])
+        await sending.value
+
+        #expect(store.isStreaming == false)
+        #expect(store.messages.last?.text == "Once upon")
+        #expect(store.messages.last?.status == .stopped)
+    }
+
+    /// Clear Conversation mengosongkan layar DAN ingatan model, tapi reminder
+    /// tetap ada (spec B §4).
+    @MainActor @Test func clearConversationForgetsTheChatButKeepsReminders() async {
+        let defaults = isolatedDefaults(#function)
+        let brain = GatedBrain()
+        let chat = ChatStore(brain: brain, defaults: defaults, now: { TestTime.now })
+        let reminders = InMemoryReminderStore()
+        chat.createReminder = CreateReminderFromTextUseCase(
+            store: reminders, notifications: SpyReminderScheduler(), now: { TestTime.now },
+            calendar: TestTime.calendar, locale: TestTime.locale)
+        await chat.send("remind me to stretch at 3pm")
+
+        await chat.clearConversation()
+
+        #expect(chat.messages.isEmpty)
+        #expect(chat.lastEvent == nil)
+        #expect(defaults.data(forKey: ChatStore.recentKey) == nil)
+        #expect(brain.resetCount == 1)
+        #expect(reminders.reminders.count == 1)
+    }
+
+    @MainActor @Test func eraseAlsoMakesTheModelForget() async {
+        let brain = GatedBrain()
+        let store = ChatStore(brain: brain, defaults: isolatedDefaults(#function))
+
+        store.eraseAllStoredData()
+        await waitUntil { brain.resetCount == 1 }
+
+        #expect(brain.resetCount == 1)
     }
 }

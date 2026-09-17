@@ -91,6 +91,20 @@ final class AppleBrain: Brain {
         }
     }
 
+    nonisolated func resetConversation() async {
+        await forgetSession()
+    }
+
+    /// Sesi di memori dibuang bersama transcript-nya. Stream yang masih
+    /// berjalan tidak menyimpan ulang transcript lama: penyimpanan di akhir
+    /// `stream` hanya terjadi bila `sessionBox.session` masih ada.
+    private func forgetSession() {
+        #if canImport(FoundationModels)
+        sessionBox.session = nil
+        (sessions as? any ChatSessionStoring)?.clear()
+        #endif
+    }
+
     #if canImport(FoundationModels)
     @available(macOS 26.0, iOS 26.0, *)
     private func stream(history: [ChatMessage],

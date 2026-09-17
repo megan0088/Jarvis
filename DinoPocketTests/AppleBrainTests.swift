@@ -1,6 +1,14 @@
 import Foundation
+import FoundationModels
 import Testing
 @testable import Apl
+
+private final class SpySessionStore: ChatSessionStoring, @unchecked Sendable {
+    private(set) var clearCount = 0
+    func loadTranscript() -> Transcript? { nil }
+    func save(_ transcript: Transcript) {}
+    func clear() { clearCount += 1 }
+}
 
 struct AppleBrainTests {
     @Test func buildPromptThreadsFullHistoryEndingWithAssistantCue() {
@@ -15,5 +23,16 @@ struct AppleBrainTests {
 
     @Test func buildPromptEmptyHistoryIsJustCue() {
         #expect(AppleBrain.buildPrompt(from: []) == "Apl:")
+    }
+
+    /// Clear Conversation harus membuat model lupa, bukan hanya layar kosong:
+    /// tanpa ini transcript lama dimuat lagi saat pesan berikutnya dikirim.
+    @MainActor @Test func resetConversationClearsTheSavedTranscript() async {
+        let sessions = SpySessionStore()
+        let brain = AppleBrain(sessionStore: sessions)
+
+        await brain.resetConversation()
+
+        #expect(sessions.clearCount == 1)
     }
 }
