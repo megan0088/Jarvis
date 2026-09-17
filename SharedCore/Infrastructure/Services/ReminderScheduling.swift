@@ -14,6 +14,9 @@ import Foundation
 
 protocol ReminderScheduling: Sendable {
     func requestAuthorization() async -> Bool
+    /// Apakah macOS saat ini mengizinkan Apl menampilkan notifikasi. Tidak
+    /// pernah memunculkan dialog; dipakai petunjuk "Notifications are off".
+    func notificationsAllowed() async -> Bool
     /// Menyamakan notifikasi tertunda dengan daftar reminder: semua milik Apl
     /// dihapus, lalu kemunculan terdekat dijadwalkan ulang.
     func sync(_ reminders: [Reminder], now: Date) async

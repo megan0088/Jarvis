@@ -32,6 +32,17 @@ final class ReminderNotificationCenter: NSObject, UNUserNotificationCenterDelega
         }
     }
 
+    /// Hanya Bool yang keluar dari completion handler, dengan alasan yang
+    /// sama seperti `pendingReminderIDs()`.
+    func notificationsAllowed() async -> Bool {
+        await withCheckedContinuation { continuation in
+            center.getNotificationSettings { settings in
+                let status = settings.authorizationStatus
+                continuation.resume(returning: status == .authorized || status == .provisional)
+            }
+        }
+    }
+
     func sync(_ reminders: [Reminder], now: Date) async {
         await cancelAll()
         for trigger in ReminderTriggers.plan(for: reminders, now: now, calendar: .current) {

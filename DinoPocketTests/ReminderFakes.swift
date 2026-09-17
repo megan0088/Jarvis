@@ -28,8 +28,11 @@ final class SpyReminderScheduler: ReminderScheduling, @unchecked Sendable {
     private(set) var lastSynced: [Reminder] = []
     private(set) var cancelAllCallCount = 0
     var authorizationAnswer = true
+    var notificationsAllowedAnswer = true
 
     func requestAuthorization() async -> Bool { authorizationAnswer }
+
+    func notificationsAllowed() async -> Bool { notificationsAllowedAnswer }
 
     func sync(_ reminders: [Reminder], now: Date) async {
         syncCallCount += 1
