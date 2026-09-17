@@ -27,23 +27,15 @@ struct RemindersPopover: View {
                         Text("Ask Apl in chat, like “Remind me to stretch at 3 PM”.")
                     }
                     .frame(height: 180)
-                } else {
+                } else if rows.count > Self.rowsWithoutScrolling {
                     ScrollView {
-                        VStack(spacing: 0) {
-                            ForEach(rows) { row in
-                                if editingID == row.id {
-                                    ReminderEditor(reminder: row.reminder,
-                                                   onSave: { save($0) },
-                                                   onCancel: { editingID = nil })
-                                        .padding(Spacing.sm)
-                                } else {
-                                    rowView(row)
-                                }
-                                Divider()
-                            }
-                        }
+                        list(rows)
                     }
-                    .frame(maxHeight: 340)
+                    .frame(height: 340)
+                } else {
+                    // Tanpa ScrollView: tinggi ScrollView di popover tidak ikut
+                    // bertambah saat editor dibuka, sehingga editor terpotong.
+                    list(rows)
                 }
                 if let cancelled = viewModel.lastCancelled {
                     Divider()
@@ -60,6 +52,25 @@ struct RemindersPopover: View {
             }
         }
         .frame(width: 320)
+    }
+
+    /// Lebih dari ini, daftar digulir dalam tinggi tetap.
+    private static let rowsWithoutScrolling = 4
+
+    private func list(_ rows: [ReminderListViewModel.Row]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(rows) { row in
+                if editingID == row.id {
+                    ReminderEditor(reminder: row.reminder,
+                                   onSave: { save($0) },
+                                   onCancel: { editingID = nil })
+                        .padding(Spacing.sm)
+                } else {
+                    rowView(row)
+                }
+                Divider()
+            }
+        }
     }
 
     private func rowView(_ row: ReminderListViewModel.Row) -> some View {
