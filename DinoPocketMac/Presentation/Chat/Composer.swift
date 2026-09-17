@@ -6,6 +6,7 @@
 //  Return mengirim, ⇧Return menambah baris, Esc menghentikan jawaban.
 //
 
+import AppKit
 import SwiftUI
 
 struct Composer: View {
@@ -15,6 +16,7 @@ struct Composer: View {
     let onStop: () -> Void
 
     @FocusState private var isFocused: Bool
+    @State private var shiftReturn = ShiftReturnNewline()
 
     private var canSend: Bool {
         state.acceptsInput && state != .streaming
@@ -29,14 +31,6 @@ struct Composer: View {
                 .focused($isFocused)
                 .disabled(!state.acceptsInput)
                 .onSubmit { submit() }
-                // SwiftUI tidak memberi akses ke posisi kursor, jadi ⇧Return
-                // menambah baris di akhir draft (deviasi 3). ⌥Return bawaan
-                // field editor tetap menyisipkan di posisi kursor.
-                .onKeyPress(.return, phases: .down) { press in
-                    guard press.modifiers.contains(.shift) else { return .ignored }
-                    draft += "\n"
-                    return .handled
-                }
                 .onKeyPress(.escape) {
                     guard state == .streaming else { return .ignored }
                     onStop()
@@ -52,6 +46,11 @@ struct Composer: View {
         .background(AppColor.controlFill, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(.separator))
         .task { isFocused = true }
+        .onChange(of: isFocused, initial: true) { _, focused in
+            shiftReturn.isActive = focused
+        }
+        .onAppear { shiftReturn.start() }
+        .onDisappear { shiftReturn.stop() }
     }
 
     @ViewBuilder
@@ -79,6 +78,37 @@ struct Composer: View {
     private func submit() {
         guard canSend else { return }
         onSend()
+    }
+}
+
+/// ⇧Return menyisipkan baris baru di posisi kursor.
+///
+/// `onKeyPress` tidak pernah menerima ⇧Return karena field editor AppKit
+/// menangkapnya lebih dulu, dan tidak berbuat apa-apa dengannya. Monitor
+/// lokal ini menyisipkan baris lewat field editor itu sendiri, hanya selama
+/// composer fokus, supaya kolom satu baris lain (nama panggilan, judul
+/// reminder) tidak ikut terpengaruh. ⌥Return bawaan tetap berfungsi.
+@MainActor
+private final class ShiftReturnNewline {
+    var isActive = false
+    private var monitor: Any?
+
+    func start() {
+        stop()
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, self.isActive,
+                  event.keyCode == 36,                                   // 36 = Return
+                  event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .shift,
+                  let editor = event.window?.firstResponder as? NSTextView,
+                  editor.isFieldEditor else { return event }
+            editor.insertNewlineIgnoringFieldEditor(nil)
+            return nil
+        }
+    }
+
+    func stop() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
     }
 }
 
