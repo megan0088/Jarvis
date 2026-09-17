@@ -135,7 +135,7 @@ private struct CharacterSettingsTab: View {
             } header: {
                 Text("Buddy Mode")
             } footer: {
-                Text("Changes apply immediately while Buddy Mode is running. Press Esc to leave Buddy Mode.")
+                Text("Changes apply immediately while Buddy Mode is running. Turn it off with Hide Buddy in the main window.")
             }
         }
         .formStyle(.grouped)

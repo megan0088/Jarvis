@@ -207,13 +207,18 @@ final class AplBuddyWindowController: NSWindowController {
 
     // MARK: - Esc to exit
 
-    /// Satu-satunya jalan keluar dari Buddy Mode, karena tidak ada tombol di
-    /// layar. Monitor lokal cukup: panel ini `.nonactivatingPanel`, jadi saat
-    /// user menekan Esc app inilah yang aktif bila memang sedang berinteraksi.
+    /// Jalan keluar dari Buddy Mode lewat keyboard. Monitor lokal cukup: panel
+    /// ini `.nonactivatingPanel`, jadi saat user menekan Esc app inilah yang
+    /// aktif bila memang sedang berinteraksi.
+    ///
+    /// Esc yang ditujukan ke jendela biasa (jendela utama, Settings, dialog)
+    /// dibiarkan lewat. Di jendela utama Esc menghentikan jawaban (spec B §7),
+    /// dan Buddy Mode dimatikan lewat tombol Hide Buddy di sana.
     private func startEscMonitoring() {
         if let escMonitor { NSEvent.removeMonitor(escMonitor) }
         escMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard event.keyCode == 53 else { return event }   // 53 = Esc
+            if let target = event.window, target !== self?.window { return event }
             self?.stopBuddyMode()
             self?.dismissHandler?()
             return nil                                        // konsumsi event
