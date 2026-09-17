@@ -30,8 +30,12 @@ enum AppColor {
     static var statusOK: Color { Color(nsColor: .systemGreen) }
     static var statusWarning: Color { Color(nsColor: .systemOrange) }
 
-    /// Panel stage: sedikit berbeda dari latar jendela di kedua tampilan.
-    static var raisedSurface: Color { Color(nsColor: .underPageBackgroundColor) }
+    /// Panel stage: sedikit berbeda dari latar jendela di kedua tampilan
+    /// (±#F2F2F2 di atas putih, ±#292929 di atas #1E1E1E).
+    ///
+    /// Bukan `underPageBackgroundColor`: di light warna itu #969696, sehingga
+    /// stage tampil sebagai blok abu-abu gelap di samping percakapan yang putih.
+    static var raisedSurface: Color { Color(nsColor: .tertiarySystemFill) }
     /// Isi kontrol ringan: composer, chip, blok kode.
     static var controlFill: Color { Color(nsColor: .quaternarySystemFill) }
     static var card: Color { Color(nsColor: .controlBackgroundColor) }
