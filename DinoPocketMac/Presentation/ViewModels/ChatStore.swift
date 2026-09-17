@@ -4,9 +4,18 @@ import Observation
 @MainActor
 @Observable
 final class ChatStore {
+
+    /// Kunci riwayat percakapan. Nama lama sengaja dipertahankan supaya
+    /// percakapan yang sudah ada tidak hilang.
+    nonisolated static let recentKey = "jarvis.chat.recent"
+
     var messages: [ChatMessage] = []
     var isStreaming = false
     var noticeMessage: String?
+
+    /// Kejadian terakhir yang membuat karakter bereaksi (spec B §6). Dibaca
+    /// `CharacterMoodResolver`; ChatStore tidak tahu apa-apa soal ekspresi.
+    private(set) var lastEvent: ChatEvent?
 
     /// Pembuatan pengingat, disuntikkan sebagai UseCase.
     ///
@@ -19,6 +28,10 @@ final class ChatStore {
     /// Apple Intelligence — satu-satunya otak (spec A §2 #7). Opsional hanya
     /// supaya preview dan test bisa membuat ChatStore tanpa model.
     private let brain: Brain?
+    /// Disuntikkan karena test host-nya Apl.app: tanpa ini, test menulis
+    /// riwayat chat ke data app sungguhan.
+    private let defaults: UserDefaults
+    private let now: () -> Date
     private var streamTask: Task<Void, Never>?
     private var streamGeneration = 0
 
@@ -30,9 +43,18 @@ final class ChatStore {
         let title: String?
     }
 
-    init(brain: Brain?) {
+    /// Jawaban reminder yang dibuat tanpa AI.
+    private struct LocalReply {
+        let text: String
+        /// Reminder yang baru dibuat; nil untuk pertanyaan "jam berapa?".
+        let reminderID: Reminder.ID?
+    }
+
+    init(brain: Brain?, defaults: UserDefaults = .standard, now: @escaping () -> Date = { .now }) {
         self.brain = brain
-        if let data = UserDefaults.standard.data(forKey: "jarvis.chat.recent"),
+        self.defaults = defaults
+        self.now = now
+        if let data = defaults.data(forKey: Self.recentKey),
            let restored = try? JSONDecoder().decode([ChatMessage].self, from: data) {
             messages = restored
         }
@@ -43,11 +65,12 @@ final class ChatStore {
         messages = []
         noticeMessage = nil
         reminderAwaitingTime = nil
-        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
+        lastEvent = nil
+        defaults.removeObject(forKey: Self.recentKey)
     }
 
-    /// Ketersediaan Apple Intelligence, tanpa efek samping — untuk gerbang
-    /// layar chat, onboarding, dan baris status di Settings.
+    /// Ketersediaan Apple Intelligence, tanpa efek samping — untuk jendela
+    /// utama, onboarding, dan karakter.
     func availability() async -> BrainAvailability {
         guard let brain else {
             return .unavailable("Apple Intelligence isn't available in this build.")
@@ -60,12 +83,16 @@ final class ChatStore {
         guard !trimmed.isEmpty else { return }
         streamTask?.cancel()
         finalizeInterruptedAssistant()
-        messages.append(ChatMessage(id: UUID(), role: .user, text: trimmed, date: .now))
+        messages.append(ChatMessage(role: .user, text: trimmed, date: now()))
 
         if let reply = await localReminderReply(to: trimmed) {
             noticeMessage = nil
             streamGeneration += 1
-            messages.append(ChatMessage(id: UUID(), role: .assistant, text: reply, date: .now))
+            messages.append(ChatMessage(role: .assistant, text: reply.text, date: now(),
+                                        attachment: reply.reminderID.map { .reminder($0) }))
+            if let id = reply.reminderID {
+                lastEvent = ChatEvent(kind: .reminderCreated(id), at: now())
+            }
             persistRecent()
             return
         }
@@ -77,7 +104,7 @@ final class ChatStore {
         noticeMessage = nil
 
         let history = messages
-        var assistant = ChatMessage(id: UUID(), role: .assistant, text: "", date: .now)
+        var assistant = ChatMessage(role: .assistant, text: "", date: now())
         messages.append(assistant)
         let index = messages.count - 1
         streamGeneration += 1
@@ -109,23 +136,23 @@ final class ChatStore {
     /// Selama ada "remind me", pesan TIDAK PERNAH sampai ke model: model bisa
     /// menjawab "Sure!" tanpa membuat apa pun, dan reminder yang dijanjikan
     /// tetapi tidak ada lebih buruk daripada pertanyaan balik.
-    private func localReminderReply(to text: String) async -> String? {
+    private func localReminderReply(to text: String) async -> LocalReply? {
         guard let createReminder else { return nil }
 
         if let pending = reminderAwaitingTime {
             reminderAwaitingTime = nil
-            if case .created(_, let confirmation)? = await createReminder.complete(title: pending.title,
-                                                                                 timeText: text) {
-                return confirmation
+            if case .created(let reminder, let confirmation)? =
+                await createReminder.complete(title: pending.title, timeText: text) {
+                return LocalReply(text: confirmation, reminderID: reminder.id)
             }
         }
 
         switch await createReminder.execute(text: text) {
-        case .created(_, let confirmation):
-            return confirmation
+        case .created(let reminder, let confirmation):
+            return LocalReply(text: confirmation, reminderID: reminder.id)
         case .needsTime(let title, let question):
             reminderAwaitingTime = PendingReminder(title: title)
-            return question
+            return LocalReply(text: question, reminderID: nil)
         case .notAReminder:
             return nil
         }
@@ -147,7 +174,7 @@ final class ChatStore {
     private func persistRecent() {
         let recent = Array(messages.suffix(20))
         if let data = try? JSONEncoder().encode(recent) {
-            UserDefaults.standard.set(data, forKey: "jarvis.chat.recent")
+            defaults.set(data, forKey: Self.recentKey)
         }
     }
 }

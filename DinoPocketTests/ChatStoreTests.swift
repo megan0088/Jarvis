@@ -59,14 +59,19 @@ private final class GatedBrain: Brain, @unchecked Sendable {
 
 private struct StubStreamError: Error {}
 
-/// Serial: setiap test membaca dan menulis `jarvis.chat.recent` di
-/// `UserDefaults.standard`, jadi menjalankannya paralel membuat satu test
-/// memuat pesan milik test lain.
-@Suite(.serialized)
+/// Test host-nya Apl.app: tanpa suite sendiri, test menulis riwayat chat ke
+/// data app sungguhan dan saling memuat pesan milik test lain.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let suite = "test.chat.\(name)"
+    let defaults = UserDefaults(suiteName: suite)!
+    defaults.removePersistentDomain(forName: suite)
+    return defaults
+}
+
 struct ChatStoreTests {
     @MainActor @Test func sendAppendsUserAndStreamedAssistantMessage() async {
-        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
-        let store = ChatStore(brain: StubBrain(chunks: ["A", "AB", "ABC"]))
+        let store = ChatStore(brain: StubBrain(chunks: ["A", "AB", "ABC"]),
+                              defaults: isolatedDefaults(#function))
         await store.send("halo")
         #expect(store.messages.count == 2)
         #expect(store.messages[0].role == .user)
@@ -76,8 +81,8 @@ struct ChatStoreTests {
     }
 
     @MainActor @Test func unavailableAppleIntelligenceLeavesANoticeAndNoReply() async {
-        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
-        let store = ChatStore(brain: StubBrain(chunks: ["X"], available: .unavailable("nope")))
+        let store = ChatStore(brain: StubBrain(chunks: ["X"], available: .unavailable("nope")),
+                              defaults: isolatedDefaults(#function))
 
         await store.send("tes")
 
@@ -95,9 +100,8 @@ struct ChatStoreTests {
     ///   started — it must NOT flip `isStreaming` back to false or persist
     ///   a stale snapshot while the newer stream is still active.
     @MainActor @Test func overlappingSendFinalizesStalePlaceholderAndIgnoresStaleCleanup() async {
-        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         let brain = GatedBrain()
-        let store = ChatStore(brain: brain)
+        let store = ChatStore(brain: brain, defaults: isolatedDefaults(#function))
 
         let firstSend = Task { await store.send("pertama") }
         await brain.waitUntilStreamStarted(1)
@@ -143,9 +147,8 @@ struct ChatStoreTests {
     /// instead of being silently discarded. The catch block must be gated
     /// by the same generation check as the success path.
     @MainActor @Test func staleStreamErrorAfterSupersessionDoesNotCorruptNewerMessage() async {
-        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
         let brain = GatedBrain()
-        let store = ChatStore(brain: brain)
+        let store = ChatStore(brain: brain, defaults: isolatedDefaults(#function))
 
         let firstSend = Task { await store.send("pertama") }
         await brain.waitUntilStreamStarted(1)
@@ -181,11 +184,12 @@ struct ChatStoreTests {
         #expect(store.isStreaming == false)
     }
 
+    /// `suite` diisi `#function` milik pemanggil, jadi tiap test tetap
+    /// mendapat UserDefaults-nya sendiri.
     @MainActor
-    private func chatHandlingReminders(now: Date = TestTime.now)
+    private func chatHandlingReminders(now: Date = TestTime.now, suite: String = #function)
         -> (ChatStore, InMemoryReminderStore, SpyReminderScheduler) {
-        UserDefaults.standard.removeObject(forKey: "jarvis.chat.recent")
-        let chat = ChatStore(brain: nil)
+        let chat = ChatStore(brain: nil, defaults: isolatedDefaults(suite), now: { now })
         let reminders = InMemoryReminderStore()
         let scheduler = SpyReminderScheduler()
         chat.createReminder = CreateReminderFromTextUseCase(
@@ -194,7 +198,7 @@ struct ChatStoreTests {
         return (chat, reminders, scheduler)
     }
 
-    /// Reminder ditangani lokal: tidak ada otak di test ini (`brains: [:]`),
+    /// Reminder ditangani lokal: tidak ada otak di test ini (`brain: nil`),
     /// jadi pesan yang sampai ke jalur AI akan mengisi `noticeMessage`.
     @MainActor @Test func reminderRequestIsHandledWithoutTheBrain() async {
         let (chat, reminders, scheduler) = chatHandlingReminders()
@@ -249,5 +253,48 @@ struct ChatStoreTests {
 
         #expect(reminders.reminders.first?.rule == .once(TestTime.date(2026, 9, 17, 15, 0)))
         #expect(chat.messages.last?.text.contains("tomorrow at") == true)
+    }
+
+    // MARK: - Kejadian dan lampiran (spec B §6)
+
+    /// Chip di bawah konfirmasi dirender dari lampiran ini, bukan dari teks.
+    @MainActor @Test func reminderConfirmationCarriesTheReminder() async throws {
+        let (chat, reminders, _) = chatHandlingReminders()
+
+        await chat.send("remind me to drink water at 3pm")
+
+        let created = try #require(reminders.reminders.first)
+        #expect(chat.messages[1].attachment == .reminder(created.id))
+        #expect(chat.messages[0].attachment == nil)
+    }
+
+    @MainActor @Test func creatingAReminderRecordsTheEvent() async throws {
+        let (chat, reminders, _) = chatHandlingReminders()
+
+        await chat.send("remind me to drink water at 3pm")
+
+        let created = try #require(reminders.reminders.first)
+        #expect(chat.lastEvent == ChatEvent(kind: .reminderCreated(created.id), at: TestTime.now))
+    }
+
+    /// Pertanyaan balik bukan reminder: tidak ada chip dan karakter tidak merayakan apa pun.
+    @MainActor @Test func timeQuestionIsPlainText() async {
+        let (chat, _, _) = chatHandlingReminders()
+
+        await chat.send("remind me to call mom")
+
+        #expect(chat.messages.last?.attachment == nil)
+        #expect(chat.lastEvent == nil)
+    }
+
+    @MainActor @Test func conversationIsSavedInItsOwnDefaults() async {
+        let defaults = isolatedDefaults(#function)
+        let first = ChatStore(brain: StubBrain(chunks: ["Hi!"]), defaults: defaults)
+
+        await first.send("hello")
+        let restored = ChatStore(brain: nil, defaults: defaults)
+
+        #expect(defaults.data(forKey: ChatStore.recentKey) != nil)
+        #expect(restored.messages == first.messages)
     }
 }
