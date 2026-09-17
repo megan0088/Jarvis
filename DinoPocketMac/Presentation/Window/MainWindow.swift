@@ -74,7 +74,8 @@ struct MainWindow: View {
         }
         // Judul jendela disembunyikan; stage dan header mengisi area tombol jendela.
         .ignoresSafeArea(.container, edges: .top)
-        .frame(minWidth: MainWindowLayout.minimumSize.width, minHeight: MainWindowLayout.minimumSize.height)
+        .frame(minWidth: MainWindowLayout.minimumContentSize.width,
+               minHeight: MainWindowLayout.minimumContentSize.height)
         .background(Color(nsColor: .windowBackgroundColor))
         .task(id: resolution.reevaluateAt) {
             guard let next = resolution.reevaluateAt else { return }
