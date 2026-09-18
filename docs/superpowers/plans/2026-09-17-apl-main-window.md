@@ -118,6 +118,8 @@ Kode di task-task di bawah adalah rencana awal. Perbaikan berikut ditemukan saat
 | `fix(b)` Esc | Monitor Esc Buddy melewatkan Esc yang ditujukan ke jendela biasa |
 | `fix(b11)` auto-scroll | Daftar pesan menggulir setiap kali pesan terakhir berubah |
 | `fix(b9)` ⇧Return | Monitor keyboard lokal `ShiftReturnNewline` menggantikan `onKeyPress` |
+| `fix(b)` ikon dekoratif | Ikon SF Symbol di chip, Up next, popover, dan banner disembunyikan dari VoiceOver |
+| `fix(b)` penghapusan tahan Force Quit | Setiap store memanggil `UserDefaults.synchronize()` setelah menghapus |
 
 Alat verifikasi: argumen `-AppleInterfaceStyle Light` **tidak** memaksa mode terang saat sistem memakai mode gelap. Gunakan `-NSRequiresAquaSystemAppearance YES`, yang juga hanya berlaku untuk proses Apl.
 

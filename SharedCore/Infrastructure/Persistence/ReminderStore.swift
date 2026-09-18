@@ -68,6 +68,8 @@ final class ReminderStore: ReminderStoring {
     func eraseAllStoredData() {
         reminders = []
         defaults.removeObject(forKey: Self.storageKey)
+        // Dipaksa turun ke disk; lihat catatan di `ProfileStore`.
+        defaults.synchronize()
     }
 
     private func save() {

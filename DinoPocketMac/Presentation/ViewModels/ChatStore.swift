@@ -235,6 +235,8 @@ final class ChatStore {
         reminderAwaitingTime = nil
         lastEvent = nil
         defaults.removeObject(forKey: Self.recentKey)
+        // Dipaksa turun ke disk; lihat catatan di `ProfileStore`.
+        defaults.synchronize()
     }
 
     private func persistRecent() {

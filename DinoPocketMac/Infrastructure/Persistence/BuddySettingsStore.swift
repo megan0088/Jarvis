@@ -106,5 +106,7 @@ extension BuddySettingsStore: LocallyErasable {
         for key in [Keys.size, Keys.opacity, Keys.keepOnTop, Keys.strolling] {
             defaults.removeObject(forKey: key)
         }
+        // Dipaksa turun ke disk; lihat catatan di `ProfileStore`.
+        defaults.synchronize()
     }
 }

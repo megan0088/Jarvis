@@ -77,6 +77,9 @@ struct LegacyDataCleanup {
         removeKeychainItem()
         removePendingNotifications(Self.notificationPrefixes)
         standard.set(true, forKey: Self.doneKey)
+        // Dipaksa turun ke disk; lihat catatan di `ProfileStore`.
+        standard.synchronize()
+        appGroup?.synchronize()
     }
 
     /// Item Keychain milik AccountStore/KeychainStore yang sudah dihapus.

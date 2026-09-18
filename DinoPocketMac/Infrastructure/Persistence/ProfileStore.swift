@@ -60,6 +60,10 @@ final class ProfileStore {
         hasCompletedOnboarding = false
         defaults.removeObject(forKey: Keys.nickname)
         defaults.removeObject(forKey: Keys.onboardingDone)
+        // Dipaksa turun ke disk. Penulisan UserDefaults biasanya tertunda, dan
+        // Force Quit tepat setelah Erase All Data mengembalikan data yang
+        // sudah dinyatakan hilang — diukur, bukan diduga.
+        defaults.synchronize()
     }
 }
 

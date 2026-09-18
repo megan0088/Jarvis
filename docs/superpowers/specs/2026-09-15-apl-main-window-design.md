@@ -360,4 +360,6 @@ Ditemukan saat menulis rencana implementasi. Rinciannya ada di rencana, bagian "
 | 18 | Popover reminder tanpa `ScrollView` untuk daftar ≤ 4; lebih dari itu digulir dalam 340pt | Tinggi `ScrollView` di popover tidak ikut bertambah, sehingga editor terpotong |
 | 19 | Daftar pesan menggulir ke bawah setiap kali pesan terakhir berubah | Anchor bawaan tidak menahan `LazyVStack` di bawah saat jawaban memanjang |
 
-Butir 15–19 ditemukan saat verifikasi manual di app sungguhan (Task 14), setelah rencana ditulis.
+| 20 | Setiap store memaksa `UserDefaults.synchronize()` setelah menghapus datanya | Penulisan preferensi tertunda: Force Quit tepat setelah Erase All Data atau Clear Conversation mengembalikan percakapan yang sudah dinyatakan hilang |
+
+Butir 15–20 ditemukan saat verifikasi manual di app sungguhan (Task 14), setelah rencana ditulis.
