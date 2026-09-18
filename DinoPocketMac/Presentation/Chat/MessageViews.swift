@@ -20,6 +20,9 @@ struct UserBubble: View {
             .background(AppColor.userBubble, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             .frame(maxWidth: 420, alignment: .trailing)
             .frame(maxWidth: .infinity, alignment: .trailing)
+            // VoiceOver membacakan isi pesan tanpa menyebut siapa yang bicara.
+            // Penanda hanya di sisi pengguna; teks tanpa penanda berarti Apl.
+            .accessibilityLabel("You said: \(text)")
     }
 }
 
