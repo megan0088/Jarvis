@@ -46,13 +46,15 @@ final class AplBuddyWindowController: NSWindowController {
     private var hoverTimer: Timer?
     private var strollTimer: Timer?
     private var moodTimer: Timer?
-    private var greetingTimer: Timer?
     private var escMonitor: Any?
 
     private var characterSize: CGFloat = CGFloat(BuddySettingsStore.defaultSize)
     private var isStrolling = false
     private var mood: SystemMood = .normal
-    private var greeting: String?
+
+    /// Dipasang app saat Buddy Mode menyala: klik pada karakter berarti
+    /// "ajak bicara" (spec C1 §2 #4).
+    var onCharacterTap: (() -> Void)?
 
     private let systemStatus: SystemStatusProviding
 
@@ -105,7 +107,6 @@ final class AplBuddyWindowController: NSWindowController {
         characterSize = CGFloat(settings.size)
         isStrolling = settings.strolling
         strollOrigin = nil
-        greeting = nil
 
         let totalFrame = Self.totalScreenFrame()
         window.setFrame(totalFrame, display: false)
@@ -148,8 +149,8 @@ final class AplBuddyWindowController: NSWindowController {
         robotHostingView?.removeFromSuperview()
         robotHostingView = nil
 
-        [hoverTimer, strollTimer, moodTimer, greetingTimer].forEach { $0?.invalidate() }
-        hoverTimer = nil; strollTimer = nil; moodTimer = nil; greetingTimer = nil
+        [hoverTimer, strollTimer, moodTimer].forEach { $0?.invalidate() }
+        hoverTimer = nil; strollTimer = nil; moodTimer = nil
 
         if let escMonitor {
             NSEvent.removeMonitor(escMonitor)
@@ -198,7 +199,7 @@ final class AplBuddyWindowController: NSWindowController {
     // MARK: - Character host
 
     private func makeCharacterHost() -> BuddyCharacterHost {
-        BuddyCharacterHost(size: characterSize, mood: mood, greeting: greeting)
+        BuddyCharacterHost(size: characterSize, mood: mood)
     }
 
     private func refreshCharacter() {
@@ -317,6 +318,31 @@ final class AplBuddyWindowController: NSWindowController {
         NSScreen.screens.reduce(CGRect.null) { $0.union($1.frame) }
     }
 
+    /// Frame karakter dalam koordinat layar, beserta layar tempat ia berdiri.
+    ///
+    /// `nil` selama Buddy Mode mati atau karakter belum dipasang — pemanggil
+    /// memakainya untuk memutuskan bahwa tidak ada yang bisa dijangkari.
+    var characterScreenFrame: (rect: CGRect, screen: NSScreen)? {
+        guard let window, let host = robotHostingView else { return nil }
+        let rect = window.convertToScreen(host.frame)
+        guard let screen = NSScreen.screens.first(where: { $0.frame.intersects(rect) })
+                ?? NSScreen.main else { return nil }
+        return (rect, screen)
+    }
+
+    /// Robot berhenti melangkah selama bubble terbuka: bubble dijangkari ke
+    /// posisinya, dan jangkar yang bergerak 2,4 detik sekali akan menyeret
+    /// kolom tulis yang sedang diketik.
+    func pauseStrolling() {
+        strollTimer?.invalidate()
+        strollTimer = nil
+    }
+
+    func resumeStrolling() {
+        guard isStrolling, strollTimer == nil else { return }
+        scheduleNextStroll()
+    }
+
     // MARK: - Click-through
 
     private func startHoverMonitoring() {
@@ -333,58 +359,34 @@ final class AplBuddyWindowController: NSWindowController {
 
     // MARK: - Interaction
 
-    /// Dipanggil karakter saat diklik: balon sapaan singkat yang menghilang
-    /// sendiri. Tidak ada UI reminder di sini — Buddy Mode tetap bersih.
+    /// Klik pada karakter berarti "ajak bicara" (spec C1 §2 #4).
     ///
-    /// Timer di-invalidate sebelum dibuat baru supaya klik cepat berturut-turut
-    /// tidak menumpuk beberapa timer yang saling bertabrakan, yang akan
-    /// memotong greeting lebih awal dari yang diharapkan.
+    /// Kalimat sapaan acak yang dulu muncul di sini dihapus: ia tidak punya
+    /// aturan, tidak punya kuota, dan tidak bisa dijawab. Sapaan yang muncul
+    /// sendiri adalah urusan C2.
     fileprivate func characterTapped() {
-        greeting = Self.greetings.randomElement()
-        refreshCharacter()
-
-        greetingTimer?.invalidate()
-        greetingTimer = Timer.scheduledTimer(withTimeInterval: 2.6, repeats: false) { [weak self] _ in
-            Task { @MainActor in
-                self?.greeting = nil
-                self?.greetingTimer = nil
-                self?.refreshCharacter()
-            }
-        }
+        onCharacterTap?()
     }
-
-    private static let greetings = [
-        "Hey there.",
-        "Still going strong?",
-        "Water break?",
-        "Stretch those shoulders.",
-        "I'm right here.",
-    ]
 }
 
 // MARK: - SwiftUI host
 
-/// Pembungkus SwiftUI untuk karakter di dalam jendela buddy: model 3D, balon
-/// sapaan opsional, dan penyesuaian halus terhadap `SystemMood`.
+/// Pembungkus SwiftUI untuk karakter di dalam jendela buddy: model 3D dan
+/// penyesuaian halus terhadap `SystemMood`.
 struct BuddyCharacterHost: View {
     let size: CGFloat
     let mood: SystemMood
-    let greeting: String?
 
     /// Mood mesin dipetakan ke perilaku karakter di sini, bukan di dalam view
     /// aset — pemilihan ekspresi adalah urusan aset, penerjemahan kondisi
     /// sistem adalah urusan buddy.
-    ///
-    /// Sapaan selalu menang: apa pun keadaan mesin, karakter yang sedang
-    /// menyapa harus terlihat ramah, bukan sibuk atau lesu.
     ///
     /// `.busy` sengaja dibedakan dari `.normal`. Sebelumnya keduanya
     /// menghasilkan perilaku yang sama persis, sehingga perbedaan yang sudah
     /// susah payah dihitung `SystemMood.from(thermalState:...)` tidak pernah
     /// sampai ke layar.
     private var behavior: CharacterBehavior {
-        guard greeting == nil else { return .greet }
-        return switch mood {
+        switch mood {
         case .hot, .lowBattery: .sleepy
         case .busy:             .thinking
         case .normal:           .idle
@@ -392,30 +394,16 @@ struct BuddyCharacterHost: View {
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            USDZCharacterView(size: size, asset: .robot, behavior: behavior)
-                // Saat mesin panas atau baterai menipis, karakter meredup dan
-                // sedikit menunduk — isyarat yang terbaca tanpa perlu teks.
-                .opacity(mood == .hot || mood == .lowBattery ? 0.75 : 1.0)
-                .scaleEffect(mood == .hot ? 0.96 : 1.0, anchor: .bottom)
-                .animation(.easeInOut(duration: 0.6), value: mood)
-
-            if let greeting {
-                Text(greeting)
-                    .font(.callout)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(.regularMaterial, in: Capsule())
-                    .shadow(radius: 6, y: 2)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                    .offset(y: -6)
+        USDZCharacterView(size: size, asset: .robot, behavior: behavior)
+            // Saat mesin panas atau baterai menipis, karakter meredup dan
+            // sedikit menunduk — isyarat yang terbaca tanpa perlu teks.
+            .opacity(mood == .hot || mood == .lowBattery ? 0.75 : 1.0)
+            .scaleEffect(mood == .hot ? 0.96 : 1.0, anchor: .bottom)
+            .animation(.easeInOut(duration: 0.6), value: mood)
+            .frame(width: size, height: size)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                AplBuddyWindowController.shared.characterTapped()
             }
-        }
-        .frame(width: size, height: size)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            AplBuddyWindowController.shared.characterTapped()
-        }
-        .animation(.easeInOut(duration: 0.2), value: greeting)
     }
 }
