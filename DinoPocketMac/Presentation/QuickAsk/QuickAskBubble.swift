@@ -57,6 +57,11 @@ struct QuickAskBubble: View {
                      onSend: { send() },
                      onStop: { chat.stopStreaming() },
                      focus: focus)
+                // Menolak dikompres. Area jawaban di atasnya bertinggi kaku,
+                // jadi tanpa ini composer-lah satu-satunya yang lentur:
+                // baris kedua dari ⇧Return terpotong alih-alih membuat bubble
+                // ikut tumbuh.
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(Spacing.md)
         .frame(width: BubblePlacement.width, alignment: .leading)

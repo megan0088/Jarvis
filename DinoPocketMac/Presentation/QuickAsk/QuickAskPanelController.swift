@@ -37,7 +37,6 @@ final class QuickAskPanelController: NSObject, NSWindowDelegate {
     private let focus = FocusRestorer()
     private let composerFocus = ComposerFocus()
     private var escMonitor: Any?
-    private var contentHeight: CGFloat = BubblePlacement.maxHeight
     /// Benar selama panel baru dibuka dan status key-nya belum tenang; lihat
     /// `claimKeyboardFocus()`.
     private var isSettling = false
@@ -186,8 +185,9 @@ final class QuickAskPanelController: NSObject, NSWindowDelegate {
                 context.openMainWindow()
             },
             onOpenIntelligenceSettings: context.openIntelligenceSettings,
-            onHeightChange: { [weak self] height in
-                self?.contentHeight = height
+            // Angkanya tidak dipakai: ia hanya penanda bahwa isi berubah
+            // tinggi, dan posisi perlu dihitung ulang.
+            onHeightChange: { [weak self] _ in
                 self?.reposition()
             },
             focus: composerFocus
@@ -201,11 +201,24 @@ final class QuickAskPanelController: NSObject, NSWindowDelegate {
         return panel
     }
 
+    /// Tinggi panel diambil dari tinggi IDEAL isinya, bukan dari tinggi panel
+    /// yang berlaku sekarang.
+    ///
+    /// Keduanya sempat saling mengunci: composer yang diberi baris kedua tidak
+    /// bisa tumbuh karena panel tidak tumbuh, dan panel tidak tumbuh karena
+    /// isinya — yang sudah telanjur dibatasi tinggi panel — tidak meminta ruang
+    /// lebih. Akibatnya baris pertama terpotong. `fittingSize` menghitung tinggi
+    /// yang diminta isi tanpa batasan itu, jadi ia memutus kuncian.
+    ///
+    /// Jendela Cocoa tumbuh ke atas dari origin-nya, sementara bubble ini
+    /// ditambatkan di tepi ATAS — karena itu posisi ikut dihitung ulang setiap
+    /// kali tingginya berubah.
     private func reposition(anchor: (rect: CGRect, screen: NSScreen)? = nil) {
         guard let panel, let anchor = anchor ?? buddy.characterScreenFrame else { return }
+        let ideal = hostingView?.fittingSize.height ?? panel.frame.height
         let frame = BubblePlacement.frame(robot: anchor.rect,
                                           screen: anchor.screen.visibleFrame,
-                                          contentHeight: contentHeight)
+                                          contentHeight: ideal)
         panel.setFrame(frame, display: true)
     }
 
