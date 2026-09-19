@@ -14,10 +14,19 @@ import CoreGraphics
 enum BubblePlacement {
 
     static let width: CGFloat = 360
-    /// Batas area jawaban sebelum ia mulai digulir.
+    /// Batas area jawaban sebelum ia mulai digulir. Inilah batas yang benar-benar
+    /// dirasakan pengguna.
     static let answerMaxHeight: CGFloat = 200
-    /// Batas seluruh bubble. Jaring pengaman: isi yang lebih tinggi dipotong.
-    static let maxHeight: CGFloat = 280
+    /// Langit-langit seluruh bubble: area jawaban ditambah pertanyaan, tautan,
+    /// composer, dan padding — diukur 318pt pada jawaban terpanjang, dibulatkan
+    /// ke atas sebagai jaring pengaman.
+    ///
+    /// Bukan angka yang memotong isi: tinggi panel ditentukan
+    /// `NSHostingView.intrinsicContentSize`, dan yang membatasinya adalah
+    /// `answerMaxHeight` di dalam SwiftUI. Nilai ini dipakai untuk menghitung
+    /// posisi, jadi ia harus TIDAK lebih kecil dari tinggi sebenarnya — kalau
+    /// tidak, bubble bisa dihitung muat padahal tepi atasnya keluar layar.
+    static let maxHeight: CGFloat = 360
     static let gap: CGFloat = 12
 
     /// - Parameters:
