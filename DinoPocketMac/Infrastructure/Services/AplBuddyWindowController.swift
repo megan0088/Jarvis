@@ -58,8 +58,15 @@ final class AplBuddyWindowController: NSWindowController {
 
     private let systemStatus: SystemStatusProviding
 
-    /// Posisi karakter saat berkeliaran. `nil` berarti diam di sudut kanan bawah.
+    /// Posisi karakter saat berkeliaran, dalam koordinat **layar**. `nil`
+    /// berarti diam di sudut kanan bawah.
+    ///
+    /// Disimpan di koordinat layar, bukan koordinat jendela: jendela overlay
+    /// bisa digeser AppKit kapan saja, dan posisi yang disimpan relatif
+    /// terhadapnya akan ikut melompat.
     private var strollOrigin: CGPoint?
+
+    private var frameObservers: [any NSObjectProtocol] = []
 
     // MARK: - Lifecycle
 
@@ -143,6 +150,11 @@ final class AplBuddyWindowController: NSWindowController {
         if isStrolling { scheduleNextStroll() }
 
         window.orderFrontRegardless()
+        // Frame jendela baru final setelah ia tampil, dan AppKit bisa
+        // menggesernya lagi kemudian; `layoutCharacter` dipanggil sekarang dan
+        // setiap kali itu terjadi.
+        startObservingWindowFrame()
+        layoutCharacter()
     }
 
     func stopBuddyMode() {
@@ -157,6 +169,7 @@ final class AplBuddyWindowController: NSWindowController {
             self.escMonitor = nil
         }
 
+        stopObservingWindowFrame()
         overlay?.shouldHandlePoint = nil
         window?.ignoresMouseEvents = false
         window?.orderOut(nil)
@@ -266,14 +279,16 @@ final class AplBuddyWindowController: NSWindowController {
         let maxX = max(visible.width - characterSize - margin * 2, 1)
         let maxY = max(visible.height - characterSize - margin * 2, 1)
 
+        // Dipilih di koordinat layar dan disimpan begitu; jendela yang
+        // menerjemahkannya setiap kali karakter ditata.
         let target = CGRect(
-            x: visible.minX - window.frame.origin.x + margin + CGFloat.random(in: 0...maxX),
-            y: visible.minY - window.frame.origin.y + margin + CGFloat.random(in: 0...maxY),
+            x: visible.minX + margin + CGFloat.random(in: 0...maxX),
+            y: visible.minY + margin + CGFloat.random(in: 0...maxY),
             width: characterSize, height: characterSize
         )
 
         strollOrigin = target.origin
-        moveCharacter(to: target, animated: true)
+        layoutCharacter(animated: true)
         scheduleNextStroll()
     }
 
@@ -297,20 +312,61 @@ final class AplBuddyWindowController: NSWindowController {
     /// Memakai `visibleFrame`, bukan `frame`: `frame` mencakup ruang di balik Dock
     /// dan menu bar, sehingga margin tetap dari tepi bawah layar menempatkan
     /// karakter tepat di belakang Dock.
+    ///
+    /// Posisi dihitung di koordinat LAYAR lalu diterjemahkan oleh jendela itu
+    /// sendiri. Dulu ia dikurangi `window.frame.origin` secara manual dengan
+    /// anggapan origin jendela sama dengan union seluruh layar — padahal AppKit
+    /// boleh menggeser jendela setelah frame-nya disetel. Di Mac dengan layar
+    /// kedua di sebelah kiri (origin x negatif), selisihnya membuat karakter
+    /// berdiri di luar semua layar: Buddy Mode menyala tanpa ada yang terlihat.
     private func characterFrame(size: CGFloat) -> CGRect {
-        let windowFrame = window?.frame ?? Self.totalScreenFrame()
+        inWindow(characterScreenRect(size: size))
+    }
 
+    /// Tempat karakter seharusnya berdiri, dalam koordinat layar.
+    private func characterScreenRect(size: CGFloat) -> CGRect {
         if let origin = strollOrigin {
             return CGRect(origin: origin, size: CGSize(width: size, height: size))
         }
-
         let margin: CGFloat = 24
         let screen = NSScreen.main ?? NSScreen.screens.first
-        let visible = screen?.visibleFrame ?? windowFrame
-
-        return CGRect(x: visible.maxX - windowFrame.origin.x - size - margin,
-                      y: visible.minY - windowFrame.origin.y + margin,
+        let visible = screen?.visibleFrame ?? window?.frame ?? Self.totalScreenFrame()
+        return CGRect(x: visible.maxX - size - margin,
+                      y: visible.minY + margin,
                       width: size, height: size)
+    }
+
+    /// Kebalikan dari `characterScreenFrame`, memakai jendela yang sama supaya
+    /// keduanya tidak bisa berbeda.
+    private func inWindow(_ screenRect: CGRect) -> CGRect {
+        window?.convertFromScreen(screenRect) ?? screenRect
+    }
+
+    /// Menata ulang karakter terhadap frame jendela yang berlaku SEKARANG.
+    ///
+    /// Wajib dipanggil ulang setiap jendela bergeser: panel ini selebar union
+    /// seluruh layar, dan AppKit menggesernya setelah frame-nya disetel. Posisi
+    /// yang dihitung sebelum pergeseran itu meleset sejauh lebar layar kedua —
+    /// cukup untuk menaruh karakter di luar semua layar, sehingga Buddy Mode
+    /// menyala tanpa ada yang terlihat.
+    private func layoutCharacter(animated: Bool = false) {
+        guard robotHostingView != nil else { return }
+        moveCharacter(to: characterFrame(size: characterSize), animated: animated)
+    }
+
+    private func startObservingWindowFrame() {
+        stopObservingWindowFrame()
+        guard let window else { return }
+        frameObservers = [NSWindow.didMoveNotification, NSWindow.didResizeNotification].map { name in
+            NotificationCenter.default.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.layoutCharacter() }
+            }
+        }
+    }
+
+    private func stopObservingWindowFrame() {
+        frameObservers.forEach(NotificationCenter.default.removeObserver)
+        frameObservers = []
     }
 
     /// Union seluruh layar terpasang (menangani multi-display).
