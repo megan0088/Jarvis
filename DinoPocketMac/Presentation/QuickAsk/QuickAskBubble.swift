@@ -19,6 +19,9 @@ struct QuickAskBubble: View {
     let onOpenIntelligenceSettings: () -> Void
     /// Dipanggil setiap kali tinggi isi berubah, supaya panel ikut menyesuaikan.
     let onHeightChange: (CGFloat) -> Void
+    /// Panel yang meminta fokus setelah ia benar-benar menjadi key; lihat
+    /// `QuickAskPanelController.handOverToSwiftUI()`.
+    var focus = ComposerFocus()
 
     @State private var draft = ""
     @State private var availability: BrainAvailability?
@@ -52,7 +55,8 @@ struct QuickAskBubble: View {
             }
             Composer(draft: $draft, state: composerState,
                      onSend: { send() },
-                     onStop: { chat.stopStreaming() })
+                     onStop: { chat.stopStreaming() },
+                     focus: focus)
         }
         .padding(Spacing.md)
         .frame(width: BubblePlacement.width, alignment: .leading)

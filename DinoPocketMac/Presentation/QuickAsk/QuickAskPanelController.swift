@@ -35,8 +35,13 @@ final class QuickAskPanelController: NSObject, NSWindowDelegate {
     private var panel: QuickAskPanel?
     private var hostingView: NSHostingView<QuickAskBubble>?
     private let focus = FocusRestorer()
+    private let composerFocus = ComposerFocus()
     private var escMonitor: Any?
     private var contentHeight: CGFloat = BubblePlacement.maxHeight
+    /// Benar selama panel baru dibuka dan status key-nya belum tenang; lihat
+    /// `claimKeyboardFocus()`.
+    private var isSettling = false
+    private var activationObserver: (any NSObjectProtocol)?
     private let buddy: AplBuddyWindowController
 
     init(buddy: AplBuddyWindowController = .shared) {
@@ -75,17 +80,82 @@ final class QuickAskPanelController: NSObject, NSWindowDelegate {
         reposition(anchor: anchor)
         startEscMonitoring()
 
-        NSApp.activate()
-        panel.makeKeyAndOrderFront(nil)
+        claimKeyboardFocus(panel)
         return true
     }
 
     func close() {
         guard let panel, panel.isVisible else { return }
         stopEscMonitoring()
+        stopWaitingForActivation()
+        isSettling = false
         panel.orderOut(nil)
         buddy.resumeStrolling()
         focus.restore()
+    }
+
+    /// Membuat panel menerima ketikan, melawan balapan aktivasi app.
+    ///
+    /// `NSApp.activate()` tidak langsung: saat app benar-benar menjadi aktif —
+    /// satu putaran run loop kemudian — AppKit mengembalikan status key ke
+    /// jendela utama, dan panel yang sudah dijadikan key kehilangannya lagi.
+    /// Akibatnya huruf pertama yang diketik jatuh ke jendela utama, bukan ke
+    /// bubble. Karena itu key ditegaskan tiga kali: sekarang, satu putaran
+    /// kemudian, dan saat app benar-benar aktif.
+    ///
+    /// Selama penegasan itu berlangsung, `windowDidResignKey` diabaikan — kalau
+    /// tidak, perebutan key oleh jendela utama akan langsung menutup bubble.
+    private func claimKeyboardFocus(_ panel: QuickAskPanel) {
+        isSettling = true
+        panel.orderFrontRegardless()
+        NSApp.activate()
+        panel.makeKeyAndOrderFront(nil)
+        handOverToSwiftUI()
+
+        stopWaitingForActivation()
+        activationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let panel = self.panel, panel.isVisible else { return }
+                    panel.makeKey()
+                    self.handOverToSwiftUI()
+                    self.settle()
+                }
+            }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let panel = self.panel, panel.isVisible else { return }
+            panel.makeKey()
+            self.handOverToSwiftUI()
+            self.settle()
+        }
+    }
+
+    /// Panel yang key belum berarti ada yang menerima ketikan.
+    ///
+    /// Dua hal harus terjadi berurutan: hosting view menjadi first responder,
+    /// lalu composer meminta fokus LAGI. Permintaan pertamanya (`.task` di
+    /// `Composer`) berjalan saat view muncul — sebelum panel menjadi key — dan
+    /// `@FocusState` yang disetel di jendela yang belum key terbuang begitu
+    /// saja. Tanpa permintaan kedua ini, bubble tampak siap diketik tetapi
+    /// menelan setiap huruf.
+    private func handOverToSwiftUI() {
+        guard let panel, let hostingView else { return }
+        panel.initialFirstResponder = hostingView
+        panel.makeFirstResponder(hostingView)
+        composerFocus.request()
+    }
+
+    private func settle() {
+        isSettling = false
+        stopWaitingForActivation()
+    }
+
+    private func stopWaitingForActivation() {
+        if let activationObserver {
+            NotificationCenter.default.removeObserver(activationObserver)
+        }
+        activationObserver = nil
     }
 
     // MARK: - Panel
@@ -119,7 +189,8 @@ final class QuickAskPanelController: NSObject, NSWindowDelegate {
             onHeightChange: { [weak self] height in
                 self?.contentHeight = height
                 self?.reposition()
-            }
+            },
+            focus: composerFocus
         )
         let host = NSHostingView(rootView: bubble)
         host.sizingOptions = [.intrinsicContentSize]
@@ -177,6 +248,7 @@ final class QuickAskPanelController: NSObject, NSWindowDelegate {
     /// mengalir TIDAK dihentikan — ia tetap ditulis ke ChatStore dan muncul
     /// utuh di jendela utama (spec C1 §6).
     func windowDidResignKey(_ notification: Notification) {
+        guard !isSettling else { return }
         close()
     }
 }
