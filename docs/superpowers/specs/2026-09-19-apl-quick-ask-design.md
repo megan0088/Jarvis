@@ -1,7 +1,8 @@
 # Apl — Panggil dari Mana Saja (Sub-project C1) — Design Spec
 
 - Tanggal: 2026-09-19
-- Status: Menunggu review pemilik produk
+- Status: Disetujui. Rencana implementasi: `docs/superpowers/plans/2026-09-19-apl-quick-ask.md`
+  (penyesuaian saat perencanaan di §13)
 - Basis kode: branch `refactor/taggo-architecture` @ `b2a6d5b` (working tree bersih)
 - Target: **macOS 26+** (Apple Silicon), distribusi **Mac App Store**
 - Melanjutkan: `2026-09-15-apl-main-window-design.md` (sub-project B). Bila bertentangan,
@@ -154,8 +155,9 @@ utama ke depan, menggulir ke bawah, dan menutup bubble.
 Apl". Saat menutup, fokus kembali ke app yang tadi dipakai dan robot melangkah lagi.
 Tidak ada yang hilang saat bubble tertutup: setiap giliran sudah ada di `ChatStore`.
 
-**Reminder.** Reminder yang terbentuk tampil sebagai satu baris konfirmasi dengan "Undo",
-bukan chip penuh seperti di jendela utama. Pembuatannya lewat jalur B tanpa perubahan.
+**Reminder.** Reminder yang terbentuk tampil sebagai satu baris konfirmasi dengan "Undo" —
+yaitu `ReminderChip` yang sama dengan jendela utama (lihat §13 #1). Pembuatannya lewat jalur
+B tanpa perubahan.
 
 **Apple Intelligence mati.** Satu baris ringkas di atas composer menautkan ke Settings —
 versi pendek `AIUnavailableBanner`. Reminder tetap bisa dibuat, sebagaimana di B.
@@ -306,3 +308,27 @@ Pendaftaran hotkey selalu lewat `HotKeyRegistering` palsu: test berjalan di dala
 | Posisi robot selalu dihitung dari `NSScreen.main` | `AplBuddyWindowController.swift:261`, `:307` | Robot terkunci di layar utama; dicatat sebagai batasan, bukan diperbaiki di C1 |
 | Klik robot memunculkan kalimat acak selama 2,6 detik | `AplBuddyWindowController.swift:342-356` | Dihapus; klik sekarang membuka bubble |
 | Monitor Esc Buddy sudah meneruskan event milik jendela lain | `AplBuddyWindowController.swift:211` | Panel bubble tinggal ikut aturan yang sama |
+
+---
+
+## 13. Penyesuaian saat perencanaan
+
+Ditemukan saat menulis `docs/superpowers/plans/2026-09-19-apl-quick-ask.md` dan membaca
+ulang kode yang akan dipakai.
+
+1. **Reminder memakai `ReminderChip` yang sudah ada.** §4 semula menulis "bukan chip penuh";
+   ternyata chip itu memang sudah satu kapsul satu baris dengan tombol Undo — persis yang
+   dimaksud. Versi kedua hanya akan jadi tempat kedua yang bisa berbeda. Bubble memakai
+   `MessageRow`, yang memilih chip itu sendiri dari lampiran pesan.
+2. **Dua batas tinggi, bukan satu.** `answerMaxHeight` (200pt) membatasi area jawaban di
+   dalam SwiftUI; `maxHeight` (280pt) menjepit panel sebagai jaring pengaman. Tanpa batas
+   dalam, `NSHostingView` meminta tinggi sebesar isinya dan penjepitan dari luar akan
+   memotong composer, bukan jawabannya.
+3. **Esc ditangani di satu tempat**, monitor lokal milik panel. Monitor lokal menerima event
+   sebelum responder chain, jadi `Composer.onKeyPress(.escape)` tidak pernah melihat Esc di
+   dalam bubble; penanganan kedua di sana akan jadi kode mati.
+4. **Monitor Esc Buddy tidak perlu diubah sama sekali** — §4 semula menyebutnya sebagai
+   sesuatu yang "harus" meneruskan event; ia sudah melakukannya sejak perbaikan di B.
+5. **Fokus composer jendela utama lewat penghitung, bukan Bool.** `ComposerFocus.token`
+   naik tiap permintaan: menekan shortcut dua kali saat composer sudah fokus harus terbaca
+   sebagai dua permintaan, dan `Bool` yang sudah `true` tidak memicu `onChange` kedua.
