@@ -2031,6 +2031,47 @@ EOF
 4. **Monitor Esc milik Buddy tidak perlu diubah.** Ia sudah meneruskan event yang
    `event.window`-nya bukan jendela Buddy, dan panel bubble adalah jendela lain.
 
+## Catatan eksekusi
+
+Dijalankan inline, 2026-09-19. Sebelas tugas selesai, **193 test di 39 suite** hijau
+(154 dari B + 39 baru), `verify-boundaries` dan `verify-release` hijau.
+
+### Temuan verifikasi manual
+
+Semuanya tidak terlihat oleh test unit: seluruhnya milik AppKit, bukan logika.
+
+| # | Temuan | Commit |
+|---|---|---|
+| 1 | Bubble selalu setinggi batas maksimum dengan rongga kosong di atas composer — `ScrollView` mengambil seluruh tinggi yang ditawarkan, jadi pelapor tinggi di akar selalu melaporkan tinggi panel | `bcd5020` |
+| 2 | Bubble tampak siap diketik tetapi menelan setiap huruf. Dua sebab berurutan: `NSApp.activate()` tidak langsung sehingga AppKit mengembalikan status key ke jendela utama, dan `@FocusState` composer disetel sebelum panel menjadi key | `6edf61c` |
+| 3 | **Robot berdiri di luar semua layar** pada Mac dua-layar: posisinya dihitung terhadap origin jendela overlay sebelum AppKit menggeser jendela itu, meleset 1512pt. Bug bawaan B — Buddy Mode menyala tanpa ada yang terlihat | `473724d` |
+| 4 | **Klik pada robot tidak pernah sampai.** View RealityKit menelan tap sebelum `onTapGesture` SwiftUI melihatnya, dan timer hover 0,08 detik diperlambat App Nap justru saat Apl tidak aktif. Juga bug bawaan B | `7aba2b3` |
+| 5 | Langit-langit tinggi bubble (280pt) lebih kecil dari tinggi yang benar-benar terjadi (318pt), padahal angka itu dipakai menghitung posisi | `ac21c2c` |
+| 6 | ⇧Return di bubble memotong baris pertama alih-alih menumbuhkan bubble: area jawaban kaku membuat composer jadi satu-satunya yang boleh dikompres | `9c17ae2` |
+
+### Yang terbukti jalan
+
+⌥Space dari Finder dan dari Safari layar penuh; mengetik lalu Return; jawaban model
+tampil di bubble dan **muncul utuh di jendela utama** (satu `ChatStore`); Esc menghentikan
+jawaban tanpa menutup, Esc kedua menutup; fokus kembali ke app sebelumnya; "Open in Apl";
+klik robot membuka bubble; Hide Buddy lalu ⌥Space membawa jendela utama; jendela utama di
+depan lalu ⌥Space memfokuskan composer tanpa bubble; preset Off benar-benar diam; preset
+⌥⌘A jalan. Regresi B: Esc di jendela utama menghentikan jawaban tanpa mematikan Buddy,
+⇧Return menyisipkan baris baru di kedua composer.
+
+**Robot di app layar penuh ikut terlihat** — pertanyaan yang ditinggalkan spec §12 terjawab:
+tidak perlu menambah `fullScreenAuxiliary` pada panel robot.
+
+### Yang belum diuji
+
+- **VoiceOver** (spec §10, item terakhir): menyalakannya adalah pengaturan sistem milik
+  pemilik produk.
+- **Dua monitor dengan robot di layar sekunder**: robot masih terkunci di `NSScreen.main`
+  (batasan yang sudah dicatat spec §11). Yang terbukti di Mac dua-layar ini adalah bubble
+  selalu mendarat di layar tempat robot berada.
+- **Kegagalan pendaftaran hotkey**: ketiga preset diterima sistem di Mac ini, jadi baris
+  peringatan di Settings belum pernah tampil.
+
 ## Self-review
 
 **Cakupan spec:** §2 keputusan 1–7 → Task 1 (#3, #5), Task 4 (#1, #2), Task 7 (#1, #2),

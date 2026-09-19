@@ -274,11 +274,13 @@ Pendaftaran hotkey selalu lewat `HotKeyRegistering` palsu: test berjalan di dala
 
 ## 10. Definition of Done
 
-- [ ] Semua test unit §9 hijau; suite B tetap hijau.
-- [ ] `verify-boundaries` dan `verify-release` hijau.
-- [ ] Daftar manual §9 dijalankan di app sungguhan, hasilnya dicatat di plan.
-- [ ] `greetings` dan `greetingTimer` hilang dari `AplBuddyWindowController`.
-- [ ] Baris shortcut ada di tab General dan menunjukkan status gagal-daftar.
+- [x] Semua test unit §9 hijau; suite B tetap hijau. **193 test di 39 suite.**
+- [x] `verify-boundaries` dan `verify-release` hijau.
+- [x] Daftar manual §9 dijalankan di app sungguhan, hasilnya dicatat di plan
+      ("Catatan eksekusi").
+- [x] `greetings` dan `greetingTimer` hilang dari `AplBuddyWindowController`.
+- [x] Baris shortcut ada di tab General; jalur gagal-daftar terpasang, tetapi tidak
+      pernah terpicu di Mac ini (ketiga preset diterima sistem).
 - [ ] VoiceOver: bubble terbaca, dan selesainya jawaban diumumkan (diuji oleh pemilik
       produk, seperti item terakhir di B).
 
@@ -332,3 +334,25 @@ ulang kode yang akan dipakai.
 5. **Fokus composer jendela utama lewat penghitung, bukan Bool.** `ComposerFocus.token`
    naik tiap permintaan: menekan shortcut dua kali saat composer sudah fokus harus terbaca
    sebagai dua permintaan, dan `Bool` yang sudah `true` tidak memicu `onChange` kedua.
+
+---
+
+## 14. Penyesuaian saat pelaksanaan
+
+Ditemukan saat menjalankan app sungguhan; rinciannya di "Catatan eksekusi" pada plan.
+
+1. **Tinggi bubble 200pt untuk jawaban, langit-langit 360pt untuk panel** (§4 semula menulis
+   "sampai 280pt"). Tinggi panel ditentukan `NSHostingView`, bukan `setFrame`: jawaban
+   terpanjang menghasilkan 318pt dan composer dua baris 332pt. Yang benar-benar membatasi
+   adalah area jawaban 200pt; 360pt hanya jaring pengaman untuk perhitungan posisi.
+2. **Fokus keyboard bubble butuh tiga penegasan**, bukan satu `makeKeyAndOrderFront`.
+   `NSApp.activate()` tidak langsung, dan saat app benar-benar aktif AppKit mengembalikan
+   status key ke jendela utama.
+3. **Klik pada robot ditangani di AppKit**, bukan `onTapGesture` SwiftUI: view RealityKit
+   menelan tap sebelum SwiftUI melihatnya.
+4. **Robot di app layar penuh: terlihat.** §12 menyisakan ini sebagai pertanyaan;
+   jawabannya ya — `canJoinAllSpaces` pada panel robot sudah cukup, dan bubble dengan
+   `fullScreenAuxiliary` ikut tampil di atasnya.
+5. **Dua bug bawaan sub-project B ikut diperbaiki** karena C1 bergantung padanya: robot
+   yang berdiri di luar semua layar pada Mac dua-layar, dan klik robot yang tidak pernah
+   sampai. Keduanya membuat Buddy Mode tampak menyala tanpa melakukan apa pun.
