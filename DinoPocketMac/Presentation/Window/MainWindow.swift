@@ -17,6 +17,7 @@ struct MainWindow: View {
     let launcher: AppLaunching
     let isBuddyModeOn: Bool
     let onToggleBuddy: () -> Void
+    let composerFocus: ComposerFocus
 
     @Environment(\.openSettings) private var openSettings
     @Environment(\.appearsActive) private var appearsActive
@@ -68,6 +69,7 @@ struct MainWindow: View {
                                      reminders: reminders,
                                      availability: availability,
                                      showsDateHeader: !isCompact,
+                                     composerFocus: composerFocus,
                                      onOpenIntelligenceSettings: { _ = launcher.open(.appleIntelligence) })
                 }
             }
@@ -129,20 +131,20 @@ struct MainWindow: View {
 
 #Preview("Main window · Dark") {
     MainWindow(chat: .preview(), reminders: .preview(), launcher: AppLauncherService(),
-               isBuddyModeOn: false, onToggleBuddy: {})
+               isBuddyModeOn: false, onToggleBuddy: {}, composerFocus: ComposerFocus())
         .frame(width: 1000, height: 680)
         .preferredColorScheme(.dark)
 }
 
 #Preview("Main window · Light") {
     MainWindow(chat: .preview(), reminders: .preview(), launcher: AppLauncherService(),
-               isBuddyModeOn: true, onToggleBuddy: {})
+               isBuddyModeOn: true, onToggleBuddy: {}, composerFocus: ComposerFocus())
         .frame(width: 1000, height: 680)
 }
 
 #Preview("Main window · Compact · Dark") {
     MainWindow(chat: .preview(), reminders: .preview(), launcher: AppLauncherService(),
-               isBuddyModeOn: false, onToggleBuddy: {})
+               isBuddyModeOn: false, onToggleBuddy: {}, composerFocus: ComposerFocus())
         .frame(width: 740, height: 520)
         .preferredColorScheme(.dark)
 }

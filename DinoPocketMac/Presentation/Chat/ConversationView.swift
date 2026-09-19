@@ -13,6 +13,7 @@ struct ConversationView: View {
     let reminders: ReminderListViewModel
     let availability: BrainAvailability?
     var showsDateHeader = true
+    let composerFocus: ComposerFocus
     let onOpenIntelligenceSettings: () -> Void
 
     @State private var draft = ""
@@ -45,7 +46,8 @@ struct ConversationView: View {
                 }
                 Composer(draft: $draft, state: composerState,
                          onSend: { send() },
-                         onStop: { chat.stopStreaming() })
+                         onStop: { chat.stopStreaming() },
+                         focus: composerFocus)
             }
             .padding(.horizontal, Spacing.xl)
             .padding(.top, Spacing.sm)
@@ -125,6 +127,7 @@ struct ConversationView: View {
 
 #Preview("Conversation · Light") {
     ConversationView(chat: .preview(), reminders: .preview(), availability: .ready,
+                     composerFocus: ComposerFocus(),
                      onOpenIntelligenceSettings: {})
         .frame(width: 680, height: 620)
 }
@@ -132,6 +135,7 @@ struct ConversationView: View {
 #Preview("Conversation · AI off · Dark") {
     ConversationView(chat: .preview(), reminders: .preview(),
                      availability: .unavailable("Enable Apple Intelligence in System Settings."),
+                     composerFocus: ComposerFocus(),
                      onOpenIntelligenceSettings: {})
         .frame(width: 680, height: 620)
         .preferredColorScheme(.dark)
@@ -141,6 +145,7 @@ struct ConversationView: View {
     ConversationView(chat: .preview([ChatMessage(role: .user, text: "Hello!"),
                                      ChatMessage(role: .assistant, text: "")], isStreaming: true),
                      reminders: .preview(), availability: .ready,
+                     composerFocus: ComposerFocus(),
                      onOpenIntelligenceSettings: {})
         .frame(width: 680, height: 620)
         .preferredColorScheme(.dark)

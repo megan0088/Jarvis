@@ -14,6 +14,8 @@ struct Composer: View {
     let state: ComposerState
     let onSend: () -> Void
     let onStop: () -> Void
+    /// `nil` di bubble: di sana composer selalu fokus begitu panel muncul.
+    var focus: ComposerFocus?
 
     @FocusState private var isFocused: Bool
     @State private var shiftReturn = ShiftReturnNewline()
@@ -46,6 +48,11 @@ struct Composer: View {
         .background(AppColor.controlFill, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(.separator))
         .task { isFocused = true }
+        // Shortcut global yang mengenai jendela utama mengembalikan fokus ke
+        // sini tanpa harus mengklik.
+        .onChange(of: focus?.token) { _, _ in
+            isFocused = true
+        }
         .onChange(of: isFocused, initial: true) { _, focused in
             shiftReturn.isActive = focused
         }

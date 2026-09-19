@@ -16,6 +16,7 @@ struct AppDependencies {
     let appLauncher: AppLaunching
     let launchAtLogin: LaunchAtLoginManaging
     let buddySettings: BuddySettingsStore
+    let shortcutSettings: ShortcutSettingsStore
     let profile: ProfileStore
 
     /// Apple Intelligence — satu-satunya otak (spec A §2 #7).
@@ -66,6 +67,7 @@ struct AppDependencies {
             appLauncher: AppLauncherService(),
             launchAtLogin: LaunchAtLoginService(),
             buddySettings: BuddySettingsStore(),
+            shortcutSettings: ShortcutSettingsStore(),
             profile: ProfileStore(),
             brain: brain,
             reminderStore: reminderStore,

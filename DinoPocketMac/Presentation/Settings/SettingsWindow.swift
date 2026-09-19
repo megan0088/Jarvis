@@ -12,6 +12,7 @@ import SwiftUI
 struct SettingsWindow: View {
     let profile: ProfileStore
     let buddySettings: BuddySettingsStore
+    let shortcutSettings: ShortcutSettingsStore
     let launchAtLogin: any LaunchAtLoginManaging
     /// Menghapus semua data lokal. Pemanggil yang tahu store mana saja.
     let eraseAllData: () async -> Void
@@ -19,7 +20,8 @@ struct SettingsWindow: View {
     var body: some View {
         TabView {
             Tab("General", systemImage: "gearshape") {
-                GeneralSettingsTab(profile: profile, launchAtLogin: launchAtLogin)
+                GeneralSettingsTab(profile: profile, launchAtLogin: launchAtLogin,
+                                   shortcutSettings: shortcutSettings)
             }
             Tab("Character", systemImage: "face.smiling") {
                 CharacterSettingsTab(buddySettings: buddySettings)
@@ -43,6 +45,7 @@ struct SettingsWindow: View {
 private struct GeneralSettingsTab: View {
     let profile: ProfileStore
     let launchAtLogin: any LaunchAtLoginManaging
+    @Bindable var shortcutSettings: ShortcutSettingsStore
 
     @State private var nicknameDraft = ""
     @State private var launchAtLoginOn = false
@@ -94,6 +97,22 @@ private struct GeneralSettingsTab: View {
                         .font(.footnote)
                         .foregroundStyle(.red)
                 }
+            }
+            Section {
+                Picker("Quick ask", selection: $shortcutSettings.preset) {
+                    ForEach(ShortcutPreset.allCases, id: \.self) { preset in
+                        Text(preset.displayName).tag(preset)
+                    }
+                }
+                if shortcutSettings.registrationFailed {
+                    // Kombinasi yang sudah dipegang app lain tidak pernah sampai
+                    // ke Apl. Diam di sini berarti pengguna menyalahkan Apl.
+                    Text("\(shortcutSettings.preset.displayName) is taken by another app — try another one.")
+                        .font(.footnote)
+                        .foregroundStyle(AppColor.statusWarning)
+                }
+            } footer: {
+                Text("Press it from any app to ask Apl without leaving what you're doing.")
             }
         }
         .formStyle(.grouped)
@@ -188,6 +207,7 @@ private struct PrivacySettingsTab: View {
 #Preview("Settings · Light") {
     SettingsWindow(profile: ProfileStore(defaults: UserDefaults(suiteName: "apl.preview.profile")!),
                    buddySettings: BuddySettingsStore(defaults: UserDefaults(suiteName: "apl.preview.buddy")!),
+                   shortcutSettings: ShortcutSettingsStore(defaults: UserDefaults(suiteName: "apl.preview.shortcut")!),
                    launchAtLogin: LaunchAtLoginService(),
                    eraseAllData: {})
 }
@@ -195,6 +215,7 @@ private struct PrivacySettingsTab: View {
 #Preview("Settings · Dark") {
     SettingsWindow(profile: ProfileStore(defaults: UserDefaults(suiteName: "apl.preview.profile")!),
                    buddySettings: BuddySettingsStore(defaults: UserDefaults(suiteName: "apl.preview.buddy")!),
+                   shortcutSettings: ShortcutSettingsStore(defaults: UserDefaults(suiteName: "apl.preview.shortcut")!),
                    launchAtLogin: LaunchAtLoginService(),
                    eraseAllData: {})
         .preferredColorScheme(.dark)

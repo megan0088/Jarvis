@@ -16,6 +16,8 @@ struct OnboardingView: View {
     let launcher: AppLaunching
     /// Meminta izin notifikasi lewat penjadwal reminder; true bila diizinkan.
     var requestNotifications: () async -> Bool = { false }
+    /// Disebut sekali di langkah terakhir, supaya tombolnya pernah terlihat.
+    var shortcutPreset: ShortcutPreset = .default
 
     @Environment(\.appearsActive) private var appearsActive
     @State private var step: Step = .welcome
@@ -108,6 +110,11 @@ struct OnboardingView: View {
                 Text("Reminders and your character work without it.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                if shortcutPreset != .off {
+                    Text("Press \(shortcutPreset.displayName) from any app to ask Apl anything.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .multilineTextAlignment(.center)

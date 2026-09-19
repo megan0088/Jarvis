@@ -15,9 +15,13 @@ struct AplApp: App {
     @State private var chat = deps.makeChatStore()
     @State private var reminders = deps.makeReminderListViewModel()
     @State private var buddySettings = deps.buddySettings
+    @State private var shortcutSettings = deps.shortcutSettings
     @State private var profile = deps.profile
 
     @State var isBuddyMode = false
+    /// Dibaca extension macOS saat shortcut mengenai jendela utama.
+    @State var composerFocus = ComposerFocus()
+    @State private var shortcut = QuickAskShortcut()
 
     init() {
         ReminderNotificationCenter.shared.configure()
@@ -46,6 +50,7 @@ struct AplApp: App {
         Settings {
             SettingsWindow(profile: profile,
                            buddySettings: buddySettings,
+                           shortcutSettings: shortcutSettings,
                            launchAtLogin: Self.deps.launchAtLogin,
                            eraseAllData: { await eraseAllData() })
         }
@@ -55,7 +60,8 @@ struct AplApp: App {
     /// sendiri; UseCase ini tidak tahu satu pun nama kunci atau suite.
     private func eraseAllData() async {
         if isBuddyMode { dismissFromBuddy() }
-        let stores: [any LocallyErasable] = [profile, chat, buddySettings] + Self.deps.erasableStores
+        let stores: [any LocallyErasable] = [profile, chat, buddySettings, shortcutSettings]
+            + Self.deps.erasableStores
         await EraseAllDataUseCase(stores: stores,
                                   clearNotifications: { await Self.deps.reminderScheduler.cancelAll() })
             .execute()
@@ -75,14 +81,16 @@ struct AplApp: App {
                                    await scheduler.sync(Self.deps.reminderStore.reminders, now: .now)
                                }
                                return granted
-                           })
+                           },
+                           shortcutPreset: shortcutSettings.preset)
         }
     }
 
     @ViewBuilder
     private var mainWindow: some View {
         MainWindow(chat: chat, reminders: reminders, launcher: Self.deps.appLauncher,
-                   isBuddyModeOn: isBuddyMode, onToggleBuddy: toggleBuddyMode)
+                   isBuddyModeOn: isBuddyMode, onToggleBuddy: toggleBuddyMode,
+                   composerFocus: composerFocus)
         // Setiap preferensi buddy diterapkan langsung tanpa memulai ulang mode,
         // supaya kontrol di Settings terasa hidup saat digeser.
         .onChange(of: buddySettings.size) { _, value in
@@ -118,6 +126,22 @@ struct AplApp: App {
         .task {
             guard !isBuddyMode else { return }
             isBuddyMode = true
+        }
+        // Shortcut global dan bubble (spec C1 §3).
+        .task {
+            QuickAskPanelController.shared.configure(
+                .init(chat: chat,
+                      reminders: reminders,
+                      openMainWindow: { bringMainWindowForward() },
+                      openIntelligenceSettings: { _ = Self.deps.appLauncher.open(.appleIntelligence) })
+            )
+            AplBuddyWindowController.shared.onCharacterTap = { handleQuickAskShortcut() }
+            shortcutSettings.onChange = { preset in
+                shortcutSettings.registrationFailed =
+                    !shortcut.apply(preset, handler: { handleQuickAskShortcut() })
+            }
+            shortcutSettings.registrationFailed =
+                !shortcut.apply(shortcutSettings.preset, handler: { handleQuickAskShortcut() })
         }
     }
 }
