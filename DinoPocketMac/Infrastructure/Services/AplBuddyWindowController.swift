@@ -21,14 +21,23 @@ import SwiftUI
 /// `NSView` polos tidak menggambar apa pun, jadi transparansinya gratis.
 private final class BuddyOverlayView: NSView {
     var shouldHandlePoint: ((CGPoint) -> Bool)?
+    var onClick: (() -> Void)?
 
     override var isOpaque: Bool { false }
 
+    /// Area karakter diklaim view ini sendiri, bukan diteruskan ke subview.
+    ///
+    /// Dulu klik diteruskan ke `NSHostingView` dengan harapan `onTapGesture`
+    /// milik SwiftUI menangkapnya. Tidak pernah terjadi: view RealityKit yang
+    /// merender karakter menelan klik itu lebih dulu, jadi robot tampak bisa
+    /// diklik tapi tidak pernah menjawab. Di sinilah hit-testing sudah jadi
+    /// milik kita, jadi di sini pula kliknya ditangani.
     override func hitTest(_ point: NSPoint) -> NSView? {
-        if let hit = super.hitTest(point), hit !== self {
-            return hit
-        }
-        return shouldHandlePoint?(point) == true ? self : nil
+        shouldHandlePoint?(point) == true ? self : nil
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        onClick?()
     }
 }
 
@@ -67,6 +76,7 @@ final class AplBuddyWindowController: NSWindowController {
     private var strollOrigin: CGPoint?
 
     private var frameObservers: [any NSObjectProtocol] = []
+    private var mouseMonitors: [Any] = []
 
     // MARK: - Lifecycle
 
@@ -143,6 +153,7 @@ final class AplBuddyWindowController: NSWindowController {
             guard let self, let host = self.robotHostingView else { return false }
             return host.frame.contains(point)
         }
+        overlay.onClick = { [weak self] in self?.characterTapped() }
 
         startHoverMonitoring()
         startEscMonitoring()
@@ -161,8 +172,9 @@ final class AplBuddyWindowController: NSWindowController {
         robotHostingView?.removeFromSuperview()
         robotHostingView = nil
 
-        [hoverTimer, strollTimer, moodTimer].forEach { $0?.invalidate() }
-        hoverTimer = nil; strollTimer = nil; moodTimer = nil
+        stopHoverMonitoring()
+        [strollTimer, moodTimer].forEach { $0?.invalidate() }
+        strollTimer = nil; moodTimer = nil
 
         if let escMonitor {
             NSEvent.removeMonitor(escMonitor)
@@ -401,16 +413,48 @@ final class AplBuddyWindowController: NSWindowController {
 
     // MARK: - Click-through
 
+    /// Jendela hanya menangkap klik saat kursor berada di atas karakter;
+    /// selebihnya klik tembus ke app di bawahnya.
+    ///
+    /// Dulu ini dijaga timer 0,08 detik. Timer itu diperlambat App Nap begitu
+    /// Apl tidak aktif — yaitu justru saat orang mengklik robot dari app lain —
+    /// sehingga `ignoresMouseEvents` tertinggal pada nilai lama dan robot tidak
+    /// bisa diklik sama sekali. Monitor pergerakan mouse tidak dijadwalkan
+    /// ulang seperti timer, dan versi globalnya tetap menerima event saat app
+    /// di latar. Timer satu detik tinggal sebagai jaring pengaman untuk saat
+    /// karakter yang bergerak, bukan kursornya.
     private func startHoverMonitoring() {
-        hoverTimer?.invalidate()
-        hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                guard let self, let window = self.window, let overlay = self.overlay else { return }
-                let mouseInWindow = window.convertPoint(fromScreen: NSEvent.mouseLocation)
-                let mouseInView = overlay.convert(mouseInWindow, from: nil)
-                window.ignoresMouseEvents = !(overlay.shouldHandlePoint?(mouseInView) ?? false)
-            }
+        stopHoverMonitoring()
+        updateClickThrough()
+
+        let matching: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged]
+        mouseMonitors = [
+            NSEvent.addGlobalMonitorForEvents(matching: matching) { [weak self] _ in
+                MainActor.assumeIsolated { self?.updateClickThrough() }
+            },
+            NSEvent.addLocalMonitorForEvents(matching: matching) { [weak self] event in
+                MainActor.assumeIsolated { self?.updateClickThrough() }
+                return event
+            },
+        ].compactMap { $0 }
+
+        hoverTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.updateClickThrough() }
         }
+    }
+
+    private func stopHoverMonitoring() {
+        hoverTimer?.invalidate()
+        hoverTimer = nil
+        mouseMonitors.forEach(NSEvent.removeMonitor)
+        mouseMonitors = []
+    }
+
+    private func updateClickThrough() {
+        guard let window, let overlay else { return }
+        let mouseInWindow = window.convertPoint(fromScreen: NSEvent.mouseLocation)
+        let mouseInView = overlay.convert(mouseInWindow, from: nil)
+        window.ignoresMouseEvents = !(overlay.shouldHandlePoint?(mouseInView) ?? false)
     }
 
     // MARK: - Interaction
@@ -420,7 +464,7 @@ final class AplBuddyWindowController: NSWindowController {
     /// Kalimat sapaan acak yang dulu muncul di sini dihapus: ia tidak punya
     /// aturan, tidak punya kuota, dan tidak bisa dijawab. Sapaan yang muncul
     /// sendiri adalah urusan C2.
-    fileprivate func characterTapped() {
+    private func characterTapped() {
         onCharacterTap?()
     }
 }
@@ -457,9 +501,7 @@ struct BuddyCharacterHost: View {
             .scaleEffect(mood == .hot ? 0.96 : 1.0, anchor: .bottom)
             .animation(.easeInOut(duration: 0.6), value: mood)
             .frame(width: size, height: size)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                AplBuddyWindowController.shared.characterTapped()
-            }
+        // Tanpa gesture: klik ditangani `BuddyOverlayView`, satu-satunya
+        // lapisan yang benar-benar menerimanya.
     }
 }
