@@ -22,6 +22,8 @@ struct QuickAskBubble: View {
 
     @State private var draft = ""
     @State private var availability: BrainAvailability?
+    /// Tinggi jawaban yang sebenarnya, sebelum dibatasi.
+    @State private var answerHeight: CGFloat = 0
 
     private var turn: QuickAskTurn? { QuickAskTurn.latest(in: chat.messages) }
 
@@ -78,6 +80,9 @@ struct QuickAskBubble: View {
             .accessibilityLabel("You said: \(text)")
     }
 
+    /// `ScrollView` mengambil SELURUH tinggi yang ditawarkan, jadi tingginya
+    /// harus dipatok dari isi — kalau tidak, bubble selalu setinggi batas
+    /// maksimum dan menyisakan rongga besar di atas composer.
     @ViewBuilder
     private func answerArea(_ turn: QuickAskTurn) -> some View {
         ScrollView {
@@ -92,9 +97,15 @@ struct QuickAskBubble: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background(GeometryReader { proxy in
+                Color.clear
+                    .onChange(of: proxy.size.height, initial: true) { _, height in
+                        answerHeight = height
+                    }
+            })
         }
         .scrollBounceBehavior(.basedOnSize)
-        .frame(maxHeight: BubblePlacement.answerMaxHeight)
+        .frame(height: min(answerHeight, BubblePlacement.answerMaxHeight))
     }
 
     /// Versi satu baris dari `AIUnavailableBanner`: di ruang 360pt, kartu penuh
