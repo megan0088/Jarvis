@@ -43,7 +43,6 @@ targets:
           # PNG icon iOS lepas, tidak dirujuk kode mana pun, tapi ikut tersalin
           # ~1,2 MB ke dalam bundle karena `sources:` menyapu seluruh folder.
           - "images/**"
-          - "DinoPocket.entitlements"
     settings:
       base:
         # Nama produk final (spec §14). Bundle jadi Apl.app dan CFBundleName jadi
