@@ -1,7 +1,11 @@
 # Apl
 
-Companion AI on-device untuk Mac — karakter 3D di desktop, chat Apple Intelligence,
-dan pengingat kebiasaan sehat. Seluruhnya berjalan lokal, tanpa server.
+Asisten desktop on-device untuk Mac: karakter 3D yang hidup di desktop, chat yang
+berjalan di Mac sendiri lewat Apple Intelligence, dan pengingat yang dibuat dengan
+kalimat biasa. Satu tombol memanggilnya dari app mana pun, dan sesekali ia menyapa
+lebih dulu — dengan kuota, dan hanya soal hal yang memang sedang terjadi.
+
+Seluruhnya lokal: tidak ada akun, tidak ada server, tidak ada data yang keluar dari Mac.
 
 Nama produk final: **Apl** · bundle id `com.ega.apl` · produk build `Apl.app`.
 
@@ -38,8 +42,9 @@ open DinoPocket.xcodeproj
 | `docs/superpowers/` | Spec dan rencana |
 
 Jalur iOS (`ContentView.swift`, `ContentView+iOS.swift`, `ContentView+macOS.swift`,
-`Haptics.swift`, `PetActivityWidgets.swift`, `JarvisWidget/`) ada di repo tapi
-dikecualikan dari build — menunggu spec companion iPhone.
+`Haptics.swift`, `PetActivityWidgets.swift`) ada di repo tapi dikecualikan dari build —
+menunggu spec companion iPhone. `JarvisWidget/` dan `JarvisUITests/` dihapus di
+sub-project D: keduanya tidak pernah disebut `project.yml`.
 
 ## Dokumen
 
