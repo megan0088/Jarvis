@@ -281,8 +281,11 @@ Pendaftaran hotkey selalu lewat `HotKeyRegistering` palsu: test berjalan di dala
 - [x] `greetings` dan `greetingTimer` hilang dari `AplBuddyWindowController`.
 - [x] Baris shortcut ada di tab General; jalur gagal-daftar terpasang, tetapi tidak
       pernah terpicu di Mac ini (ketiga preset diterima sistem).
-- [ ] VoiceOver: bubble terbaca, dan selesainya jawaban diumumkan (diuji oleh pemilik
-      produk, seperti item terakhir di B).
+- [~] VoiceOver: **pohon aksesibilitasnya diaudit** (2026-09-20) dan bersih — grup bubble
+      berlabel "Apl quick ask", pesan pengguna berawalan "You said:", tautan "Open in Apl"
+      dan tombol Send berlabel, ikon hiasan tidak muncul. Yang tersisa hanya yang menuntut
+      VoiceOver benar-benar menyala: apakah selesainya jawaban **terdengar** diumumkan.
+      Diuji pemilik produk, seperti item terakhir di B.
 
 ---
 
