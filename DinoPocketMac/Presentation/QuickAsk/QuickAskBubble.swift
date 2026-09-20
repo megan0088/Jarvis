@@ -72,10 +72,8 @@ struct QuickAskBubble: View {
             .strokeBorder(.separator))
         .background(heightReporter)
         .task { availability = await chat.availability() }
-        .onChange(of: chat.isStreaming) { was, isStreaming in
-            guard was, !isStreaming else { return }
-            announceAnswer()
-        }
+        // Bubble akan menghilang, jadi pengumumannya boleh memotong.
+        .announcesAnswers(from: chat, priority: .high)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Apl quick ask")
     }
@@ -150,18 +148,6 @@ struct QuickAskBubble: View {
         let text = draft
         draft = ""
         Task { await chat.send(text) }
-    }
-
-    /// Panel `.nonactivatingPanel` tidak mengumumkan apa pun sendiri; tanpa ini
-    /// pengguna VoiceOver tidak tahu jawabannya sudah ada (spec C1 §7).
-    private func announceAnswer() {
-        guard let text = turn?.answer?.text, !text.isEmpty else { return }
-        NSAccessibility.post(element: NSApp as Any,
-                             notification: .announcementRequested,
-                             userInfo: [
-                                .announcement: text,
-                                .priority: NSAccessibilityPriorityLevel.high.rawValue,
-                             ])
     }
 }
 

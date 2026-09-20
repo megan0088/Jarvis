@@ -55,6 +55,9 @@ struct ConversationView: View {
         }
         // Esc menghentikan jawaban walau fokus tidak di composer.
         .onExitCommand { chat.stopStreaming() }
+        // Jendela ini tetap bisa ditelusuri ulang, jadi pengumumannya tidak
+        // perlu memotong apa yang sedang dibacakan.
+        .announcesAnswers(from: chat, priority: .medium)
     }
 
     private var messageList: some View {
