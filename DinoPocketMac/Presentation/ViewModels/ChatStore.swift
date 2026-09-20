@@ -124,6 +124,16 @@ final class ChatStore {
         persistRecent()
     }
 
+    /// Menyisipkan kalimat Apl yang TIDAK berasal dari model — sapaan proaktif
+    /// yang diklik pengguna (spec C2 §5). Tidak memanggil otak dan tidak
+    /// memulai stream; ia hanya menjadi giliran terakhir supaya bisa dijawab.
+    func appendAssistantNote(_ text: String) {
+        guard !text.isEmpty else { return }
+        finalizeInterruptedAssistant()
+        messages.append(ChatMessage(role: .assistant, text: text, date: now()))
+        persistRecent()
+    }
+
     /// Menu Conversation › Clear Conversation…. Reminder tidak ikut terhapus.
     func clearConversation() async {
         resetConversationState()

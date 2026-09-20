@@ -16,6 +16,9 @@ struct AplApp: App {
     @State private var reminders = deps.makeReminderListViewModel()
     @State private var buddySettings = deps.buddySettings
     @State private var shortcutSettings = deps.shortcutSettings
+    @State private var nudgeHistory = deps.nudgeHistory
+    @State private var speaker = NudgeSpeaker()
+    @State private var nudges: NudgeScheduler?
     @State private var profile = deps.profile
 
     @State var isBuddyMode = false
@@ -60,6 +63,7 @@ struct AplApp: App {
     /// sendiri; UseCase ini tidak tahu satu pun nama kunci atau suite.
     private func eraseAllData() async {
         if isBuddyMode { dismissFromBuddy() }
+        nudges?.stop()
         let stores: [any LocallyErasable] = [profile, chat, buddySettings, shortcutSettings]
             + Self.deps.erasableStores
         await EraseAllDataUseCase(stores: stores,
@@ -115,8 +119,10 @@ struct AplApp: App {
                     settings: buddySettings,
                     onDismiss: { dismissFromBuddy() }
                 )
+                nudges?.start()
             } else {
                 AplBuddyWindowController.shared.stopBuddyMode()
+                nudges?.stop()
             }
         }
         // Buddy Mode menyala sendiri begitu jendela utama tampil.
@@ -142,6 +148,28 @@ struct AplApp: App {
             }
             shortcutSettings.registrationFailed =
                 !shortcut.apply(shortcutSettings.preset, handler: { handleQuickAskShortcut() })
+
+            // Mesin proaktif (spec C2 §3). Ia tidak memutuskan apa pun sendiri;
+            // NudgeRules yang memutuskan, dan ia hanya menjalankan jawabannya.
+            let scheduler = NudgeScheduler(
+                reminders: Self.deps.reminderStore,
+                status: Self.deps.systemStatus,
+                history: nudgeHistory,
+                settings: buddySettings,
+                speaker: speaker,
+                signals: QuietSignalReader(
+                    isBuddyRunning: { isBuddyMode },
+                    isQuickAskOpen: { QuickAskPanelController.shared.isOpen },
+                    isNudgeOnScreen: { NudgePanelController.shared.isShowing }
+                ),
+                engage: { nudge in
+                    // Sapaan baru masuk percakapan saat diklik (spec C2 §2 #7).
+                    chat.appendAssistantNote(nudge.text)
+                    _ = QuickAskPanelController.shared.open()
+                }
+            )
+            scheduler.start()
+            nudges = scheduler
         }
     }
 }

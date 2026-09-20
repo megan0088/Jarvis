@@ -17,6 +17,7 @@ struct AppDependencies {
     let launchAtLogin: LaunchAtLoginManaging
     let buddySettings: BuddySettingsStore
     let shortcutSettings: ShortcutSettingsStore
+    let nudgeHistory: NudgeHistory
     let profile: ProfileStore
 
     /// Apple Intelligence — satu-satunya otak (spec A §2 #7).
@@ -62,12 +63,16 @@ struct AppDependencies {
         erasable.append(reminderStore)
         erasable.append(cleanup)
 
+        let nudgeHistory = NudgeHistory()
+        erasable.append(nudgeHistory)
+
         return AppDependencies(
             systemStatus: SystemStatusService(),
             appLauncher: AppLauncherService(),
             launchAtLogin: LaunchAtLoginService(),
             buddySettings: BuddySettingsStore(),
             shortcutSettings: ShortcutSettingsStore(),
+            nudgeHistory: nudgeHistory,
             profile: ProfileStore(),
             brain: brain,
             reminderStore: reminderStore,
