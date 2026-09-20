@@ -139,13 +139,14 @@ diberikan tanpa Apple ID pemilik produk.
 
 ## 7. Definition of Done
 
-- [ ] Kategori `productivity` dan deployment target `26.0`, dijaga `verify-release.sh`.
-- [ ] Empat berkas mati terhapus; build dan seluruh suite tetap hijau.
-- [ ] README tidak lagi menjanjikan pelacakan kebiasaan sehat.
-- [ ] `docs/appstore/2026-09-20-listing.md` lengkap, termasuk review notes dan daftar
+- [x] Kategori `productivity` dan deployment target `26.0`, dijaga `verify-release.sh`.
+- [x] Empat berkas mati terhapus; build dan seluruh suite tetap hijau (**225 test**).
+- [x] README tidak lagi menjanjikan pelacakan kebiasaan sehat.
+- [x] `docs/appstore/2026-09-20-listing.md` lengkap, termasuk review notes dan daftar
       "harus datang dari pemilik produk".
-- [ ] Empat screenshot 1280×800, tanpa app pihak ketiga di dalamnya.
-- [ ] Archive Release terbangun dan `Info.plist`-nya diperiksa.
+- [x] Empat screenshot 1280×800, tanpa app pihak ketiga di dalamnya.
+- [x] Archive Release terbangun dan `Info.plist`-nya diperiksa — sepuluh kunci benar,
+      `AppIcon.icns` terbundel.
 
 ---
 

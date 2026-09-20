@@ -484,6 +484,55 @@ EOF
 
 ---
 
+## Catatan eksekusi
+
+Dijalankan inline, 2026-09-20. Tujuh tugas selesai, **225 test di 43 suite** hijau,
+`verify-boundaries` dan `verify-release` hijau dengan tiga aturan baru.
+
+### Archive dan Info.plist
+
+`xcodebuild archive` → **ARCHIVE SUCCEEDED**. Isi `Info.plist` di dalam archive:
+
+| Kunci | Nilai |
+|---|---|
+| `CFBundleIdentifier` | `com.ega.apl` |
+| `CFBundleName` / `CFBundleDisplayName` | `Apl` / `Apl` |
+| `CFBundleShortVersionString` / `CFBundleVersion` | `1.0` / `1` |
+| `LSApplicationCategoryType` | `public.app-category.productivity` |
+| `LSMinimumSystemVersion` | `26.0` |
+| `NSHumanReadableCopyright` | `Copyright © 2026 Muhamad Ega Nugraha. All rights reserved.` |
+| `ITSAppUsesNonExemptEncryption` | `false` |
+| `CFBundleIconName` | `AppIcon`, dan `AppIcon.icns` benar-benar terbundel |
+
+### Temuan saat pelaksanaan
+
+| # | Temuan | Tindakan |
+|---|---|---|
+| 1 | Pemeriksaan "entitlements yatim" versi pertama meloloskan `DinoPocket.entitlements`, karena namanya disebut `project.yml` sebagai `excludes`. **Disebut bukan berarti dipakai** | Pemeriksa memakai `CODE_SIGN_ENTITLEMENTS`, bukan sekadar nama yang muncul |
+| 2 | Screenshot Settings memuat **tab Debug**, yang hanya ada di build DEBUG dan tidak akan pernah ada di app yang dikirim | Diambil ulang dari build Release; shot utama ikut diambil ulang dari sana |
+
+Satu-satunya perbedaan UI antara Debug dan Release adalah tab itu
+(`SettingsWindow.swift:32` dan `DebugSettingsTab.swift`) — diperiksa dengan menyisir
+seluruh `#if DEBUG` di kode yang di-build.
+
+### Tentang screenshot
+
+Shot 1 dan 4 dari build **Release**; shot 2 dan 3 dari build Debug, yang untuk layar-layar
+itu identik piksel demi piksel. Jendela dipotret sendiri lalu disusun di atas latar polos
+oleh `compose` (alat kecil yang menggambar ke bitmap berukuran piksel eksplisit — `NSImage.lockFocus`
+memakai skala layar Retina dan akan memperbesar potret 1× jadi buram).
+
+Percakapan pemilik produk **tidak dihapus**; isi yang pantas dipotret dibuat dengan
+menambah giliran baru sampai sampah uji terdorong keluar dari layar. Empat reminder yang
+dibuat demi gambar dihapus setelah selesai, supaya tidak ada notifikasi yang berbunyi
+tanpa diminta.
+
+### Yang tersisa untuk pemilik produk
+
+URL kebijakan privasi, URL dukungan, ketersediaan nama "Apl", dan harga — semuanya
+tercatat di `docs/appstore/2026-09-20-listing.md`. Unggah dan Submit for Review tidak
+dilakukan; itu tindakan Anda ke pihak luar.
+
 ## Self-review
 
 **Cakupan spec:** §2 #1 dan #2 → Task 1 (pemeriksa lebih dulu, konfigurasi kemudian);
