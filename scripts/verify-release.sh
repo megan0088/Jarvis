@@ -32,7 +32,12 @@ echo "Konfigurasi Release:"
 check Release ENABLE_APP_SANDBOX      "YES"  "wajib untuk Mac App Store"
 check Release ENABLE_HARDENED_RUNTIME "YES"  "wajib untuk notarization"
 check Release ENABLE_OUTGOING_NETWORK_CONNECTIONS "NO" "keputusan all-Apple"
-check Release INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.*" "App Store butuh kategori"
+# Kategori PERSIS, bukan sekadar "ada kategori apa pun": healthcare-fitness
+# adalah peninggalan wellness tracker yang dibuang di sub-project A, dan ia
+# lolos pola longgar tanpa suara (spec D §3).
+check Release INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.productivity" "kategori salah rak"
+# Batas OS yang naik diam-diam mengusir pemasang, termasuk App Review.
+check Release MACOSX_DEPLOYMENT_TARGET "26.0" "lebih tinggi dari API tertinggi yang dipakai"
 
 # Identitas produk. Bundle id PERMANEN begitu record App Store Connect dibuat —
 # ketiganya pernah kosong atau memakai codename, dan tidak satu pun menghasilkan
@@ -61,6 +66,26 @@ if [ -z "$siwa" ]; then
   echo "  ✅ tidak ada entitlement Sign in with Apple"
 else
   echo "  ❌ masih ada entitlement Sign in with Apple:"; echo "$siwa"; fail=1
+fi
+
+echo "Tanpa entitlements yatim:"
+orphans=""
+while IFS= read -r file; do
+  [ -z "$file" ] && continue
+  # Yang menentukan hanya CODE_SIGN_ENTITLEMENTS. Disebut di `excludes`
+  # justru berarti berkas itu sengaja tidak ikut build — bukan bahwa ia
+  # menandatangani sesuatu.
+  if ! grep -E "CODE_SIGN_ENTITLEMENTS.*$(basename "$file")" project.yml >/dev/null 2>&1; then
+    orphans="$orphans $file"
+  fi
+done <<< "$(find . -name '*.entitlements' -not -path './.git/*' 2>/dev/null)"
+if [ -z "$orphans" ]; then
+  echo "  ✅ tidak ada .entitlements yang tidak dirujuk"
+else
+  echo "  ❌ .entitlements tidak dirujuk siapa pun:$orphans"
+  echo "     berkas mati semacam ini menunggu suatu hari tersambung dan meminta"
+  echo "     capability yang tidak pernah dipakai app ini"
+  fail=1
 fi
 
 echo "Brain tunggal (spec A §2 #7):"

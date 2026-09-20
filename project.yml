@@ -4,7 +4,7 @@ options:
   bundleIdPrefix: com.ega
   createIntermediateGroups: true
   deploymentTarget:
-    macOS: "26.2"
+    macOS: "26.0"
   groupSortPosition: top
 
 settings:
@@ -74,9 +74,10 @@ targets:
         # enkripsi di SETIAP submit. App ini tidak memakai kriptografi di
         # luar yang disediakan sistem (Keychain), jadi jawabannya NO.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
-        # Kategori App Store. Health & Fitness dipilih karena inti produknya
-        # ritme sehat (minum, stretch, istirahat), bukan produktivitas.
-        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.healthcare-fitness
+        # Kategori App Store. Productivity: app ini menjawab dan mengingatkan.
+        # Sebelumnya healthcare-fitness, peninggalan wellness tracker yang
+        # dibuang di sub-project A (spec D §2 #1).
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         ENABLE_APP_SANDBOX: YES
         ENABLE_HARDENED_RUNTIME: YES
         ENABLE_OUTGOING_NETWORK_CONNECTIONS: NO
