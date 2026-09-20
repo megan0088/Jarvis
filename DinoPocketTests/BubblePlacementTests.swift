@@ -52,6 +52,22 @@ struct BubblePlacementTests {
         #expect(frame.maxX <= second.maxX)
     }
 
+    /// Balon nudge lebih kecil dari bubble; sisi dan jepitannya harus memakai
+    /// lebar balon itu, bukan lebar 360 milik bubble.
+    @Test func smallBalloonUsesItsOwnWidth() {
+        let frame = BubblePlacement.frame(robot: robot(x: 1400), screen: screen,
+                                          size: CGSize(width: 220, height: 44))
+        #expect(frame.width == 220)
+        #expect(frame.maxX <= screen.maxX)
+        #expect(frame.maxY == robot(x: 1400).maxY)
+    }
+
+    @Test func smallBalloonStillSitsToTheRightWhenThereIsRoom() {
+        let frame = BubblePlacement.frame(robot: robot(x: 400), screen: screen,
+                                          size: CGSize(width: 220, height: 44))
+        #expect(frame.minX == 400 + 120 + BubblePlacement.gap)
+    }
+
     /// Karakter di dasar layar: bubble tidak boleh menggantung di bawah tepi.
     @Test func doesNotHangBelowTheScreen() {
         let frame = BubblePlacement.frame(robot: CGRect(x: 400, y: 0, width: 120, height: 120),
