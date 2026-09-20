@@ -1484,6 +1484,59 @@ EOF
 
 ---
 
+## Catatan eksekusi
+
+Dijalankan inline, 2026-09-20. Delapan tugas selesai, **225 test di 43 suite** hijau
+(193 dari B/C1 + 32 baru), `verify-boundaries` dan `verify-release` hijau, dan
+`git diff --stat` pada `DinoPocket.entitlements` **kosong** — janji "tanpa izin baru"
+diperiksa, bukan diingat.
+
+### Temuan verifikasi manual
+
+| # | Temuan | Commit |
+|---|---|---|
+| 1 | Klik pada balon membuka bubble yang menampilkan **giliran yang salah**: pertanyaan terakhir beserta jawabannya, bukan sapaan yang baru saja diklik. `QuickAskTurn` hanya mengenal pola tanya-jawab dan mengambil pesan asisten yang persis setelah pertanyaan terakhir; kalimat Apl yang datang belakangan tanpa ditanya tidak punya tempat di pola itu | `0e7c499` |
+
+### Yang terbukti jalan
+
+Balon muncul **tepat lima menit** sebelum reminder (09:44:21 untuk reminder 09:49),
+ditambatkan di samping kepala robot, dan hilang sendiri setelah 8 detik. Kursor di atasnya
+menahannya 13 detik penuh, lalu hilang 11 detik setelah kursor pergi. Klik membuka bubble
+berisi sapaan itu sendiri, siap dijawab, dan sapaan hanya masuk percakapan saat diklik —
+yang diabaikan tidak meninggalkan jejak. Toggle suara ada di tab Character, **mati secara
+bawaan**, dan bertahan di kedua arah.
+
+**Peredam layar penuh terbukti dengan kontrol positif** — sinyal yang spec §10 tandai
+sebagai satu-satunya yang belum pernah dijalankan:
+
+| Waktu | Keadaan | Balon |
+|---|---|---|
+| 10:12:57 – 10:16:24 | Safari layar penuh, jendela balon terbuka sejak 10:13 | **0** |
+| 10:16:48 | keluar dari layar penuh | — |
+| 10:17:29 | detak berikutnya | **muncul** |
+
+### Yang belum diuji
+
+- **Pemicu keadaan mesin**: `.hot`/`.lowBattery` tidak terjadi secara alami selama
+  pengujian, dan memanaskan Mac atau menguras baterai bukan sesuatu yang saya lakukan pada
+  mesin orang. Aturannya sendiri diuji habis-habisan sebagai fungsi murni.
+- **Bunyi TTS**: jalurnya berjalan (toggle menyala, balon muncul, tidak ada kegagalan),
+  tetapi keluaran audio tidak bisa diverifikasi tanpa telinga.
+- **VoiceOver**: pengaturan sistem milik pemilik produk, sama seperti di B dan C1.
+
+### Artefak lingkungan uji (bukan bug app)
+
+- `osascript -e 'tell application "Apl" to activate'` diam-diam **meluncurkan salinan kedua**
+  dari `build/dd` (sisa `verify-release.sh`) karena bundle id-nya sama: dua robot, dua
+  penjadwal, satu `UserDefaults`. Pemfokusan berikutnya memakai
+  `tell application "System Events" to set frontmost of process "Apl"`, yang tidak pernah
+  meluncurkan apa pun.
+- Setelah `pkill`, SwiftUI memulihkan keadaan "tanpa jendela" dan app tampak hidup tanpa UI.
+  Membukanya lewat Dock (`open`) mengembalikan jendelanya — jalur normal pengguna tidak
+  terpengaruh.
+- Sebelas reminder uji dan riwayat kuota hasil pengujian dihapus setelah selesai; toggle
+  suara dikembalikan ke mati.
+
 ## Self-review
 
 **Cakupan spec:** §2 #1 → Task 5; #2 → Task 7 (tanpa Intents) dan langkah pemeriksa

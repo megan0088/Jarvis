@@ -211,12 +211,14 @@ ada riwayat kehadiran. Sinyal peredam dibaca saat ditanya dan langsung dibuang.
 
 ## 8. Definition of Done
 
-- [ ] Test unit §7 hijau; suite C1 dan B tetap hijau.
-- [ ] `verify-boundaries` dan `verify-release` hijau.
-- [ ] Daftar manual §7 dijalankan di app sungguhan, hasilnya dicatat di plan.
-- [ ] Suara mati secara bawaan.
-- [ ] `DinoPocket.entitlements` **tidak berubah sama sekali**.
-- [ ] `nudge.speaks` dan `nudge.history` hilang saat Erase All Data.
+- [x] Test unit §7 hijau; suite C1 dan B tetap hijau. **225 test di 43 suite.**
+- [x] `verify-boundaries` dan `verify-release` hijau.
+- [x] Daftar manual §7 dijalankan di app sungguhan, hasilnya dicatat di plan
+      ("Catatan eksekusi") — kecuali pemicu keadaan mesin, yang tidak terjadi secara alami.
+- [x] Suara mati secara bawaan.
+- [x] `DinoPocket.entitlements` **tidak berubah sama sekali** (`git diff --stat` kosong).
+- [x] `nudge.speaks` dan `nudge.history` hilang saat Erase All Data — keduanya
+      `LocallyErasable` dan terdaftar di `erasableStores`.
 
 ---
 
@@ -240,3 +242,9 @@ pernah dijalankan di app ini.** Bila ternyata tidak dapat diandalkan tanpa izin 
 Recording, jatuhnya ke aturan yang lebih kasar: anggap layar penuh bila jendela terdepan
 milik app lain menutupi seluruh layar menurut `NSWorkspace` dan `NSScreen`, dan bila itu
 pun gagal, sinyal ini dibuang dan dicatat sebagai batasan — bukan diganti dengan izin baru.
+
+**Terjawab saat pelaksanaan: sinyal ini bekerja, tanpa izin apa pun.** Diuji dengan kontrol
+positif — nol balon selama Safari layar penuh 10:12–10:16 meski jendela balonnya terbuka
+sejak 10:13, lalu balon muncul pada detak pertama setelah keluar dari layar penuh
+(10:17:29). Membandingkan UKURAN jendela dengan ukuran layar, bukan posisinya, menghindari
+seluruh perkara koordinat kiri-atas lawan kiri-bawah.
