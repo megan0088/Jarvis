@@ -42,7 +42,9 @@ struct QuickAskBubble: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             if let turn {
-                question(turn.question)
+                if let asked = turn.question {
+                    question(asked)
+                }
                 answerArea(turn)
                 if !chat.isStreaming, turn.answer != nil {
                     Button("Open in Apl", action: onOpenMainWindow)

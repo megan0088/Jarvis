@@ -10,15 +10,30 @@
 //
 
 struct QuickAskTurn: Equatable {
-    let question: String
+    /// `nil` bila kalimat Apl tidak menjawab apa pun — sapaan proaktif yang
+    /// diklik pengguna (spec C2 §5). Menampilkan pertanyaan lama di atasnya
+    /// akan membuat sapaan itu tampak seperti jawaban atas hal lain.
+    let question: String?
     /// `nil` selama jawaban belum ada (baru dikirim, atau sedang mengalir).
     let answer: ChatMessage?
 
     static func latest(in messages: [ChatMessage]) -> QuickAskTurn? {
-        guard let asked = messages.lastIndex(where: { $0.role == .user }) else { return nil }
-        let next = messages.index(after: asked)
-        let answer = messages.indices.contains(next) && messages[next].role == .assistant
-            ? messages[next]
+        guard let last = messages.last else { return nil }
+
+        guard let asked = messages.lastIndex(where: { $0.role == .user }) else {
+            // Belum pernah ada pertanyaan: yang ada hanya kalimat Apl sendiri.
+            return last.role == .assistant ? QuickAskTurn(question: nil, answer: last) : nil
+        }
+
+        let reply = messages.index(after: asked)
+        let lastIndex = messages.index(before: messages.endIndex)
+        // Kalimat Apl yang datang setelah jawaban bukan jawaban atas apa pun.
+        if last.role == .assistant, lastIndex > reply {
+            return QuickAskTurn(question: nil, answer: last)
+        }
+
+        let answer = messages.indices.contains(reply) && messages[reply].role == .assistant
+            ? messages[reply]
             : nil
         return QuickAskTurn(question: messages[asked].text, answer: answer)
     }

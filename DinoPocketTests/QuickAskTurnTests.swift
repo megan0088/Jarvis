@@ -46,6 +46,25 @@ struct QuickAskTurnTests {
         #expect(turn?.answer == nil)
     }
 
+    /// Sapaan proaktif yang diklik masuk percakapan sebagai kalimat Apl yang
+    /// tidak menjawab apa pun; menampilkan pertanyaan lama di atasnya akan
+    /// membuatnya tampak seperti jawaban atas hal lain (spec C2 §5).
+    @Test func unsolicitedGreetingHasNoQuestionAboveIt() {
+        let turn = QuickAskTurn.latest(in: [
+            ChatMessage(role: .user, text: "remind me to smile at 10:14"),
+            ChatMessage(role: .assistant, text: "Done — I'll remind you."),
+            ChatMessage(role: .assistant, text: "Smile · 10:14"),
+        ])
+        #expect(turn?.question == nil)
+        #expect(turn?.answer?.text == "Smile · 10:14")
+    }
+
+    @Test func greetingInAnEmptyConversationStandsAlone() {
+        let turn = QuickAskTurn.latest(in: [ChatMessage(role: .assistant, text: "Smile · 10:14")])
+        #expect(turn?.question == nil)
+        #expect(turn?.answer?.text == "Smile · 10:14")
+    }
+
     @Test func failedAnswerIsStillTheAnswer() {
         let turn = QuickAskTurn.latest(in: [
             ChatMessage(role: .user, text: "Hi"),
