@@ -151,6 +151,7 @@ private struct CharacterSettingsTab: View {
                 }
                 Toggle("Keep on top of other windows", isOn: $buddySettings.keepOnTop)
                 Toggle("Wander around the desktop", isOn: $buddySettings.strolling)
+                Toggle("Speak when Apl greets you", isOn: $buddySettings.speaks)
             } header: {
                 Text("Buddy Mode")
             } footer: {

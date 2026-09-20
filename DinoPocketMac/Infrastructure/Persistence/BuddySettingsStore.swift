@@ -30,6 +30,7 @@ final class BuddySettingsStore {
         static let opacity = "buddy.opacity"
         static let keepOnTop = "buddy.keepOnTop"
         static let strolling = "buddy.strolling"
+        static let speaks = "nudge.speaks"
     }
 
     private let defaults: UserDefaults
@@ -65,6 +66,17 @@ final class BuddySettingsStore {
         didSet { defaults.set(strolling, forKey: Keys.strolling) }
     }
 
+    /// Membacakan sapaan yang tidak diminta (spec C2 §5). Default MATI: suara
+    /// yang muncul sendiri tanpa diminta adalah hal terakhir yang boleh
+    /// mengejutkan orang.
+    var speaks: Bool {
+        didSet {
+            defaults.set(speaks, forKey: Keys.speaks)
+            // Dipaksa turun ke disk; lihat catatan di `ProfileStore`.
+            defaults.synchronize()
+        }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
 
@@ -78,6 +90,7 @@ final class BuddySettingsStore {
         // `bool(forKey:)` tidak, dan itu akan mematikan default keepOnTop.
         self.keepOnTop = (defaults.object(forKey: Keys.keepOnTop) as? Bool) ?? true
         self.strolling = (defaults.object(forKey: Keys.strolling) as? Bool) ?? false
+        self.speaks = defaults.bool(forKey: Keys.speaks)
     }
 
     /// Default sengaja jauh di bawah 260pt yang dipakai demo — pada ukuran itu
@@ -103,7 +116,8 @@ extension BuddySettingsStore: LocallyErasable {
         opacity = 1.0
         keepOnTop = true
         strolling = false
-        for key in [Keys.size, Keys.opacity, Keys.keepOnTop, Keys.strolling] {
+        speaks = false
+        for key in [Keys.size, Keys.opacity, Keys.keepOnTop, Keys.strolling, Keys.speaks] {
             defaults.removeObject(forKey: key)
         }
         // Dipaksa turun ke disk; lihat catatan di `ProfileStore`.
