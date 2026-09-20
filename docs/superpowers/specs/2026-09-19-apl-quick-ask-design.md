@@ -356,3 +356,9 @@ Ditemukan saat menjalankan app sungguhan; rinciannya di "Catatan eksekusi" pada 
 5. **Dua bug bawaan sub-project B ikut diperbaiki** karena C1 bergantung padanya: robot
    yang berdiri di luar semua layar pada Mac dua-layar, dan klik robot yang tidak pernah
    sampai. Keduanya membuat Buddy Mode tampak menyala tanpa melakukan apa pun.
+6. **Panel bubble menyatakan diri bisa jadi main window.** Dilaporkan pemilik produk saat
+   memakai app: satu klik pada robot memunculkan dua hal — bubble DAN jendela percakapan.
+   Penyebabnya `NSApp.activate()`, yang wajib agar bubble bisa diketik, dan yang mengangkat
+   MAIN window app. Panel biasanya tidak bisa jadi main, jadi yang terangkat adalah jendela
+   utama. Dengan `canBecomeMain`, panel itu sendiri yang terangkat dan jendela utama tetap
+   di tempatnya — §4 sekarang berlaku apa adanya: klik robot memunculkan bubble, titik.

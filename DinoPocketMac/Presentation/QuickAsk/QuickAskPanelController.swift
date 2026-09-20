@@ -17,6 +17,12 @@ private final class QuickAskPanel: NSPanel {
     /// Tanpa ini panel borderless tidak pernah jadi key window, dan composer
     /// tidak pernah menerima satu huruf pun.
     override var canBecomeKey: Bool { true }
+
+    /// Mengaktifkan app mengangkat MAIN window-nya. Panel biasanya tidak bisa
+    /// jadi main, jadi yang terangkat adalah jendela utama — dan satu klik pada
+    /// robot memunculkan dua hal sekaligus: bubble dan jendela percakapan.
+    /// Dengan ini panel-lah yang terangkat, dan jendela utama tetap di tempatnya.
+    override var canBecomeMain: Bool { true }
 }
 
 @MainActor
