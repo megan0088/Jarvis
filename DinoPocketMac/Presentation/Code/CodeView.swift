@@ -174,9 +174,9 @@ struct CodeView: View {
         panel.allowsMultipleSelection = false
         panel.prompt = "Choose"
         guard panel.runModal() == .OK, let folder = panel.url else { return }
-        try? workspace.choose(folder)
+        workspace.choose(folder)
+        notice = workspace.bookmarkFailure
         attached = []
-        notice = nil
         lastReceipt = nil
     }
 

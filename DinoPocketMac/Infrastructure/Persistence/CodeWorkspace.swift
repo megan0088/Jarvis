@@ -51,6 +51,9 @@ final class CodeWorkspace {
     nonisolated static let key = "code.workspace"
 
     private(set) var url: URL?
+    /// Folder terpakai untuk sesi ini, tetapi tidak bisa diingat sampai
+    /// peluncuran berikutnya. Ditampilkan apa adanya alih-alih didiamkan.
+    private(set) var bookmarkFailure: String?
     private let bookmarks: any BookmarkStoring
 
     init(bookmarks: any BookmarkStoring = UserDefaultsBookmarkStore()) {
@@ -58,9 +61,18 @@ final class CodeWorkspace {
         url = bookmarks.resolve(Self.key)
     }
 
-    func choose(_ folder: URL) throws {
-        try bookmarks.save(folder, for: Self.key)
+    /// Akses berlaku begitu pengguna memilih di panel Open — itu pemberian dari
+    /// sistem, bukan dari bookmark. Menyimpan bookmark hanya membuat pilihan itu
+    /// bertahan sampai peluncuran berikutnya, jadi kegagalannya tidak boleh
+    /// membatalkan folder yang sudah dipilih: ia dicatat dan dikatakan.
+    func choose(_ folder: URL) {
         url = folder
+        do {
+            try bookmarks.save(folder, for: Self.key)
+            bookmarkFailure = nil
+        } catch {
+            bookmarkFailure = "Apl can use this folder now, but will ask again next launch. (\(error.localizedDescription))"
+        }
     }
 
     func forget() {
