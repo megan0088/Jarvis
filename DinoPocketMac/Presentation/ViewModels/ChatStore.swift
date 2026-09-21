@@ -61,11 +61,18 @@ final class ChatStore {
         let reminderID: Reminder.ID?
     }
 
-    init(brain: Brain?, defaults: UserDefaults = .standard, now: @escaping () -> Date = { .now }) {
+    /// Kunci penyimpanan percakapan INI. Sisi Code memakai kunci lain supaya dua
+    /// percakapan dalam satu app tidak saling menimpa di disk (spec E §2 #3).
+    private let storageKey: String
+
+    init(brain: Brain?, defaults: UserDefaults = .standard,
+         recentKey: String = ChatStore.recentKey,
+         now: @escaping () -> Date = { .now }) {
         self.brain = brain
         self.defaults = defaults
+        self.storageKey = recentKey
         self.now = now
-        if let data = defaults.data(forKey: Self.recentKey),
+        if let data = defaults.data(forKey: recentKey),
            let restored = try? JSONDecoder().decode([ChatMessage].self, from: data) {
             messages = restored
         }
@@ -244,15 +251,20 @@ final class ChatStore {
         noticeMessage = nil
         reminderAwaitingTime = nil
         lastEvent = nil
-        defaults.removeObject(forKey: Self.recentKey)
+        defaults.removeObject(forKey: storageKey)
         // Dipaksa turun ke disk; lihat catatan di `ProfileStore`.
         defaults.synchronize()
     }
 
+    #if DEBUG
+    /// Hanya untuk test: memaksa penyimpanan tanpa melalui `send`.
+    func persistForTesting() { persistRecent() }
+    #endif
+
     private func persistRecent() {
         let recent = Array(messages.suffix(20))
         if let data = try? JSONEncoder().encode(recent) {
-            defaults.set(data, forKey: Self.recentKey)
+            defaults.set(data, forKey: storageKey)
         }
     }
 }

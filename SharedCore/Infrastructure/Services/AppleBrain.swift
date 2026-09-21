@@ -31,11 +31,20 @@ final class AppleBrain: Brain {
 
     private let sessions: (any Sendable)?
 
-    /// - Parameter sessionStore: penyimpan transcript. `nil` berarti percakapan
-    ///   tetap berjalan tetapi tidak bertahan setelah app ditutup.
-    init(sessionStore: (any Sendable)? = nil) {
+    private let instructions: String
+
+    /// - Parameters:
+    ///   - instructions: persona sesi ini. Sisi Code memakai instructions
+    ///     sendiri karena sesinya memang terpisah (spec E §2 #3).
+    ///   - sessionStore: penyimpan transcript. `nil` berarti percakapan tetap
+    ///     berjalan tetapi tidak bertahan setelah app ditutup.
+    init(instructions: String = AplInstructions.text, sessionStore: (any Sendable)? = nil) {
+        self.instructions = instructions
         self.sessions = sessionStore
     }
+
+    /// Dibaca test; sesi sungguhan tidak bisa diperiksa dari luar.
+    var instructionsText: String { instructions }
 
     /// Gabungkan riwayat percakapan menjadi satu prompt untuk Foundation Models
     /// (streamResponse menerima satu String; instructions sudah di-set saat sesi dibuat).
@@ -118,7 +127,7 @@ final class AppleBrain: Brain {
             if let transcript = store?.loadTranscript(), !transcript.isEmpty {
                 box.session = LanguageModelSession(transcript: transcript)
             } else {
-                box.session = LanguageModelSession(instructions: AplInstructions.text)
+                box.session = LanguageModelSession(instructions: instructions)
                 isResumed = false
             }
         }
