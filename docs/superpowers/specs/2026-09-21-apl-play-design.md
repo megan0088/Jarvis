@@ -114,7 +114,33 @@ Hide Buddy lalu main lagi → rondenya berlangsung di dalam chat.
 
 ---
 
-## 8. Yang sengaja tidak dikerjakan
+## 8. Penyesuaian setelah tinjauan rencana
+
+Empat hal ketahuan saat rencananya ditinjau sebelum satu baris kode ditulis. Dua di
+antaranya mengubah keputusan produk, bukan sekadar urutan kerja.
+
+1. **Ekspresi kalah butuh case baru.** `CharacterBehavior` hanya punya `idle`, `greet`,
+   `sleepy`, `celebrate`, `thinking` — dan yang memakai berkas `RobotSad` adalah `.sleepy`,
+   yang juga berarti baterai menipis. Robot yang tampak **mengantuk** setiap kali pengguna
+   menang adalah salah pesan. Ditambahkan `case sad`, dipetakan ke aset `RobotSad` yang
+   sudah ada: tidak ada aset baru, hanya arti yang dipisahkan dari sebabnya.
+2. **Robot desktop belum punya pintu untuk mengganti ekspresi.** `BuddyCharacterHost`
+   menghitungnya murni dari `SystemMood`. Ditambahkan override yang **hanya berlaku selama
+   ronde** dan menang atas mood mesin; begitu ronde selesai, mood kembali memegang kendali.
+   Panas dan baterai tetap terlihat — hanya tertunda beberapa detik, dan itu harga yang
+   wajar untuk permainan yang diminta pengguna.
+3. **Jeda berpikir adalah milik `SuitGame`, bukan view.** Kalau ia tinggal di tampilan, ia
+   tidak bisa diuji sama sekali. Jam-nya disuntikkan, jadi "robot berpikir dulu, baru
+   mengungkap" bisa dibuktikan tanpa menunggu.
+4. **Balon permainan ikut membungkam sapaan proaktif.** `QuietSignals` C2 tidak tahu
+   apa-apa soal balon ini, jadi tanpa satu bendera tambahan Apl akan menyela permainannya
+   sendiri.
+5. **Tempat bermain adalah keputusan yang bisa diuji**, bukan cabang `if` di dalam view:
+   `PlayVenue.decide(buddyIsRunning:)` memilih balon atau chat.
+
+---
+
+## 9. Yang sengaja tidak dikerjakan
 
 - **Papan peringkat, lawan daring, taruhan.**
 - **Komentar robot yang digenerate model** — lambat, boros konteks, dan tidak punya aturan.
