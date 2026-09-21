@@ -17,6 +17,7 @@ struct AplApp: App {
     @State private var buddySettings = deps.buddySettings
     @State private var shortcutSettings = deps.shortcutSettings
     @State private var nudgeHistory = deps.nudgeHistory
+    @State private var codeChat = deps.makeCodeChatStore()
     @State private var speaker = NudgeSpeaker()
     @State private var nudges: NudgeScheduler?
     @State private var profile = deps.profile
@@ -64,7 +65,7 @@ struct AplApp: App {
     private func eraseAllData() async {
         if isBuddyMode { dismissFromBuddy() }
         nudges?.stop()
-        let stores: [any LocallyErasable] = [profile, chat, buddySettings, shortcutSettings]
+        let stores: [any LocallyErasable] = [profile, chat, codeChat, buddySettings, shortcutSettings]
             + Self.deps.erasableStores
         await EraseAllDataUseCase(stores: stores,
                                   clearNotifications: { await Self.deps.reminderScheduler.cancelAll() })
@@ -94,7 +95,10 @@ struct AplApp: App {
     private var mainWindow: some View {
         MainWindow(chat: chat, reminders: reminders, launcher: Self.deps.appLauncher,
                    isBuddyModeOn: isBuddyMode, onToggleBuddy: toggleBuddyMode,
-                   composerFocus: composerFocus)
+                   composerFocus: composerFocus,
+                   codeWorkspace: Self.deps.codeWorkspace,
+                   codeChat: codeChat,
+                   fileWriter: Self.deps.fileWriter)
         // Setiap preferensi buddy diterapkan langsung tanpa memulai ulang mode,
         // supaya kontrol di Settings terasa hidup saat digeser.
         .onChange(of: buddySettings.size) { _, value in

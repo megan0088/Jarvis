@@ -18,6 +18,9 @@ struct MainWindow: View {
     let isBuddyModeOn: Bool
     let onToggleBuddy: () -> Void
     let composerFocus: ComposerFocus
+    let codeWorkspace: CodeWorkspace
+    let codeChat: ChatStore
+    let fileWriter: FileWriter
 
     @Environment(\.openSettings) private var openSettings
     @Environment(\.appearsActive) private var appearsActive
@@ -27,6 +30,10 @@ struct MainWindow: View {
     /// Diperbarui saat momen berakhir, supaya body dievaluasi ulang.
     @State private var clock = Date.now
     @State private var isConfirmingClear = false
+    @State private var side: Side = .chat
+
+    /// Dua ruang di kolom yang sama (spec E §2 #2).
+    enum Side: String, CaseIterable { case chat = "Chat", code = "Code" }
 
     var body: some View {
         // `clock` dibaca di sini agar pembaruannya memicu render ulang. Waktu
@@ -65,12 +72,26 @@ struct MainWindow: View {
                                            onOpenSettings: { openSettings() })
                         Divider()
                     }
-                    ConversationView(chat: chat,
-                                     reminders: reminders,
-                                     availability: availability,
-                                     showsDateHeader: !isCompact,
-                                     composerFocus: composerFocus,
-                                     onOpenIntelligenceSettings: { _ = launcher.open(.appleIntelligence) })
+                    Picker("", selection: $side) {
+                        ForEach(Side.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .padding(.horizontal, Spacing.xl)
+                    .padding(.top, Spacing.sm)
+
+                    switch side {
+                    case .chat:
+                        ConversationView(chat: chat,
+                                         reminders: reminders,
+                                         availability: availability,
+                                         showsDateHeader: !isCompact,
+                                         composerFocus: composerFocus,
+                                         onOpenIntelligenceSettings: { _ = launcher.open(.appleIntelligence) })
+                    case .code:
+                        CodeView(workspace: codeWorkspace, chat: codeChat,
+                                 writer: fileWriter, reminders: reminders)
+                    }
                 }
             }
         }
@@ -131,20 +152,32 @@ struct MainWindow: View {
 
 #Preview("Main window · Dark") {
     MainWindow(chat: .preview(), reminders: .preview(), launcher: AppLauncherService(),
-               isBuddyModeOn: false, onToggleBuddy: {}, composerFocus: ComposerFocus())
+               isBuddyModeOn: false, onToggleBuddy: {}, composerFocus: ComposerFocus(),
+               codeWorkspace: CodeWorkspace(bookmarks: UserDefaultsBookmarkStore(
+                   defaults: UserDefaults(suiteName: "apl.preview.code")!)),
+               codeChat: .preview([]),
+               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory))
         .frame(width: 1000, height: 680)
         .preferredColorScheme(.dark)
 }
 
 #Preview("Main window · Light") {
     MainWindow(chat: .preview(), reminders: .preview(), launcher: AppLauncherService(),
-               isBuddyModeOn: true, onToggleBuddy: {}, composerFocus: ComposerFocus())
+               isBuddyModeOn: true, onToggleBuddy: {}, composerFocus: ComposerFocus(),
+               codeWorkspace: CodeWorkspace(bookmarks: UserDefaultsBookmarkStore(
+                   defaults: UserDefaults(suiteName: "apl.preview.code")!)),
+               codeChat: .preview([]),
+               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory))
         .frame(width: 1000, height: 680)
 }
 
 #Preview("Main window · Compact · Dark") {
     MainWindow(chat: .preview(), reminders: .preview(), launcher: AppLauncherService(),
-               isBuddyModeOn: false, onToggleBuddy: {}, composerFocus: ComposerFocus())
+               isBuddyModeOn: false, onToggleBuddy: {}, composerFocus: ComposerFocus(),
+               codeWorkspace: CodeWorkspace(bookmarks: UserDefaultsBookmarkStore(
+                   defaults: UserDefaults(suiteName: "apl.preview.code")!)),
+               codeChat: .preview([]),
+               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory))
         .frame(width: 740, height: 520)
         .preferredColorScheme(.dark)
 }
