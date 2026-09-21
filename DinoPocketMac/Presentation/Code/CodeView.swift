@@ -47,6 +47,10 @@ struct CodeView: View {
         } actions: {
             Button("Choose Folder…", action: chooseFolder)
         }
+        // Mengisi ruang yang tersedia. Tanpa ini VStack induk memusatkan
+        // isinya, dan pemilih Chat | Code ikut melompat dari atas ke tengah
+        // setiap kali sisi Code masih kosong.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var fileBar: some View {
