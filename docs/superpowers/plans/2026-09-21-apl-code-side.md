@@ -1554,6 +1554,41 @@ pun di bagian baru spec.
 
 ---
 
+## Catatan eksekusi
+
+Dijalankan inline, 2026-09-21. Sepuluh tugas selesai, **272 test di 51 suite** hijau
+(233 lama + 39 baru), `verify-boundaries` dan `verify-release` hijau, dan `project.yml`
+tidak menambah satu pun entitlement.
+
+### Penyesuaian terhadap rencana
+
+| # | Yang direncanakan | Yang dikerjakan, dan kenapa |
+|---|---|---|
+| 1 | `FileWriter.Snapshot` memakai tanggal ubah + ukuran | Memakai **sidik isi SHA-256**. Tanggal ubah hanya berketelitian satu detik di banyak filesystem: suntingan berukuran sama dalam detik yang sama akan lolos — dan itu justru bentuk suntingan paling sering saat orang mengganti satu nama di Xcode |
+| 2 | `CodeAnswer.Rejection: Equatable` | Harus `Error` juga, karena dipakai sebagai `Failure` di `Result` |
+| 3 | `CodeView` gagal dibangun sampai Task 9 | Ditulis utuh sekaligus dengan `ask`; memecahnya jadi dua commit hanya menyisakan berkas yang tidak bisa dikompilasi di riwayat |
+
+### Temuan verifikasi manual
+
+| Temuan | Commit |
+|---|---|
+| Pemilih Chat \| Code melompat dari atas ke tengah setiap kali sisi Code masih kosong — keadaan kosongnya tidak mengisi ruang, jadi VStack induk memusatkan seluruh isinya | `4c4a61d` |
+
+### Yang terbukti jalan
+
+Pemilih Chat | Code muncul di atas kolom percakapan dan berpindah; sisi Code menampilkan
+keadaan kosong yang jujur ("Apl only reads the files you point at, and only inside this
+folder") dengan satu tombol; sisi Chat, robot, dan seluruh isinya tidak berubah.
+
+### Yang tersisa untuk pemilik produk
+
+**Memilih folder lewat panel Open tidak saya klik sendiri** — panel itu adalah cara sandbox
+memberi app akses ke berkas, dan memberikannya adalah keputusan pemilik produk. Karena itu
+seluruh langkah setelahnya pada daftar spec §8 juga belum dijalankan: melampirkan berkas,
+pengukur token, penolakan berkas yang tidak muat, penulisan, Undo, dan penolakan berkas
+basi. Aturannya sendiri sudah diuji habis sebagai fungsi murni dan `FileWriter` diuji
+dengan berkas sungguhan; yang belum adalah membuktikannya di folder Anda.
+
 ## Self-review
 
 **Cakupan spec:** §2 #1 → tidak ada panggilan jaringan di seluruh plan; #2 → Task 9 Step 2;

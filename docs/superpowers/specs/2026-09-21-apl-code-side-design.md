@@ -165,12 +165,14 @@ perilakunya.
 
 ## 9. Definition of Done
 
-- [ ] Test unit §8 hijau; seluruh suite lama tetap hijau.
-- [ ] `verify-boundaries` dan `verify-release` hijau.
-- [ ] `DinoPocket.entitlements` tidak ada, dan `project.yml` tidak menambah entitlement.
-- [ ] Pengukur token terlihat dan sesuai perkiraan yang dinyatakan.
-- [ ] Undo terbukti bekerja setelah app ditutup dan dibuka lagi.
-- [ ] Daftar manual §8 dijalankan, hasilnya dicatat di plan.
+- [x] Test unit §8 hijau; seluruh suite lama tetap hijau. **272 test di 51 suite.**
+- [x] `verify-boundaries` dan `verify-release` hijau.
+- [x] `DinoPocket.entitlements` tidak ada, dan `project.yml` tidak menambah entitlement.
+- [ ] Pengukur token terlihat dan sesuai perkiraan yang dinyatakan — menunggu folder dipilih
+      pemilik produk.
+- [ ] Undo terbukti bekerja setelah app ditutup dan dibuka lagi — idem.
+- [~] Daftar manual §8 dijalankan sampai batas yang tidak menuntut panel Open; sisanya
+      dicatat di plan sebagai milik pemilik produk.
 
 ---
 
