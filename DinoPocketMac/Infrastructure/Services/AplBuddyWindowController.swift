@@ -65,6 +65,15 @@ final class AplBuddyWindowController: NSWindowController {
     /// "ajak bicara" (spec C1 §2 #4).
     var onCharacterTap: (() -> Void)?
 
+    /// Disetel permainan; `nil` mengembalikan kendali ke `SystemMood`
+    /// (spec F §8 #2).
+    var playExpression: CharacterBehavior? {
+        didSet {
+            guard playExpression != oldValue else { return }
+            refreshCharacter()
+        }
+    }
+
     private let systemStatus: SystemStatusProviding
 
     /// Posisi karakter saat berkeliaran, dalam koordinat **layar**. `nil`
@@ -224,7 +233,7 @@ final class AplBuddyWindowController: NSWindowController {
     // MARK: - Character host
 
     private func makeCharacterHost() -> BuddyCharacterHost {
-        BuddyCharacterHost(size: characterSize, mood: mood)
+        BuddyCharacterHost(size: characterSize, mood: mood, override: playExpression)
     }
 
     private func refreshCharacter() {
@@ -476,6 +485,8 @@ final class AplBuddyWindowController: NSWindowController {
 struct BuddyCharacterHost: View {
     let size: CGFloat
     let mood: SystemMood
+    /// Disetel sesuatu yang sedang terjadi — hari ini hanya permainan suit.
+    var override: CharacterBehavior?
 
     /// Mood mesin dipetakan ke perilaku karakter di sini, bukan di dalam view
     /// aset — pemilihan ekspresi adalah urusan aset, penerjemahan kondisi
@@ -485,12 +496,21 @@ struct BuddyCharacterHost: View {
     /// menghasilkan perilaku yang sama persis, sehingga perbedaan yang sudah
     /// susah payah dihitung `SystemMood.from(thermalState:...)` tidak pernah
     /// sampai ke layar.
-    private var behavior: CharacterBehavior {
-        switch mood {
+    /// Override menang atas mood mesin, TETAPI hanya selama ia ada: begitu
+    /// ronde selesai dan nilainya kembali `nil`, panas dan baterai memegang
+    /// kendali lagi. Yang hilang cuma beberapa detik, dan itu harga yang wajar
+    /// untuk permainan yang diminta pengguna sendiri (spec F §8 #2).
+    static func behavior(mood: SystemMood, override: CharacterBehavior?) -> CharacterBehavior {
+        if let override { return override }
+        return switch mood {
         case .hot, .lowBattery: .sleepy
         case .busy:             .thinking
         case .normal:           .idle
         }
+    }
+
+    private var behavior: CharacterBehavior {
+        Self.behavior(mood: mood, override: override)
     }
 
     var body: some View {

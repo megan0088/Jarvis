@@ -28,7 +28,12 @@ struct CharacterAssetTests {
         for behavior in CharacterBehavior.allCases {
             #expect(asset.expressions[behavior] != nil, "\(behavior) belum punya ekspresi")
         }
-        #expect(Set(asset.expressions.values).count == CharacterBehavior.allCases.count)
+        // Satu-satunya wajah yang dipakai berdua: `.sleepy` (mesin panas atau
+        // baterai menipis) dan `.sad` (Apl kalah suit) sama-sama `RobotSad`
+        // (spec F §8 #1). Yang dipisahkan artinya, bukan gambarnya — dan
+        // duplikat LAIN tetap jatuh di sini.
+        #expect(asset.resourceName(for: .sad) == asset.resourceName(for: .sleepy))
+        #expect(Set(asset.expressions.values).count == CharacterBehavior.allCases.count - 1)
     }
 
     /// Senyum lebar disimpan untuk perayaan supaya tetap berarti; wajah datar
