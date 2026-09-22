@@ -14,6 +14,8 @@ struct ConversationView: View {
     let availability: BrainAvailability?
     var showsDateHeader = true
     let composerFocus: ComposerFocus
+    /// Ronde suit tanpa robot: balon yang sama, ditaruh di atas composer.
+    var playGame: SuitGame?
     let onOpenIntelligenceSettings: () -> Void
 
     @State private var draft = ""
@@ -40,6 +42,10 @@ struct ConversationView: View {
             messageList
 
             VStack(spacing: Spacing.sm) {
+                if let playGame, playGame.round != nil {
+                    SuitBalloon(game: playGame, onFinish: { playGame.finish() })
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 if let availability, availability != .ready {
                     AIUnavailableBanner(availability: availability,
                                         onOpenSettings: onOpenIntelligenceSettings)

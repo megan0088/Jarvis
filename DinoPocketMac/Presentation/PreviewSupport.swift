@@ -78,3 +78,23 @@ extension ChatStore {
         return store
     }
 }
+
+extension SuitGame {
+
+    /// Ronde yang belum dipilih. Undiannya dipaku supaya preview tidak berubah
+    /// setiap kali digambar ulang.
+    static func previewFresh() -> SuitGame {
+        let game = SuitGame(score: GameScore(defaults: UserDefaults(suiteName: "apl.preview.game")!),
+                            draw: { .paper }, think: {})
+        game.start()
+        return game
+    }
+
+    /// `think: {}` membuat hasilnya muncul pada giliran main actor berikutnya,
+    /// jadi preview-nya sudah menampilkan ronde yang selesai.
+    static func previewResolved() -> SuitGame {
+        let game = previewFresh()
+        Task { await game.pick(.scissors) }
+        return game
+    }
+}

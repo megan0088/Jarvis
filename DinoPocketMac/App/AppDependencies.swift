@@ -21,6 +21,7 @@ struct AppDependencies {
     let codeWorkspace: CodeWorkspace
     let fileWriter: FileWriter
     let profile: ProfileStore
+    let gameScore: GameScore
 
     /// Apple Intelligence — satu-satunya otak (spec A §2 #7).
     let brain: Brain
@@ -68,6 +69,9 @@ struct AppDependencies {
         let nudgeHistory = NudgeHistory()
         erasable.append(nudgeHistory)
 
+        let gameScore = GameScore()
+        erasable.append(gameScore)
+
         return AppDependencies(
             systemStatus: SystemStatusService(),
             appLauncher: AppLauncherService(),
@@ -78,6 +82,7 @@ struct AppDependencies {
             codeWorkspace: CodeWorkspace(),
             fileWriter: FileWriter(backups: AppDependencies.backupsFolder()),
             profile: ProfileStore(),
+            gameScore: gameScore,
             brain: brain,
             reminderStore: reminderStore,
             reminderScheduler: ReminderNotificationCenter.shared,

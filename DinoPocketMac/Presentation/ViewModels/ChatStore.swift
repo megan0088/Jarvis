@@ -18,6 +18,9 @@ final class ChatStore {
     nonisolated static let unavailableNotice =
         "Apple Intelligence isn't available yet. Enable it in System Settings to chat."
 
+    /// Kalimat Apl saat ronde dimulai. Pasti, bukan acak (spec F §2 #5).
+    nonisolated static let playInvitation = "Rock, paper, or scissors?"
+
     var messages: [ChatMessage] = []
     var isStreaming = false
     var noticeMessage: String?
@@ -33,6 +36,10 @@ final class ChatStore {
     /// benar-benar berbunyi bergantung pada siapa yang memasang closure itu.
     /// UseCase menyatukan parse, simpan, dan jadwalkan jadi satu tanggung jawab.
     var createReminder: CreateReminderFromTextUseCase?
+
+    /// Ajakan main suit. Dipasang app; `nil` berarti tidak ada permainan yang
+    /// bisa dimulai, dan kalimatnya diteruskan seperti pesan biasa.
+    var playRequested: (() -> Void)?
 
     /// Apple Intelligence — satu-satunya otak (spec A §2 #7). Opsional hanya
     /// supaya preview dan test bisa membuat ChatStore tanpa model.
@@ -105,6 +112,17 @@ final class ChatStore {
                 lastEvent = ChatEvent(kind: .reminderCreated(id), at: now())
             }
             persistRecent()
+            return
+        }
+
+        // Ajakan main ditangani lokal, tidak pernah sampai ke model (spec F §2 #1).
+        // Urutannya sesudah reminder: "remind me to play …" adalah pengingat.
+        if playRequested != nil, PlayCommand.matches(trimmed) {
+            noticeMessage = nil
+            streamGeneration += 1
+            messages.append(ChatMessage(role: .assistant, text: Self.playInvitation, date: now()))
+            persistRecent()
+            playRequested?()
             return
         }
 

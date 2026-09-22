@@ -21,6 +21,9 @@ struct MainWindow: View {
     let codeWorkspace: CodeWorkspace
     let codeChat: ChatStore
     let fileWriter: FileWriter
+    /// Ronde yang berlangsung DI DALAM chat — hanya saat tidak ada robot untuk
+    /// dijangkari (spec F §2 #6). `nil` berarti balon robot yang memegangnya.
+    var playGame: SuitGame?
 
     @Environment(\.openSettings) private var openSettings
     @Environment(\.appearsActive) private var appearsActive
@@ -87,6 +90,7 @@ struct MainWindow: View {
                                          availability: availability,
                                          showsDateHeader: !isCompact,
                                          composerFocus: composerFocus,
+                                         playGame: playGame,
                                          onOpenIntelligenceSettings: { _ = launcher.open(.appleIntelligence) })
                     case .code:
                         CodeView(workspace: codeWorkspace, chat: codeChat,

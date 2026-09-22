@@ -68,21 +68,3 @@ final class SuitGame {
         round = nil
     }
 }
-
-#if DEBUG
-extension SuitGame {
-    static func previewFresh() -> SuitGame {
-        SuitGame(score: GameScore(defaults: UserDefaults(suiteName: "apl.preview.game")!),
-                 draw: { .paper }, think: {})
-    }
-
-    /// `think: {}` membuat hasilnya muncul pada giliran main actor berikutnya,
-    /// jadi preview-nya sudah menampilkan ronde yang selesai.
-    static func previewResolved() -> SuitGame {
-        let game = previewFresh()
-        game.start()
-        Task { await game.pick(.scissors) }
-        return game
-    }
-}
-#endif

@@ -32,10 +32,13 @@ final class PlayPanelController {
         return render()
     }
 
-    func dismiss() {
+    /// - Parameter endingRound: `false` saat robot pergi di tengah ronde —
+    ///   balonnya ditutup, tetapi rondenya pindah ke chat (spec F §2 #6), bukan
+    ///   hilang begitu saja.
+    func dismiss(endingRound: Bool = true) {
         // Ekspresi dikembalikan ke mood mesin begitu ronde selesai (spec F §8 #2).
         buddy.playExpression = nil
-        game?.finish()
+        if endingRound { game?.finish() }
         game = nil
         panel.dismiss()
     }

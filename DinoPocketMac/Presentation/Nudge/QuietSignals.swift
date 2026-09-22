@@ -16,6 +16,9 @@ struct QuietSignals: Equatable {
     var quickAskIsOpen = false
     var buddyIsRunning = true
     var aNudgeIsOnScreen = false
+    /// Ronde suit sedang tampil. Tanpa ini Apl menyela permainannya sendiri
+    /// (spec F §8 #4).
+    var aGameIsOnScreen = false
 
     var allowsSpeaking: Bool {
         buddyIsRunning
@@ -24,5 +27,6 @@ struct QuietSignals: Equatable {
             && !aplIsFrontmost
             && !quickAskIsOpen
             && !aNudgeIsOnScreen
+            && !aGameIsOnScreen
     }
 }

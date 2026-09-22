@@ -106,6 +106,7 @@ struct NudgeRulesTests {
             { $0.quickAskIsOpen = true },
             { $0.buddyIsRunning = false },
             { $0.aNudgeIsOnScreen = true },
+            { $0.aGameIsOnScreen = true },
         ]
         for mutate in mutations {
             var signals = QuietSignals()

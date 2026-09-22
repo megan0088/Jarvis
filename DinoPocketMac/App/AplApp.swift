@@ -21,6 +21,9 @@ struct AplApp: App {
     @State private var speaker = NudgeSpeaker()
     @State private var nudges: NudgeScheduler?
     @State private var profile = deps.profile
+    @State private var game = SuitGame(score: deps.gameScore)
+    /// Di mana ronde yang sedang berjalan ditampilkan (spec F §2 #6).
+    @State private var playVenue: PlayVenue = .balloon
 
     @State var isBuddyMode = false
     /// Dibaca extension macOS saat shortcut mengenai jendela utama.
@@ -65,6 +68,10 @@ struct AplApp: App {
     private func eraseAllData() async {
         if isBuddyMode { dismissFromBuddy() }
         nudges?.stop()
+        // Skor yang hilang sementara rondenya masih tampil di layar adalah
+        // keadaan yang tidak berarti apa-apa (spec F §8).
+        PlayPanelController.shared.dismiss()
+        game.finish()
         let stores: [any LocallyErasable] = [profile, chat, codeChat, buddySettings, shortcutSettings]
             + Self.deps.erasableStores
         await EraseAllDataUseCase(stores: stores,
@@ -98,7 +105,8 @@ struct AplApp: App {
                    composerFocus: composerFocus,
                    codeWorkspace: Self.deps.codeWorkspace,
                    codeChat: codeChat,
-                   fileWriter: Self.deps.fileWriter)
+                   fileWriter: Self.deps.fileWriter,
+                   playGame: playVenue == .chat ? game : nil)
         // Setiap preferensi buddy diterapkan langsung tanpa memulai ulang mode,
         // supaya kontrol di Settings terasa hidup saat digeser.
         .onChange(of: buddySettings.size) { _, value in
@@ -125,6 +133,12 @@ struct AplApp: App {
                 )
                 nudges?.start()
             } else {
+                // Robot pergi di tengah ronde: balonnya ditutup, rondenya
+                // pindah ke chat alih-alih hilang (spec F §2 #6).
+                if PlayPanelController.shared.isShowing {
+                    PlayPanelController.shared.dismiss(endingRound: false)
+                    playVenue = .chat
+                }
                 AplBuddyWindowController.shared.stopBuddyMode()
                 nudges?.stop()
             }
@@ -146,6 +160,9 @@ struct AplApp: App {
                       openIntelligenceSettings: { _ = Self.deps.appLauncher.open(.appleIntelligence) })
             )
             AplBuddyWindowController.shared.onCharacterTap = { handleQuickAskShortcut() }
+            // "main suit" ditangani ChatStore secara lokal; yang diputuskan di
+            // sini hanya DI MANA rondenya berlangsung (spec F §2 #6).
+            chat.playRequested = { startRound() }
             shortcutSettings.onChange = { preset in
                 shortcutSettings.registrationFailed =
                     !shortcut.apply(preset, handler: { handleQuickAskShortcut() })
@@ -164,7 +181,8 @@ struct AplApp: App {
                 signals: QuietSignalReader(
                     isBuddyRunning: { isBuddyMode },
                     isQuickAskOpen: { QuickAskPanelController.shared.isOpen },
-                    isNudgeOnScreen: { NudgePanelController.shared.isShowing }
+                    isNudgeOnScreen: { NudgePanelController.shared.isShowing },
+                    isGameOnScreen: { PlayPanelController.shared.isShowing }
                 ),
                 engage: { nudge in
                     // Sapaan baru masuk percakapan saat diklik (spec C2 §2 #7).
@@ -174,6 +192,18 @@ struct AplApp: App {
             )
             scheduler.start()
             nudges = scheduler
+        }
+    }
+
+    /// Satu ronde dimulai. Balon robot bila ada robotnya, chat bila tidak —
+    /// dan juga bila balonnya gagal menemukan jangkar.
+    private func startRound() {
+        game.start()
+        let venue = PlayVenue.decide(buddyIsRunning: isBuddyMode)
+        if venue == .balloon, PlayPanelController.shared.show(game: game) {
+            playVenue = .balloon
+        } else {
+            playVenue = .chat
         }
     }
 }
