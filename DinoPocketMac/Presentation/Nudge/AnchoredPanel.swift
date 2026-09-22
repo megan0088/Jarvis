@@ -66,12 +66,23 @@ final class AnchoredPanel {
 
     func reposition() {
         guard let panel, let host, let anchor = buddy.characterScreenFrame else { return }
+        // Diukur SETELAH tata letak dijalankan. `fittingSize` yang dibaca
+        // sebelum SwiftUI sempat menata isinya mengembalikan ukuran kerdil, dan
+        // panelnya menyusut jadi kotak 70×90 dengan teks terpotong.
+        host.layoutSubtreeIfNeeded()
         let size = CGSize(width: min(host.fittingSize.width, Self.maxWidth),
                           height: host.fittingSize.height)
         panel.setFrame(BubblePlacement.frame(robot: anchor.rect,
                                              screen: anchor.screen.visibleFrame,
                                              size: size),
                        display: true)
+    }
+
+    /// Untuk pemanggil yang berada DI DALAM evaluasi `body` SwiftUI: di sana
+    /// isinya belum ditata, jadi pengukuran ditunda sampai siklus tampilan
+    /// berikutnya.
+    func repositionAfterLayout() {
+        DispatchQueue.main.async { [weak self] in self?.reposition() }
     }
 
     func dismiss() {

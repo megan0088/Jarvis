@@ -45,16 +45,16 @@ final class PlayPanelController {
 
     /// Balonnya memperbarui dirinya sendiri — `SuitGame` `@Observable`. Yang
     /// tidak bisa ia lakukan adalah mengubah wajah robot dan tinggi panel,
-    /// jadi hanya dua hal itu yang diikat di sini.
+    /// jadi hanya dua hal itu yang diikat lewat `PlayBalloonHost`.
     private func render() -> Bool {
         guard let game else { return false }
-        buddy.playExpression = Self.expression(for: game.round)
         return panel.show(
-            SuitBalloon(game: game, onFinish: { [weak self] in self?.dismiss() })
-                .onChange(of: game.round) { [weak self] _, round in
-                    self?.buddy.playExpression = PlayPanelController.expression(for: round)
-                    self?.panel.reposition()
-                }
+            PlayBalloonHost(game: game,
+                            onFinish: { [weak self] in self?.dismiss() },
+                            onRound: { [weak self] round in
+                                self?.buddy.playExpression = PlayPanelController.expression(for: round)
+                                self?.panel.repositionAfterLayout()
+                            })
         )
     }
 
@@ -67,5 +67,26 @@ final class PlayPanelController {
         case .draw: return .idle
         case nil: return .greet
         }
+    }
+}
+
+/// Pembawa efek samping balon: wajah robot dan tinggi panel.
+///
+/// Ada karena `onChange` yang dipasang dari luar SwiftUI tidak pernah menyala.
+/// Observation hanya mencatat pembacaan yang terjadi DI DALAM `body`; ronde yang
+/// dibaca saat view dibangun secara imperatif — di `render()` — tidak tercatat,
+/// jadi tidak ada yang mengevaluasi ulang modifier itu. Ketahuan dari verifikasi
+/// manual: balon menampilkan hasilnya dengan benar sementara wajah robot masih
+/// tertinggal di `.greet`.
+private struct PlayBalloonHost: View {
+    let game: SuitGame
+    let onFinish: () -> Void
+    let onRound: (SuitGame.Round?) -> Void
+
+    var body: some View {
+        SuitBalloon(game: game, onFinish: onFinish)
+            // `initial: true` menyetel wajah pertama sekalian, jadi tidak ada
+            // dua tempat yang mengatur hal yang sama.
+            .onChange(of: game.round, initial: true) { _, round in onRound(round) }
     }
 }
