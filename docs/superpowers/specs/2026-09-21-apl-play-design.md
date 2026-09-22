@@ -105,12 +105,12 @@ Hide Buddy lalu main lagi → rondenya berlangsung di dalam chat.
 
 ## 7. Definition of Done
 
-- [ ] Test unit §6 hijau; seluruh suite lama tetap hijau.
-- [ ] Permainan berjalan penuh tanpa Apple Intelligence.
-- [ ] `project.yml` tidak menambah entitlement; tidak ada aset baru.
-- [ ] `game.suit.score` ikut hilang saat Erase All Data.
-- [ ] `NudgePanelController` memakai `AnchoredPanel` yang sama, bukan salinan.
-- [ ] Daftar manual §6 dijalankan, hasilnya dicatat di plan.
+- [x] Test unit §6 hijau; seluruh suite lama tetap hijau (295 test, 58 suite).
+- [x] Permainan berjalan penuh tanpa Apple Intelligence (`PlayWithoutBrainTests`).
+- [x] `project.yml` tidak menambah entitlement; tidak ada aset baru (`.sad` memakai `RobotSad`).
+- [x] `game.suit.score` ikut hilang saat Erase All Data (`GameScore` terdaftar `LocallyErasable`).
+- [x] `NudgePanelController` memakai `AnchoredPanel` yang sama, bukan salinan.
+- [~] Daftar manual §6 dijalankan **sebagian**; sisanya dan alasannya dicatat di plan.
 
 ---
 
