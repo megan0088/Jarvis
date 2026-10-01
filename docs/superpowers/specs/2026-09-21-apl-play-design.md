@@ -1,5 +1,7 @@
 # Apl — Main Suit dengan Robot (Sub-project F) — Design Spec
 
+- Status: **DIBUANG 2026-10-01** atas permintaan pemilik produk — Apl tidak jadi punya permainan. Kodenya dihapus; dokumen ini ditahan sebagai catatan keputusan.
+
 - Tanggal: 2026-09-21
 - Status: Disetujui
 - Basis kode: branch `main` @ `b006638` (working tree bersih)

@@ -22,10 +22,6 @@ enum CharacterBehavior: Hashable, Sendable, CaseIterable {
     case sleepy
     case celebrate
     case thinking
-    /// Murung. Memakai wajah yang sama dengan `.sleepy`, tetapi artinya lain:
-    /// `.sleepy` berarti mesin panas atau baterai menipis, `.sad` berarti Apl
-    /// kalah suit. Satu wajah, dua sebab — dan sebab itu yang dipisahkan.
-    case sad
 }
 
 /// Kredit yang wajib ditampilkan untuk aset pihak ketiga.
@@ -105,7 +101,6 @@ extension CharacterAsset {
             .celebrate: "RobotBigSmile",
             .sleepy:    "RobotSad",
             .thinking:  "RobotO",
-            .sad:       "RobotSad",
         ],
         targetExtent: 0.35,
         cameraDistance: 0.9,
