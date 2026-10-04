@@ -29,6 +29,12 @@ struct LegacyDataCleanup {
         "pet.customSchedules",
     ]
 
+    /// Kunci milik fitur yang DIBUANG, yang store-nya sudah tidak ada lagi
+    /// untuk menghapus miliknya sendiri. Dihapus setiap kali app dibuka, bukan
+    /// sekali: pemasangan yang sudah menjalankan pembersihan pertama tetap
+    /// menyimpan kuncinya.
+    nonisolated static let removedFeatureKeys = ["game.suit.score"]
+
     nonisolated static let activeBrainKey = "jarvis.activeBrain"
     nonisolated static let chatRecentKey = "jarvis.chat.recent"
 
@@ -57,6 +63,12 @@ struct LegacyDataCleanup {
     /// - Parameter force: `false` saat app dibuka (sekali per instalasi);
     ///   `true` dari Erase All Data (selalu).
     func run(force: Bool = false) {
+        // Di luar penjagaan `doneKey`: kunci fitur yang dibuang harus hilang
+        // juga dari pemasangan yang sudah lama berjalan.
+        for key in Self.removedFeatureKeys {
+            standard.removeObject(forKey: key)
+        }
+
         let isFirstRun = !standard.bool(forKey: Self.doneKey)
         guard force || isFirstRun else { return }
 

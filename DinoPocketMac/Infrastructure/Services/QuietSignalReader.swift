@@ -13,7 +13,6 @@ struct QuietSignalReader {
     var isBuddyRunning: () -> Bool
     var isQuickAskOpen: () -> Bool
     var isNudgeOnScreen: () -> Bool
-    var isGameOnScreen: () -> Bool
 
     func read() -> QuietSignals {
         QuietSignals(
@@ -22,8 +21,7 @@ struct QuietSignalReader {
             aplIsFrontmost: NSApp.isActive,
             quickAskIsOpen: isQuickAskOpen(),
             buddyIsRunning: isBuddyRunning(),
-            aNudgeIsOnScreen: isNudgeOnScreen(),
-            aGameIsOnScreen: isGameOnScreen()
+            aNudgeIsOnScreen: isNudgeOnScreen()
         )
     }
 

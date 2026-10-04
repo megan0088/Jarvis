@@ -30,11 +30,6 @@ enum CharacterStatusText {
             // Intelligence mati di situ akan menyuruh pengguna memperbaiki
             // hal yang tidak rusak.
             return intelligenceAvailable ? "Something went wrong" : "Apple Intelligence is off"
-        case .sad:
-            // Panggung jendela utama tidak pernah menampilkan `.sad` hari ini —
-            // ia milik robot desktop selama ronde suit. Kalimatnya tetap ditulis
-            // dan bukan `default`: case berikutnya harus ketahuan di sini juga.
-            return "You win this one"
         }
     }
 
@@ -53,7 +48,6 @@ enum CharacterStatusText {
         case .thinking: "Apl, thinking"
         case .celebrate: "Apl, celebrating"
         case .sleepy: "Apl, sleepy"
-        case .sad: "Apl, disappointed"
         }
     }
 }

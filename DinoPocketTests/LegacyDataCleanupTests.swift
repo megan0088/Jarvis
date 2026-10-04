@@ -100,4 +100,21 @@ struct LegacyDataCleanupTests {
 
         #expect(appGroup.object(forKey: "wellness.goalProgress") == nil)
     }
+
+    /// Skor suit tertinggal di disk setelah permainannya dibuang, dan
+    /// `GameScore` sudah tidak ada untuk menghapusnya sendiri. Ini berlaku
+    /// juga bagi pemasangan yang pembersihan pertamanya sudah lewat.
+    @Test func removedFeatureKeysGoEvenAfterTheFirstRun() {
+        let suite = "test.legacy.removed.\(UUID())"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defaults.set(true, forKey: LegacyDataCleanup.doneKey)
+        defaults.set(Data([1, 2, 3]), forKey: "game.suit.score")
+
+        LegacyDataCleanup(standard: defaults, appGroup: nil, transcripts: nil,
+                          removeKeychainItem: {}, removePendingNotifications: { _ in })
+            .run()
+
+        #expect(defaults.data(forKey: "game.suit.score") == nil)
+    }
 }
