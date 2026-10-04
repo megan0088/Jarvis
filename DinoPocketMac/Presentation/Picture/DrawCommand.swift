@@ -36,8 +36,11 @@ enum DrawCommand {
         guard !questionOpeners.contains(where: { lowered.hasPrefix($0) }) else { return nil }
 
         guard let prefix = prefixes.first(where: { lowered.hasPrefix($0) }) else { return nil }
-        let concept = trimmed.dropFirst(prefix.count)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let rest = trimmed.dropFirst(prefix.count)
+        // Awalan harus kata utuh: "drawing a UI" dan "gambarnya bagus"
+        // bukan ajakan, walau huruf-huruf depannya cocok.
+        guard rest.first?.isWhitespace ?? true else { return nil }
+        let concept = rest.trimmingCharacters(in: .whitespacesAndNewlines)
         // "draw a" tanpa apa-apa sesudahnya tidak punya yang bisa digambar.
         guard concept.count >= 3 else { return nil }
         return concept

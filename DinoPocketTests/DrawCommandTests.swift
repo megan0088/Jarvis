@@ -34,4 +34,12 @@ struct DrawCommandTests {
         #expect(DrawCommand.concept(in: "draw") == nil)
         #expect(DrawCommand.concept(in: "draw a") == nil)
     }
+
+    /// Awalan harus berupa KATA utuh. Tanpa batas kata, "drawing" terpotong
+    /// jadi konsep "ing ..." dan kalimat biasa membuka sheet.
+    @Test func prefixMustBeAWholeWord() {
+        #expect(DrawCommand.concept(in: "drawing a UI in SwiftUI is hard") == nil)
+        #expect(DrawCommand.concept(in: "gambarnya bagus sekali") == nil)
+        #expect(DrawCommand.concept(in: "drawers keep jamming today") == nil)
+    }
 }
