@@ -86,9 +86,10 @@ struct ConversationView: View {
                 .flatMap { NSImage(contentsOf: $0) }
                 .map { Image(nsImage: $0) },
             onCompletion: { url in
-                let concept = pictures.request?.concept ?? ""
+                // `lastConcept`, bukan `request`: sheet boleh sudah menutup
+                // dirinya (dan mengosongkan `request`) sebelum sampai di sini.
                 pictures.finish()
-                onPictureCreated(url, concept)
+                onPictureCreated(url, pictures.lastConcept)
             },
             onCancellation: { pictures.finish() }
         )

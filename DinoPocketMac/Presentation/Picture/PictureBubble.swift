@@ -19,7 +19,7 @@ struct PictureBubble: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            if let url = store.url(for: name), let image = NSImage(contentsOf: url) {
+            if let url = store.url(for: name), let image = Self.image(at: url) {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
@@ -48,6 +48,22 @@ struct PictureBubble: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// `body` dievaluasi ulang setiap potongan jawaban datang, dan membaca PNG
+    /// 1536×1536 dari disk sebanyak itu membuat percakapan tersendat. Nama
+    /// berkasnya UUID, jadi isi di balik satu URL tidak pernah berubah.
+    private static let cache: NSCache<NSURL, NSImage> = {
+        let cache = NSCache<NSURL, NSImage>()
+        cache.countLimit = ImageStore.limit
+        return cache
+    }()
+
+    private static func image(at url: URL) -> NSImage? {
+        if let cached = cache.object(forKey: url as NSURL) { return cached }
+        guard let image = NSImage(contentsOf: url) else { return nil }
+        cache.setObject(image, forKey: url as NSURL)
+        return image
     }
 
     private func save(_ url: URL) {

@@ -38,12 +38,18 @@ final class PictureSession {
 
     private(set) var request: PictureRequest?
 
+    /// Konsep permintaan terakhir yang DITERIMA. Bertahan melewati `finish()`:
+    /// sheet Apple boleh menutup dirinya sebelum menyerahkan gambarnya, dan
+    /// saat itu `request` sudah `nil`.
+    @ObservationIgnored private(set) var lastConcept = ""
+
     /// `false` bila sudah ada yang terbuka; pemanggil mengabaikannya
     /// (spec G §5 — sheet kedua di atas sheet pertama bukan jawaban).
     @discardableResult
     func start(_ request: PictureRequest) -> Bool {
         guard self.request == nil else { return false }
         self.request = request
+        lastConcept = request.concept
         return true
     }
 

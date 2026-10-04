@@ -128,7 +128,12 @@ struct MainWindow: View {
         .confirmationDialog("Clear this conversation?", isPresented: $isConfirmingClear,
                             titleVisibility: .visible) {
             Button("Clear Conversation", role: .destructive) {
-                Task { await chat.clearConversation() }
+                Task {
+                    await chat.clearConversation()
+                    // Folder gambar adalah fungsi dari percakapan (spec G §4):
+                    // percakapan yang dilupakan tidak meninggalkan gambarnya.
+                    imageStore.prune(keeping: chat.pictureNames)
+                }
             }
             Button("Cancel", role: .cancel) {}
         } message: {

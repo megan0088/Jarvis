@@ -34,4 +34,23 @@ struct PictureSessionTests {
         #expect(session.request == nil)
         #expect(session.start(PictureRequest(concept: "a dog", sourceImage: nil)))
     }
+
+    /// Sheet Apple boleh menutup dirinya SEBELUM memanggil onCompletion. Kalau
+    /// konsepnya ikut hilang bersama permintaan, gambarnya masuk percakapan
+    /// tanpa keterangan dan VoiceOver hanya berkata "Image".
+    @Test func conceptOutlivesTheRequest() {
+        let session = PictureSession()
+        session.start(PictureRequest(concept: "an orange cat", sourceImage: nil))
+        session.finish()
+        #expect(session.request == nil)
+        #expect(session.lastConcept == "an orange cat")
+    }
+
+    /// Permintaan yang ditolak tidak boleh menimpa konsep yang sedang berjalan.
+    @Test func ignoredRequestDoesNotReplaceTheConcept() {
+        let session = PictureSession()
+        session.start(PictureRequest(concept: "an orange cat", sourceImage: nil))
+        session.start(PictureRequest(concept: "a dog", sourceImage: nil))
+        #expect(session.lastConcept == "an orange cat")
+    }
 }
