@@ -56,4 +56,22 @@ struct AnswerAnnouncementTests {
         #expect(AnswerAnnouncement.text(messages: [user("Hi"), apl("Half", status: .stopped)],
                                         isStreaming: false) == "Half")
     }
+
+    /// Gambar tanpa label adalah lubang di percakapan bagi yang tidak
+    /// melihatnya. Teks pesannya kosong, jadi konsepnyalah yang dibacakan.
+    @Test func picturesAreAnnouncedByTheirConcept() {
+        let messages = [ChatMessage(role: .user, text: "gambarkan kucing oranye"),
+                        ChatMessage(role: .assistant, text: "",
+                                    attachment: .picture(name: "a.png", concept: "kucing oranye"))]
+        #expect(AnswerAnnouncement.text(messages: messages, isStreaming: false)
+                == "Image of kucing oranye")
+    }
+
+    /// Jalur menu ("Describe an image…", "Use a photo…") tidak membawa konsep.
+    /// "Image of" tanpa lanjutan adalah kalimat yang putus di tengah.
+    @Test func picturesWithoutAConceptAreStillAnnounced() {
+        let messages = [ChatMessage(role: .assistant, text: "",
+                                    attachment: .picture(name: "a.png", concept: ""))]
+        #expect(AnswerAnnouncement.text(messages: messages, isStreaming: false) == "Image")
+    }
 }

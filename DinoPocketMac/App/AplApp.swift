@@ -98,7 +98,8 @@ struct AplApp: App {
                    composerFocus: composerFocus,
                    codeWorkspace: Self.deps.codeWorkspace,
                    codeChat: codeChat,
-                   fileWriter: Self.deps.fileWriter)
+                   fileWriter: Self.deps.fileWriter,
+                   imageStore: Self.deps.imageStore)
         // Setiap preferensi buddy diterapkan langsung tanpa memulai ulang mode,
         // supaya kontrol di Settings terasa hidup saat digeser.
         .onChange(of: buddySettings.size) { _, value in

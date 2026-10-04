@@ -21,6 +21,7 @@ struct MainWindow: View {
     let codeWorkspace: CodeWorkspace
     let codeChat: ChatStore
     let fileWriter: FileWriter
+    let imageStore: ImageStore
 
     @Environment(\.openSettings) private var openSettings
     @Environment(\.appearsActive) private var appearsActive
@@ -85,6 +86,7 @@ struct MainWindow: View {
                         ConversationView(chat: chat,
                                          reminders: reminders,
                                          availability: availability,
+                                         imageStore: imageStore,
                                          showsDateHeader: !isCompact,
                                          composerFocus: composerFocus,
                                          onOpenIntelligenceSettings: { _ = launcher.open(.appleIntelligence) })
@@ -156,7 +158,8 @@ struct MainWindow: View {
                codeWorkspace: CodeWorkspace(bookmarks: UserDefaultsBookmarkStore(
                    defaults: UserDefaults(suiteName: "apl.preview.code")!)),
                codeChat: .preview([]),
-               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory))
+               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory),
+               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)))
         .frame(width: 1000, height: 680)
         .preferredColorScheme(.dark)
 }
@@ -167,7 +170,8 @@ struct MainWindow: View {
                codeWorkspace: CodeWorkspace(bookmarks: UserDefaultsBookmarkStore(
                    defaults: UserDefaults(suiteName: "apl.preview.code")!)),
                codeChat: .preview([]),
-               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory))
+               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory),
+               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)))
         .frame(width: 1000, height: 680)
 }
 
@@ -177,7 +181,8 @@ struct MainWindow: View {
                codeWorkspace: CodeWorkspace(bookmarks: UserDefaultsBookmarkStore(
                    defaults: UserDefaults(suiteName: "apl.preview.code")!)),
                codeChat: .preview([]),
-               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory))
+               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory),
+               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)))
         .frame(width: 740, height: 520)
         .preferredColorScheme(.dark)
 }

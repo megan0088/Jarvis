@@ -19,6 +19,9 @@ enum MessageRowKind: Equatable {
 struct MessageRow: View {
     let message: ChatMessage
     let reminders: ReminderListViewModel
+    /// `nil` di tempat yang tidak menampilkan gambar (bubble ⌥Space, sisi
+    /// Code): gambar hanya hidup di jendela utama (spec G §2 #3).
+    var imageStore: ImageStore?
     /// Hanya jawaban gagal yang TERAKHIR yang bisa diulang (lihat `ChatStore.retry`).
     let canRetry: Bool
     let onRetry: () -> Void
@@ -49,9 +52,12 @@ struct MessageRow: View {
                 ReminderChip(state: reminders.chipState(for: id, at: .now),
                              onUndo: { Task { await reminders.cancel(id) } })
             }
-        case .picture(_, let concept):
-            // Sementara sampai Task 5: gelembung gambarnya belum ada.
-            AssistantMessage(text: concept)
+        case .picture(let name, let concept):
+            if let imageStore {
+                PictureBubble(name: name, concept: concept, store: imageStore)
+            } else {
+                AssistantMessage(text: AnswerAnnouncement.pictureLabel(concept: concept))
+            }
         case .failed:
             FailedMessage(text: message.text, onRetry: canRetry ? onRetry : nil)
         }
@@ -60,9 +66,11 @@ struct MessageRow: View {
 
 #Preview("Rows · Light") {
     let reminders = ReminderListViewModel.preview()
+    let imageStore = ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true))
     VStack(spacing: Spacing.lg) {
         ForEach(PreviewData.messages) { message in
-            MessageRow(message: message, reminders: reminders, canRetry: false, onRetry: {})
+            MessageRow(message: message, reminders: reminders, imageStore: imageStore,
+                       canRetry: false, onRetry: {})
         }
         MessageRow(message: ChatMessage(role: .assistant, text: "", status: .failed),
                    reminders: reminders, canRetry: true, onRetry: {})
@@ -73,9 +81,11 @@ struct MessageRow: View {
 
 #Preview("Rows · Dark") {
     let reminders = ReminderListViewModel.preview()
+    let imageStore = ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true))
     VStack(spacing: Spacing.lg) {
         ForEach(PreviewData.messages) { message in
-            MessageRow(message: message, reminders: reminders, canRetry: false, onRetry: {})
+            MessageRow(message: message, reminders: reminders, imageStore: imageStore,
+                       canRetry: false, onRetry: {})
         }
     }
     .padding(Spacing.xl)

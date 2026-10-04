@@ -12,6 +12,7 @@ struct ConversationView: View {
     let chat: ChatStore
     let reminders: ReminderListViewModel
     let availability: BrainAvailability?
+    let imageStore: ImageStore
     var showsDateHeader = true
     let composerFocus: ComposerFocus
     let onOpenIntelligenceSettings: () -> Void
@@ -67,6 +68,7 @@ struct ConversationView: View {
                     ForEach(chat.messages) { message in
                         MessageRow(message: message,
                                    reminders: reminders,
+                                   imageStore: imageStore,
                                    canRetry: !chat.isStreaming && message.id == chat.messages.last?.id,
                                    onRetry: { Task { await chat.retry(message.id) } })
                             .id(message.id)
@@ -130,6 +132,7 @@ struct ConversationView: View {
 
 #Preview("Conversation · Light") {
     ConversationView(chat: .preview(), reminders: .preview(), availability: .ready,
+                     imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
                      composerFocus: ComposerFocus(),
                      onOpenIntelligenceSettings: {})
         .frame(width: 680, height: 620)
@@ -138,6 +141,7 @@ struct ConversationView: View {
 #Preview("Conversation · AI off · Dark") {
     ConversationView(chat: .preview(), reminders: .preview(),
                      availability: .unavailable("Enable Apple Intelligence in System Settings."),
+                     imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
                      composerFocus: ComposerFocus(),
                      onOpenIntelligenceSettings: {})
         .frame(width: 680, height: 620)
@@ -148,6 +152,7 @@ struct ConversationView: View {
     ConversationView(chat: .preview([ChatMessage(role: .user, text: "Hello!"),
                                      ChatMessage(role: .assistant, text: "")], isStreaming: true),
                      reminders: .preview(), availability: .ready,
+                     imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
                      composerFocus: ComposerFocus(),
                      onOpenIntelligenceSettings: {})
         .frame(width: 680, height: 620)

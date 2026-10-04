@@ -31,7 +31,16 @@ enum AnswerAnnouncement {
     static func text(messages: [ChatMessage], isStreaming: Bool) -> String? {
         guard !isStreaming, let last = messages.last, last.role == .assistant else { return nil }
         if last.status == .failed { return failureNotice }
+        if case .picture(_, let concept)? = last.attachment {
+            return pictureLabel(concept: concept)
+        }
         return last.text.isEmpty ? nil : last.text
+    }
+
+    /// Label gambar, dipakai pengumuman dan `PictureBubble`. Jalur menu tidak
+    /// membawa konsep, dan "Image of" tanpa lanjutan adalah kalimat yang putus.
+    static func pictureLabel(concept: String) -> String {
+        concept.isEmpty ? "Image" : "Image of \(concept)"
     }
 
     static func post(_ text: String, priority: NSAccessibilityPriorityLevel) {
