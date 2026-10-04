@@ -49,6 +49,13 @@ Yang tidak siap, dan membentuk desain di bawah:
 7. **View iOS lama tidak dipakai dan tidak dihapus.** Ia tetap dibekukan; menghapusnya
    mengubah folder Mac, dan itu di luar keputusan #5.
 8. **Teks antarmuka Inggris**, komentar dan dokumen Indonesia — sama dengan Mac.
+9. **Clean Architecture, versi pragmatis.** `AplPhone/` dibagi tiga lapis — Domain, Data,
+   Presentation — dengan ketergantungan yang hanya menunjuk ke dalam (§3.2). Pragmatis
+   berarti: tidak ada UseCase per aksi dan tidak ada protokol untuk hal yang hanya punya
+   satu implementasi dan tidak perlu dipalsukan di test.
+10. **Diuji di iPhone fisik.** Setiap tugas rencana yang mengubah apa yang terlihat diakhiri
+    dengan memasang dan menjalankan app di iPhone 17 pemilik produk ("Egaaaaa"), bukan
+    hanya di simulator. Simulator dipakai untuk test unit.
 
 ---
 
@@ -56,12 +63,23 @@ Yang tidak siap, dan membentuk desain di bawah:
 
 ```
 AplPhone/
-├── App/            AplPhoneApp.swift, PhoneDependencies.swift
-├── Shared/         salinan dari DinoPocketMac (daftar di §3.1)
-├── Presentation/   view iOS, ditulis baru (§4)
-├── DesignSystem/   PhoneColors.swift + salinan Spacing/Radius/AppFont
-└── Assets.xcassets AppIcon, AccentColor
-AplPhoneTests/      Swift Testing, dijalankan di simulator iOS 26
+├── App/                 AplPhoneApp.swift, PhoneDependencies.swift (composition root)
+├── Domain/              aturan murni; hanya `import Foundation`
+│   ├── Character/       CharacterAsset, CharacterMoodResolver, CharacterStatusText
+│   ├── Chat/            ChatEvent, ComposerState, MarkdownBlocks, MessageRowKind
+│   └── Reminders/       ReminderDraft
+├── Data/                penyimpanan dan layanan konkret
+│   ├── Persistence/     ProfileStore
+│   └── Services/        CharacterExpressionCache, DebugAvailabilityBrain
+├── Presentation/
+│   ├── ViewModels/      ChatStore, ReminderListViewModel
+│   ├── Home/            PhoneHomeView, header robot, baris pesan, composer
+│   ├── Reminders/       PhoneRemindersSheet, editor
+│   ├── Onboarding/      PhoneOnboardingView
+│   ├── Settings/        PhoneSettingsView
+│   └── DesignSystem/    PhoneColors, Spacing, Radius, AppFont
+└── Assets.xcassets      AppIcon, AccentColor
+AplPhoneTests/           Swift Testing, dijalankan di simulator iOS 26
 ```
 
 `project.yml` mendapat dua target (`AplPhone`, `AplPhoneTests`) dan satu scheme
@@ -70,8 +88,8 @@ AplPhoneTests/      Swift Testing, dijalankan di simulator iOS 26
 
 ### 3.1 Berkas kembaran
 
-Disalin dari `DinoPocketMac/` ke `AplPhone/Shared/`. Isinya tidak diubah kecuali yang
-disebut di kolom ketiga.
+Disalin dari `DinoPocketMac/` ke lapis yang sesuai di `AplPhone/` (pohon di atas). Isinya
+tidak diubah kecuali yang disebut di kolom ketiga.
 
 | Asal (di `DinoPocketMac/`) | Test yang ikut disalin | Perubahan |
 |---|---|---|
@@ -95,7 +113,33 @@ disebut di kolom ketiga.
 asalnya dan commit saat ia disalin. Itulah satu-satunya cara tahu, nanti, seberapa jauh
 keduanya sudah menyimpang.
 
-### 3.2 `SharedCore` di iOS
+### 3.2 Lapis dan arah ketergantungan
+
+`SharedCore/` sudah berlapis (`Data/Models`, `Domain/UseCases`, `Infrastructure/`) dan
+menjadi inti bersama: entitas (`ChatMessage`, `Reminder`), UseCase reminder, protokol
+(`Brain`, `ReminderScheduling`, `LocallyErasable`), dan implementasinya. `AplPhone/`
+melanjutkan pola itu:
+
+| Lapis | Isi | Boleh bergantung pada | Dilarang |
+|---|---|---|---|
+| **Domain** | aturan dan keputusan murni | `Foundation`, entitas `SharedCore` | `SwiftUI`, `UIKit`, `RealityKit`, `UserDefaults`, lapis lain |
+| **Data** | store dan layanan konkret | Domain, `SharedCore` | view dan view model |
+| **Presentation** | view model dan view | Domain, protokol dan UseCase `SharedCore` | membuat store atau layanan sendiri |
+| **App** | `PhoneDependencies` | semuanya | — |
+
+- **Hanya `PhoneDependencies` yang tahu implementasi konkret.** View model menerima
+  miliknya lewat `init`; view menerima view model lewat properti, bukan `@Environment`.
+- **View tidak menyentuh store.** Ia membaca dan memerintah lewat view model
+  (`ChatStore`, `ReminderListViewModel`) atau UseCase.
+- **Setiap keputusan yang bisa salah tinggal di Domain** sebagai fungsi murni dan diuji di
+  sana: bentuk baris pesan, header penuh atau ringkas, lencana lonceng, langkah onboarding.
+  View hanya merender hasilnya.
+- **Ditegakkan skrip, bukan niat baik.** `scripts/verify-phone-layers.sh` gagal bila ada
+  berkas di `AplPhone/Domain/` yang mengimpor selain `Foundation`, atau berkas di
+  `AplPhone/Presentation/` (di luar `#Preview`) yang membuat `ReminderStore`,
+  `ProfileStore`, atau `AppleBrain` sendiri. Skrip ini masuk DoD.
+
+### 3.3 `SharedCore` di iOS
 
 `SharedCore` belum pernah dikompilasi untuk iOS. Kalau ada yang gagal, perbaikannya
 dilakukan **di `SharedCore`** dengan cara yang netral platform (`#if os(` tetap haram di
@@ -217,7 +261,7 @@ untuk logika yang lahir di iOS, masing-masing unit murni yang terpisah dari view
 **Regresi Mac.** `xcodebuild test -scheme DinoPocketMac` tetap hijau dengan jumlah test
 yang sama seperti sebelum pekerjaan ini; `verify-boundaries` dan `verify-release` hijau.
 
-**Manual, di iPhone 17 fisik:**
+**Manual, di iPhone 17 fisik** (dipasang lewat `xcodebuild` + `xcrun devicectl`):
 
 1. Onboarding selesai; izin notifikasi diminta hanya saat tombolnya diketuk.
 2. Pertanyaan biasa dijawab streaming; robot berwajah "thinking" selama itu.
@@ -248,7 +292,7 @@ yang sama seperti sebelum pekerjaan ini; `verify-boundaries` dan `verify-release
 - **Apple Intelligence di simulator** hanya berjalan bila Mac induknya mengaktifkannya.
   Test unit tidak bergantung padanya (`brain: nil` dan stub); chat yang sesungguhnya
   diperiksa di perangkat.
-- **`SharedCore` di iOS** belum pernah dicoba (§3.2).
+- **`SharedCore` di iOS** belum pernah dicoba (§3.3).
 
 ---
 
@@ -258,7 +302,7 @@ yang sama seperti sebelum pekerjaan ini; `verify-boundaries` dan `verify-release
 - [ ] `AplPhoneTests` hijau; salinan test §3.1 lulus tanpa diubah.
 - [ ] Suite Mac hijau dengan jumlah test yang tidak berubah; `git diff` terhadap basis
       tidak menyentuh `DinoPocketMac/` maupun `DinoPocketTests/`.
-- [ ] `verify-boundaries` dan `verify-release` hijau.
+- [ ] `verify-boundaries`, `verify-release`, dan `verify-phone-layers` hijau.
 - [ ] Tidak ada entitlement jaringan, iCloud, atau App Group di target `AplPhone`.
 - [ ] Daftar manual §7 dijalankan di perangkat, hasilnya dicatat di plan.
 
