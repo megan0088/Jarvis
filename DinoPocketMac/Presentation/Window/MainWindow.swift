@@ -22,6 +22,9 @@ struct MainWindow: View {
     let codeChat: ChatStore
     let fileWriter: FileWriter
     let imageStore: ImageStore
+    let pictures: PictureSession
+    let pictureIsAvailable: Bool
+    let onPictureCreated: (URL, String) -> Void
 
     @Environment(\.openSettings) private var openSettings
     @Environment(\.appearsActive) private var appearsActive
@@ -87,6 +90,9 @@ struct MainWindow: View {
                                          reminders: reminders,
                                          availability: availability,
                                          imageStore: imageStore,
+                                         pictures: pictures,
+                                         pictureIsAvailable: pictureIsAvailable,
+                                         onPictureCreated: onPictureCreated,
                                          showsDateHeader: !isCompact,
                                          composerFocus: composerFocus,
                                          onOpenIntelligenceSettings: { _ = launcher.open(.appleIntelligence) })
@@ -159,7 +165,9 @@ struct MainWindow: View {
                    defaults: UserDefaults(suiteName: "apl.preview.code")!)),
                codeChat: .preview([]),
                fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory),
-               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)))
+               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
+               pictures: PictureSession(), pictureIsAvailable: true,
+               onPictureCreated: { _, _ in })
         .frame(width: 1000, height: 680)
         .preferredColorScheme(.dark)
 }
@@ -171,7 +179,9 @@ struct MainWindow: View {
                    defaults: UserDefaults(suiteName: "apl.preview.code")!)),
                codeChat: .preview([]),
                fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory),
-               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)))
+               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
+               pictures: PictureSession(), pictureIsAvailable: true,
+               onPictureCreated: { _, _ in })
         .frame(width: 1000, height: 680)
 }
 
@@ -182,7 +192,9 @@ struct MainWindow: View {
                    defaults: UserDefaults(suiteName: "apl.preview.code")!)),
                codeChat: .preview([]),
                fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory),
-               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)))
+               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
+               pictures: PictureSession(), pictureIsAvailable: true,
+               onPictureCreated: { _, _ in })
         .frame(width: 740, height: 520)
         .preferredColorScheme(.dark)
 }

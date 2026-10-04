@@ -5,6 +5,7 @@
 //  Created by Codex on 13/03/26.
 //
 
+import ImagePlayground
 import SwiftUI
 
 @main
@@ -21,6 +22,7 @@ struct AplApp: App {
     @State private var speaker = NudgeSpeaker()
     @State private var nudges: NudgeScheduler?
     @State private var profile = deps.profile
+    @State private var pictures = PictureSession()
 
     @State var isBuddyMode = false
     /// Dibaca extension macOS saat shortcut mengenai jendela utama.
@@ -36,6 +38,16 @@ struct AplApp: App {
             rootView
                 .task {
                     chat.createReminder = Self.deps.makeCreateReminderUseCase()
+                    // Ketersediaan diperiksa SEBELUM apa pun dibuka; kalimatnya
+                    // tetap dikenali lokal dan dijawab satu baris (spec G §5).
+                    chat.pictureRequested = { request in
+                        guard PictureAvailability.decide(
+                                isAvailable: ImagePlaygroundViewController.isAvailable) == .ready else {
+                            chat.appendAssistantNote(PictureAvailability.unavailableNotice)
+                            return
+                        }
+                        pictures.start(request)
+                    }
                     // Kelima ekspresi dimuat di awal, supaya pergantian wajah
                     // pertama pun tidak menunggu disk (spec B §6).
                     await CharacterExpressionCache.shared.preload(.robot)
@@ -72,6 +84,18 @@ struct AplApp: App {
             .execute()
     }
 
+    /// URL dari Apple hidup di tempat sementara; kalau menyalinnya gagal, Apl
+    /// mengatakannya alih-alih menaruh lampiran rusak (spec G §5).
+    private func keepPicture(at url: URL, concept: String) {
+        do {
+            let name = try Self.deps.imageStore.save(contentsOf: url)
+            chat.appendPicture(name: name, concept: concept)
+            Self.deps.imageStore.prune(keeping: chat.pictureNames)
+        } catch {
+            chat.appendAssistantNote("I couldn't keep that image.")
+        }
+    }
+
     @ViewBuilder
     private var rootView: some View {
         if profile.hasCompletedOnboarding {
@@ -99,7 +123,10 @@ struct AplApp: App {
                    codeWorkspace: Self.deps.codeWorkspace,
                    codeChat: codeChat,
                    fileWriter: Self.deps.fileWriter,
-                   imageStore: Self.deps.imageStore)
+                   imageStore: Self.deps.imageStore,
+                   pictures: pictures,
+                   pictureIsAvailable: ImagePlaygroundViewController.isAvailable,
+                   onPictureCreated: { url, concept in keepPicture(at: url, concept: concept) })
         // Setiap preferensi buddy diterapkan langsung tanpa memulai ulang mode,
         // supaya kontrol di Settings terasa hidup saat digeser.
         .onChange(of: buddySettings.size) { _, value in

@@ -6,13 +6,23 @@
 //  pesan terbaru, banner AI, dan composer (spec B §5–§6).
 //
 
+import AppKit
+import ImagePlayground
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ConversationView: View {
     let chat: ChatStore
     let reminders: ReminderListViewModel
     let availability: BrainAvailability?
     let imageStore: ImageStore
+    let pictures: PictureSession
+    /// Menu dinonaktifkan (bukan disembunyikan) saat Image Playground belum
+    /// tersedia — kontrol yang lenyap tidak mengajarkan apa-apa (spec G §5).
+    var pictureIsAvailable = true
+    /// Dipanggil saat sheet selesai: URL sementara dari Apple, beserta konsep
+    /// yang diminta. Penyalinan dan pemangkasannya milik `AplApp`.
+    let onPictureCreated: (URL, String) -> Void
     var showsDateHeader = true
     let composerFocus: ComposerFocus
     let onOpenIntelligenceSettings: () -> Void
@@ -48,7 +58,11 @@ struct ConversationView: View {
                 Composer(draft: $draft, state: composerState,
                          onSend: { send() },
                          onStop: { chat.stopStreaming() },
-                         focus: composerFocus)
+                         focus: composerFocus,
+                         picture: PictureMenuActions(
+                            isEnabled: pictureIsAvailable,
+                            describe: { pictures.start(PictureRequest(concept: "", sourceImage: nil)) },
+                            usePhoto: { choosePhoto() }))
             }
             .padding(.horizontal, Spacing.xl)
             .padding(.top, Spacing.sm)
@@ -59,6 +73,25 @@ struct ConversationView: View {
         // Jendela ini tetap bisa ditelusuri ulang, jadi pengumumannya tidak
         // perlu memotong apa yang sedang dibacakan.
         .announcesAnswers(from: chat, priority: .medium)
+        // Varian `concepts:` dipakai untuk KEDUA jalur: array kosong berarti
+        // sheet terbuka tanpa konsep, dan itu persis yang diminta menu
+        // "Describe an image…".
+        .imagePlaygroundSheet(
+            isPresented: Binding(get: { pictures.request != nil },
+                                 set: { if !$0 { pictures.finish() } }),
+            concepts: pictures.request.map { request in
+                request.concept.isEmpty ? [] : [ImagePlaygroundConcept.text(request.concept)]
+            } ?? [],
+            sourceImage: pictures.request?.sourceImage
+                .flatMap { NSImage(contentsOf: $0) }
+                .map { Image(nsImage: $0) },
+            onCompletion: { url in
+                let concept = pictures.request?.concept ?? ""
+                pictures.finish()
+                onPictureCreated(url, concept)
+            },
+            onCancellation: { pictures.finish() }
+        )
     }
 
     private var messageList: some View {
@@ -119,6 +152,23 @@ struct ConversationView: View {
         Task { await chat.send(text) }
     }
 
+    /// Panel dibatasi ke gambar, jadi yang salah jenis tidak bisa dipilih sejak
+    /// awal. Yang tidak terbaca sama sekali dikatakan sebelum sheet dibuka
+    /// (spec G §5).
+    private func choosePhoto() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.image]
+        panel.prompt = "Use Photo"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard NSImage(contentsOf: url) != nil else {
+            chat.appendAssistantNote("I couldn't read that image.")
+            return
+        }
+        pictures.start(PictureRequest(concept: "", sourceImage: url))
+    }
+
     /// "Today", "Yesterday", atau tanggal pesan terakhir.
     nonisolated static func dayLabel(for date: Date, now: Date, calendar: Calendar = .current) -> String {
         if calendar.isDate(date, inSameDayAs: now) { return "Today" }
@@ -133,6 +183,7 @@ struct ConversationView: View {
 #Preview("Conversation · Light") {
     ConversationView(chat: .preview(), reminders: .preview(), availability: .ready,
                      imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
+                     pictures: PictureSession(), onPictureCreated: { _, _ in },
                      composerFocus: ComposerFocus(),
                      onOpenIntelligenceSettings: {})
         .frame(width: 680, height: 620)
@@ -142,6 +193,7 @@ struct ConversationView: View {
     ConversationView(chat: .preview(), reminders: .preview(),
                      availability: .unavailable("Enable Apple Intelligence in System Settings."),
                      imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
+                     pictures: PictureSession(), onPictureCreated: { _, _ in },
                      composerFocus: ComposerFocus(),
                      onOpenIntelligenceSettings: {})
         .frame(width: 680, height: 620)
@@ -153,6 +205,7 @@ struct ConversationView: View {
                                      ChatMessage(role: .assistant, text: "")], isStreaming: true),
                      reminders: .preview(), availability: .ready,
                      imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
+                     pictures: PictureSession(), onPictureCreated: { _, _ in },
                      composerFocus: ComposerFocus(),
                      onOpenIntelligenceSettings: {})
         .frame(width: 680, height: 620)

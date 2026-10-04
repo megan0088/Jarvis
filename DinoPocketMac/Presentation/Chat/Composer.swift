@@ -9,6 +9,15 @@
 import AppKit
 import SwiftUI
 
+/// Menu gambar di composer. `nil` berarti tidak ada — bubble ⌥Space memakai
+/// composer yang sama, dan sheet tidak punya jendela untuk ditempelkan di sana
+/// (spec G §2 #3).
+struct PictureMenuActions {
+    let isEnabled: Bool
+    let describe: () -> Void
+    let usePhoto: () -> Void
+}
+
 struct Composer: View {
     @Binding var draft: String
     let state: ComposerState
@@ -16,6 +25,7 @@ struct Composer: View {
     let onStop: () -> Void
     /// `nil` di bubble: di sana composer selalu fokus begitu panel muncul.
     var focus: ComposerFocus?
+    var picture: PictureMenuActions?
 
     @FocusState private var isFocused: Bool
     @State private var shiftReturn = ShiftReturnNewline()
@@ -27,6 +37,24 @@ struct Composer: View {
 
     var body: some View {
         HStack(alignment: .bottom, spacing: Spacing.sm) {
+            if let picture {
+                Menu {
+                    Button("Describe an image…", action: picture.describe)
+                    Button("Use a photo…", action: picture.usePhoto)
+                } label: {
+                    Image(systemName: "photo.badge.plus")
+                        .font(.system(size: 13))
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .frame(width: 22)
+                .disabled(!picture.isEnabled)
+                .help(picture.isEnabled
+                      ? "Create an image"
+                      : "Image Playground isn't available yet")
+                .accessibilityLabel("Create an image")
+                .padding(.bottom, 9)
+            }
             TextField(state.placeholder, text: $draft, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(1...6)
@@ -137,7 +165,10 @@ private struct RoundActionButtonStyle: ButtonStyle {
 #Preview("Composer · Light") {
     @Previewable @State var draft = "Remind me to stretch at 3 PM"
     VStack(spacing: Spacing.md) {
-        Composer(draft: $draft, state: .ready, onSend: {}, onStop: {})
+        Composer(draft: $draft, state: .ready, onSend: {}, onStop: {},
+                 picture: PictureMenuActions(isEnabled: true, describe: {}, usePhoto: {}))
+        Composer(draft: .constant(""), state: .ready, onSend: {}, onStop: {},
+                 picture: PictureMenuActions(isEnabled: false, describe: {}, usePhoto: {}))
         Composer(draft: .constant(""), state: .streaming, onSend: {}, onStop: {})
         Composer(draft: .constant(""), state: .preparing, onSend: {}, onStop: {})
     }
