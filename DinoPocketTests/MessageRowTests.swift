@@ -16,4 +16,18 @@ struct MessageRowTests {
                 == .reminderConfirmation(id))
         #expect(MessageRow.kind(of: ChatMessage(role: .assistant, text: "", status: .failed)) == .failed)
     }
+
+    @Test func pictureAttachmentPicksThePictureRow() {
+        let message = ChatMessage(role: .assistant, text: "",
+                                  attachment: .picture(name: "a.png", concept: "an orange cat"))
+        #expect(MessageRow.kind(of: message) == .picture(name: "a.png", concept: "an orange cat"))
+    }
+
+    /// Gambar yang gagal tetap kalah oleh status gagal: yang perlu dilihat
+    /// pengguna adalah kegagalannya.
+    @Test func failureStillWins() {
+        let message = ChatMessage(role: .assistant, text: "",
+                                  attachment: .picture(name: "a.png", concept: "a cat"), status: .failed)
+        #expect(MessageRow.kind(of: message) == .failed)
+    }
 }

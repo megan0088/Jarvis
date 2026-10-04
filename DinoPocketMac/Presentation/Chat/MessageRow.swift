@@ -12,6 +12,7 @@ enum MessageRowKind: Equatable {
     case user
     case assistant(stopped: Bool)
     case reminderConfirmation(Reminder.ID)
+    case picture(name: String, concept: String)
     case failed
 }
 
@@ -26,6 +27,9 @@ struct MessageRow: View {
         if message.role == .user { return .user }
         if message.status == .failed { return .failed }
         if case .reminder(let id)? = message.attachment { return .reminderConfirmation(id) }
+        if case .picture(let name, let concept)? = message.attachment {
+            return .picture(name: name, concept: concept)
+        }
         return .assistant(stopped: message.status == .stopped)
     }
 
@@ -45,6 +49,9 @@ struct MessageRow: View {
                 ReminderChip(state: reminders.chipState(for: id, at: .now),
                              onUndo: { Task { await reminders.cancel(id) } })
             }
+        case .picture(_, let concept):
+            // Sementara sampai Task 5: gelembung gambarnya belum ada.
+            AssistantMessage(text: concept)
         case .failed:
             FailedMessage(text: message.text, onRetry: canRetry ? onRetry : nil)
         }

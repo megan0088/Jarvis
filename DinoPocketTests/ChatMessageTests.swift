@@ -28,4 +28,23 @@ struct ChatMessageTests {
         #expect(decoded[0].attachment == nil)
         #expect(decoded[0].status == .complete)
     }
+
+    /// Percakapan yang tersimpan SEBELUM G tetap terbaca: `attachment` sudah
+    /// `decodeIfPresent` sejak B, dan case baru tidak boleh merusak itu.
+    @Test func oldConversationsStillDecode() throws {
+        let json = """
+        {"id":"\(UUID().uuidString)","role":"assistant","text":"Done",
+         "date":768000000,"status":"complete"}
+        """.data(using: .utf8)!
+        let message = try JSONDecoder().decode(ChatMessage.self, from: json)
+        #expect(message.attachment == nil)
+    }
+
+    @Test func pictureAttachmentRoundTrips() throws {
+        let original = ChatMessage(role: .assistant, text: "",
+                                   attachment: .picture(name: "a.png", concept: "an orange cat"))
+        let data = try JSONEncoder().encode(original)
+        let restored = try JSONDecoder().decode(ChatMessage.self, from: data)
+        #expect(restored.attachment == .picture(name: "a.png", concept: "an orange cat"))
+    }
 }
