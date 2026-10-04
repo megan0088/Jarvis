@@ -147,7 +147,8 @@ struct QuickAskBubble: View {
     private func send() {
         let text = draft
         draft = ""
-        Task { await chat.send(text) }
+        // Gambar hanya di jendela utama (spec G §2 #3).
+        Task { await chat.send(text, allowsPictures: false) }
     }
 }
 

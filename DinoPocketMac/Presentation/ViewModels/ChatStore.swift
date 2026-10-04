@@ -35,6 +35,9 @@ final class ChatStore {
     /// UseCase menyatukan parse, simpan, dan jadwalkan jadi satu tanggung jawab.
     var createReminder: CreateReminderFromTextUseCase?
 
+    /// Ajakan menggambar. Dipasang app; `nil` berarti tidak ada yang bisa
+    /// membuka sheet, dan kalimatnya diteruskan seperti pesan biasa.
+    var pictureRequested: ((PictureRequest) -> Void)?
 
     /// Apple Intelligence — satu-satunya otak (spec A §2 #7). Opsional hanya
     /// supaya preview dan test bisa membuat ChatStore tanpa model.
@@ -91,7 +94,10 @@ final class ChatStore {
 
     // MARK: - Percakapan
 
-    func send(_ text: String) async {
+    /// - Parameter allowsPictures: `false` dari bubble ⌥Space. Ia memakai
+    ///   ChatStore yang sama, tetapi sheet hanya punya jendela utama untuk
+    ///   ditempeli (spec G §2 #3).
+    func send(_ text: String, allowsPictures: Bool = true) async {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         streamTask?.cancel()
@@ -107,6 +113,17 @@ final class ChatStore {
                 lastEvent = ChatEvent(kind: .reminderCreated(id), at: now())
             }
             persistRecent()
+            return
+        }
+
+        // Ajakan menggambar juga ditangani lokal (spec G §2 #1). Tidak ada
+        // kalimat jawaban di sini: pesan Apl baru ada kalau gambarnya benar-
+        // benar jadi (spec G §2 #5).
+        if allowsPictures, let pictureRequested, let concept = DrawCommand.concept(in: trimmed) {
+            noticeMessage = nil
+            streamGeneration += 1
+            persistRecent()
+            pictureRequested(PictureRequest(concept: concept, sourceImage: nil))
             return
         }
 
@@ -141,6 +158,23 @@ final class ChatStore {
         finalizeInterruptedAssistant()
         messages.append(ChatMessage(role: .assistant, text: text, date: now()))
         persistRecent()
+    }
+
+    /// Menyisipkan gambar yang sudah tersimpan sebagai pesan Apl. Teksnya
+    /// kosong dengan sengaja; lampirannya yang membawa arti.
+    func appendPicture(name: String, concept: String) {
+        finalizeInterruptedAssistant()
+        messages.append(ChatMessage(role: .assistant, text: "", date: now(),
+                                    attachment: .picture(name: name, concept: concept)))
+        persistRecent()
+    }
+
+    /// Nama berkas yang masih dirujuk percakapan — dipakai `ImageStore.prune`.
+    var pictureNames: Set<String> {
+        Set(messages.compactMap {
+            if case .picture(let name, _)? = $0.attachment { return name }
+            return nil
+        })
     }
 
     /// Menu Conversation › Clear Conversation…. Reminder tidak ikut terhapus.
