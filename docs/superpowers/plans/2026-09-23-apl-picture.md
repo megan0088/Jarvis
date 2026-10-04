@@ -1184,6 +1184,46 @@ pemiliknya melakukannya dan laporkan hasilnya.
 
 ---
 
+## Catatan eksekusi
+
+Task 1–3 dijalankan 2026-10-01; Task 4–7 dan tinjauan akhir 2026-10-04, inline, di
+`feat/apl-picture`. **301 test di 55 suite** hijau; build Debug dan Release berhasil;
+`verify-boundaries` dan `verify-release` hijau; `project.yml` tidak berubah, jadi tidak ada
+entitlement baru dan kategori tetap Productivity.
+
+### Penyimpangan dari rencana
+
+| # | Penyimpangan | Alasan |
+|---|---|---|
+| 1 | `chore/remove-play` digabung ke branch ini sebelum Task 4; jalur menggambar duduk sesudah reminder, tanpa "main suit" | Permainan dibuang pemilik produk (`ac821c6`), dan Task 6–7 menyentuh berkas yang sama |
+| 2 | `MessageRow.imageStore` opsional | `MessageRow` juga dipakai `QuickAskBubble` dan `CodeView`, yang tidak disebut rencana; gambar hanya hidup di jendela utama (spec §2 #3) |
+| 3 | `AppDependencies.imageStore` dan penerusannya ditarik dari Task 7 ke Task 5 | `ConversationView` membutuhkannya agar suite Task 5 bisa dikompilasi |
+| 4 | `ChatStore.send(_:allowsPictures:)`, dan bubble ⌥Space mengirim `false` | Bubble memakai `ChatStore` yang sama; tanpa ini "gambarkan …" dari bubble membuka sheet di jendela utama |
+| 5 | `DrawCommand` mewajibkan awalan berupa kata utuh | "drawing a UI in SwiftUI is hard" dan "gambarnya bagus" tadinya terbaca sebagai ajakan |
+| 6 | Konsep kosong dilabeli "Image", bukan "Image of " | Jalur menu tidak membawa konsep |
+| 7 | `pictureRequested` dipasang di `.task` yang sama dengan `createReminder` | `.task` milik `playRequested` sudah tidak ada |
+
+### Temuan tinjauan akhir (diperbaiki, `fix(g)` terakhir)
+
+Tinjauan dilakukan penulisnya sendiri, bukan peninjau berkonteks segar.
+
+1. `onCompletion` membaca konsep dari `request`, yang sudah `nil` bila sheet menutup dirinya
+   lebih dulu → `PictureSession.lastConcept` (dua test baru).
+2. Clear Conversation meninggalkan berkas gambar sampai gambar berikutnya disimpan → folder
+   dipangkas saat itu juga.
+3. `PictureBubble` membaca PNG dari disk di setiap evaluasi `body` → `NSCache`.
+
+### Verifikasi manual (Task 8) — BELUM dijalankan
+
+Tidak satu pun dari daftar §6 diperiksa di app yang berjalan: sheet Image Playground, panel
+berkas, Save, dan VoiceOver semuanya butuh tangan di depan layar. Yang sudah dijaga test
+unit: item 7 dan 8 (`DrawCommandTests`), penghapusan folder di item 9 (`ImageStoreTests`),
+dan teks label di item 10 (`AnswerAnnouncementTests`). Item 11 berubah: "main suit" sudah
+tidak ada. Sisanya — item 1–6, pemasangan item 9–10 di app sungguhan, regresi, dan Step 2
+(mematikan Apple Intelligence) — menunggu pemilik produk.
+
+---
+
 ## Self-review
 
 **Cakupan spec.** §2 #1 → Task 1 dan 6 (`PictureWithoutBrainTests`); #2 → Task 1 (ketik)

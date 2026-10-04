@@ -156,11 +156,11 @@ nonaktifnya — pengaturan sistem tidak disentuh dari sini.
 
 ## 7. Definition of Done
 
-- [ ] Test unit §6 hijau; seluruh suite lama tetap hijau.
-- [ ] Ajakan menggambar tidak pernah sampai ke model.
-- [ ] `project.yml` tidak menambah entitlement; kategori tidak berubah.
+- [x] Test unit §6 hijau; seluruh suite lama tetap hijau.
+- [x] Ajakan menggambar tidak pernah sampai ke model.
+- [x] `project.yml` tidak menambah entitlement; kategori tidak berubah.
 - [ ] Folder `Images/` ikut hilang saat Erase All Data.
-- [ ] Percakapan yang tersimpan sebelum G tetap terbaca.
+- [x] Percakapan yang tersimpan sebelum G tetap terbaca.
 - [ ] Daftar manual §6 dijalankan, hasilnya dicatat di plan.
 
 ---
