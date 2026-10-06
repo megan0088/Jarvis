@@ -29,6 +29,11 @@ open DinoPocket.xcodeproj
 ```bash
 ./scripts/test.sh DinoPocket DinoPocketMac   # 301 test, 55 suite
 ./scripts/verify-boundaries.sh               # batas SharedCore
+
+xcodebuild test -project DinoPocket.xcodeproj -scheme AplPhone \
+  -destination 'platform=iOS Simulator,name=iPhone 17'   # test iPhone, 104 test
+./scripts/verify-phone-layers.sh                         # lapis AplPhone
+./scripts/run-phone.sh                                   # pasang ke iPhone fisik
 ```
 
 ## Struktur
@@ -39,6 +44,8 @@ open DinoPocket.xcodeproj
 | `DinoPocketMac/` | Aplikasi macOS |
 | `DinoPocketMac/Legacy/` | Karakter SpriteKit 2D, tidak ikut build |
 | `DinoPocketTests/` | Swift Testing |
+| `AplPhone/` | Companion iPhone (spec H): Domain / Data / Presentation, ditegakkan `scripts/verify-phone-layers.sh`. Sebagian logikanya **kembaran** dari `DinoPocketMac/` — daftar di spec H §3.1 |
+| `AplPhoneTests/` | Swift Testing, simulator iOS 26 |
 | `docs/superpowers/` | Spec dan rencana |
 
 Jalur iOS (`ContentView.swift`, `ContentView+iOS.swift`, `ContentView+macOS.swift`,
