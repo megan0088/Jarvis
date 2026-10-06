@@ -298,13 +298,15 @@ yang sama seperti sebelum pekerjaan ini; `verify-boundaries` dan `verify-release
 
 ## 9. Definition of Done
 
-- [ ] `AplPhone` terbangun untuk simulator iOS 26 dan terpasang di iPhone 17 fisik.
-- [ ] `AplPhoneTests` hijau; salinan test §3.1 lulus tanpa diubah.
-- [ ] Suite Mac hijau dengan jumlah test yang tidak berubah; `git diff` terhadap basis
-      tidak menyentuh `DinoPocketMac/` maupun `DinoPocketTests/`.
-- [ ] `verify-boundaries`, `verify-release`, dan `verify-phone-layers` hijau.
-- [ ] Tidak ada entitlement jaringan, iCloud, atau App Group di target `AplPhone`.
-- [ ] Daftar manual §7 dijalankan di perangkat, hasilnya dicatat di plan.
+- [x] `AplPhone` terbangun untuk simulator iOS 26 dan terpasang di iPhone 17 fisik.
+- [x] `AplPhoneTests` hijau (104 test, 20 suite); salinan test §3.1 lulus tanpa diubah.
+- [x] Suite Mac hijau dengan jumlah test yang tidak berubah (301); `git diff` terhadap basis
+      (`main`, lihat penyimpangan #1 di plan) tidak menyentuh `DinoPocketMac/`,
+      `DinoPocketTests/`, maupun `SharedCore/`.
+- [x] `verify-boundaries`, `verify-release`, dan `verify-phone-layers` hijau.
+- [x] Tidak ada entitlement jaringan, iCloud, atau App Group di target `AplPhone`.
+- [ ] Daftar manual §7 dijalankan di perangkat, hasilnya dicatat di plan. **Menunggu
+      pemilik produk** — app sudah terpasang dan berjalan, penilaiannya pekerjaan mata.
 
 ---
 
