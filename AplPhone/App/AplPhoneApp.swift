@@ -2,41 +2,44 @@
 //  AplPhoneApp.swift
 //  Apl (iPhone)
 //
-//  Titik masuk companion iPhone (spec H). Isinya tumbuh di Task 6–8.
+//  Titik masuk companion iPhone (spec H). Satu-satunya berkas yang menyentuh
+//  UIApplication: membuka Settings sistem adalah urusan app, bukan view.
 //
 
 import SwiftUI
+import UIKit
 
 @main
 struct AplPhoneApp: App {
-    private static let cache = CharacterExpressionCache()
+    /// Satu-satunya tempat implementasi konkret dipilih.
+    private static let deps = PhoneDependencies.live()
+
+    init() {
+        // Tanpa delegate, reminder yang jatuh tempo saat Apl di depan tidak
+        // ditampilkan sama sekali.
+        ReminderNotificationCenter.shared.configure()
+    }
 
     var body: some Scene {
         WindowGroup {
-            RobotProbeView(cache: Self.cache)
+            PhoneRootView(profile: Self.deps.profile,
+                          chat: Self.deps.chat,
+                          reminders: Self.deps.reminders,
+                          cache: Self.deps.characterCache,
+                          requestNotifications: { await Self.deps.requestNotifications() },
+                          eraseAllData: { await Self.deps.eraseAllData() },
+                          onOpenSystemSettings: { Self.openSystemSettings() })
+                .tint(PhoneColor.accent)
+                .task {
+                    // Kelima ekspresi dimuat di awal, supaya pergantian wajah
+                    // pertama pun tidak menunggu disk.
+                    await Self.deps.characterCache.preload(.robot)
+                }
         }
     }
-}
 
-/// SEMENTARA (Task 3). Dibuang di Task 6.
-private struct RobotProbeView: View {
-    let cache: CharacterExpressionCache
-    @State private var behavior: CharacterBehavior = .idle
-
-    var body: some View {
-        VStack(spacing: Spacing.xl) {
-            ZStack {
-                Circle()
-                    .fill(RadialGradient(colors: [PhoneColor.stageGlow, .clear],
-                                         center: .center, startRadius: 0, endRadius: 140))
-                    .frame(width: 280, height: 280)
-                PhoneCharacterView(size: 200, behavior: behavior, cache: cache)
-            }
-            Picker("Expression", selection: $behavior) {
-                ForEach(CharacterBehavior.allCases, id: \.self) { Text(String(describing: $0)).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-        }
+    private static func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 }
