@@ -27,7 +27,7 @@ open DinoPocket.xcodeproj
 ## Test
 
 ```bash
-./scripts/test.sh DinoPocket DinoPocketMac   # 90 test, 19 suite
+./scripts/test.sh DinoPocket DinoPocketMac   # 301 test, 55 suite
 ./scripts/verify-boundaries.sh               # batas SharedCore
 ```
 

@@ -21,6 +21,10 @@ struct MainWindow: View {
     let codeWorkspace: CodeWorkspace
     let codeChat: ChatStore
     let fileWriter: FileWriter
+    let imageStore: ImageStore
+    let pictures: PictureSession
+    let pictureIsAvailable: Bool
+    let onPictureCreated: (URL, String) -> Void
 
     @Environment(\.openSettings) private var openSettings
     @Environment(\.appearsActive) private var appearsActive
@@ -85,6 +89,10 @@ struct MainWindow: View {
                         ConversationView(chat: chat,
                                          reminders: reminders,
                                          availability: availability,
+                                         imageStore: imageStore,
+                                         pictures: pictures,
+                                         pictureIsAvailable: pictureIsAvailable,
+                                         onPictureCreated: onPictureCreated,
                                          showsDateHeader: !isCompact,
                                          composerFocus: composerFocus,
                                          onOpenIntelligenceSettings: { _ = launcher.open(.appleIntelligence) })
@@ -120,7 +128,12 @@ struct MainWindow: View {
         .confirmationDialog("Clear this conversation?", isPresented: $isConfirmingClear,
                             titleVisibility: .visible) {
             Button("Clear Conversation", role: .destructive) {
-                Task { await chat.clearConversation() }
+                Task {
+                    await chat.clearConversation()
+                    // Folder gambar adalah fungsi dari percakapan (spec G §4):
+                    // percakapan yang dilupakan tidak meninggalkan gambarnya.
+                    imageStore.prune(keeping: chat.pictureNames)
+                }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -156,7 +169,10 @@ struct MainWindow: View {
                codeWorkspace: CodeWorkspace(bookmarks: UserDefaultsBookmarkStore(
                    defaults: UserDefaults(suiteName: "apl.preview.code")!)),
                codeChat: .preview([]),
-               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory))
+               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory),
+               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
+               pictures: PictureSession(), pictureIsAvailable: true,
+               onPictureCreated: { _, _ in })
         .frame(width: 1000, height: 680)
         .preferredColorScheme(.dark)
 }
@@ -167,7 +183,10 @@ struct MainWindow: View {
                codeWorkspace: CodeWorkspace(bookmarks: UserDefaultsBookmarkStore(
                    defaults: UserDefaults(suiteName: "apl.preview.code")!)),
                codeChat: .preview([]),
-               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory))
+               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory),
+               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
+               pictures: PictureSession(), pictureIsAvailable: true,
+               onPictureCreated: { _, _ in })
         .frame(width: 1000, height: 680)
 }
 
@@ -177,7 +196,10 @@ struct MainWindow: View {
                codeWorkspace: CodeWorkspace(bookmarks: UserDefaultsBookmarkStore(
                    defaults: UserDefaults(suiteName: "apl.preview.code")!)),
                codeChat: .preview([]),
-               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory))
+               fileWriter: FileWriter(backups: FileManager.default.temporaryDirectory),
+               imageStore: ImageStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent("apl.preview.images", isDirectory: true)),
+               pictures: PictureSession(), pictureIsAvailable: true,
+               onPictureCreated: { _, _ in })
         .frame(width: 740, height: 520)
         .preferredColorScheme(.dark)
 }

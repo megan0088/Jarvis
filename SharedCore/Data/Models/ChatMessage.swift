@@ -13,6 +13,10 @@ struct ChatMessage: Identifiable, Codable, Equatable {
     /// reminder tidak ditebak dari bunyi teks konfirmasi (spec B §6).
     enum Attachment: Codable, Equatable {
         case reminder(UUID)
+        /// Gambar yang dibuat lewat Image Playground (spec G §3). Nama berkas
+        /// dan konsepnya disimpan bersama: konsepnya yang dibacakan VoiceOver
+        /// dan ditampilkan sebagai keterangan.
+        case picture(name: String, concept: String)
     }
 
     /// Nasib jawaban. Kegagalan dan penghentian dicatat di sini, bukan

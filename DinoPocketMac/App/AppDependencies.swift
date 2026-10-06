@@ -20,6 +20,7 @@ struct AppDependencies {
     let nudgeHistory: NudgeHistory
     let codeWorkspace: CodeWorkspace
     let fileWriter: FileWriter
+    let imageStore: ImageStore
     let profile: ProfileStore
 
     /// Apple Intelligence — satu-satunya otak (spec A §2 #7).
@@ -68,6 +69,9 @@ struct AppDependencies {
         let nudgeHistory = NudgeHistory()
         erasable.append(nudgeHistory)
 
+        let imageStore = ImageStore(folder: AppDependencies.imagesFolder())
+        erasable.append(imageStore)
+
         return AppDependencies(
             systemStatus: SystemStatusService(),
             appLauncher: AppLauncherService(),
@@ -77,6 +81,7 @@ struct AppDependencies {
             nudgeHistory: nudgeHistory,
             codeWorkspace: CodeWorkspace(),
             fileWriter: FileWriter(backups: AppDependencies.backupsFolder()),
+            imageStore: imageStore,
             profile: ProfileStore(),
             brain: brain,
             reminderStore: reminderStore,
@@ -109,6 +114,12 @@ struct AppDependencies {
     static func backupsFolder() -> URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent("Apl/CodeBackups", isDirectory: true)
+    }
+
+    /// Gambar tinggal di container app, bersebelahan dengan cadangan Code.
+    static func imagesFolder() -> URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        return base.appendingPathComponent("Apl/Images", isDirectory: true)
     }
 
     func makeCreateReminderUseCase() -> CreateReminderFromTextUseCase {
