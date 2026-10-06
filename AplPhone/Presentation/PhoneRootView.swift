@@ -20,16 +20,24 @@ struct PhoneRootView: View {
     @State private var showsSettings = false
 
     var body: some View {
-        PhoneHomeView(chat: chat, reminders: reminders, cache: cache,
-                      onOpenReminders: { showsReminders = true },
-                      onOpenSettings: { showsSettings = true },
-                      onOpenSystemSettings: onOpenSystemSettings)
-            .sheet(isPresented: $showsReminders) {
-                PhoneRemindersSheet(viewModel: reminders, onOpenSystemSettings: onOpenSystemSettings)
+        Group {
+            if profile.hasCompletedOnboarding {
+                PhoneHomeView(chat: chat, reminders: reminders, cache: cache,
+                              onOpenReminders: { showsReminders = true },
+                              onOpenSettings: { showsSettings = true },
+                              onOpenSystemSettings: onOpenSystemSettings)
+            } else {
+                PhoneOnboardingView(profile: profile, chat: chat, cache: cache,
+                                    requestNotifications: requestNotifications,
+                                    onOpenSystemSettings: onOpenSystemSettings)
             }
-            .sheet(isPresented: $showsSettings) {
-                Text("Settings")    // diganti di Task 8
-            }
+        }
+        .sheet(isPresented: $showsReminders) {
+            PhoneRemindersSheet(viewModel: reminders, onOpenSystemSettings: onOpenSystemSettings)
+        }
+        .sheet(isPresented: $showsSettings) {
+            PhoneSettingsView(profile: profile, chat: chat, eraseAllData: eraseAllData)
+        }
     }
 }
 
