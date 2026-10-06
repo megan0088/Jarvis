@@ -25,7 +25,7 @@ struct PhoneRootView: View {
                       onOpenSettings: { showsSettings = true },
                       onOpenSystemSettings: onOpenSystemSettings)
             .sheet(isPresented: $showsReminders) {
-                Text("Reminders")   // diganti di Task 7
+                PhoneRemindersSheet(viewModel: reminders, onOpenSystemSettings: onOpenSystemSettings)
             }
             .sheet(isPresented: $showsSettings) {
                 Text("Settings")    // diganti di Task 8
