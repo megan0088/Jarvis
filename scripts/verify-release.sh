@@ -42,7 +42,7 @@ check Release MACOSX_DEPLOYMENT_TARGET "26.0" "lebih tinggi dari API tertinggi y
 # Identitas produk. Bundle id PERMANEN begitu record App Store Connect dibuat —
 # ketiganya pernah kosong atau memakai codename, dan tidak satu pun menghasilkan
 # error saat build.
-check Release PRODUCT_BUNDLE_IDENTIFIER "com.ega.apl" "bundle id salah — permanen setelah submit pertama"
+check Release PRODUCT_BUNDLE_IDENTIFIER "com.Jarvis.Ega" "bundle id salah — permanen setelah submit pertama"
 check Release PRODUCT_NAME "Apl" "nama produk masih codename; CFBundleName ikut PRODUCT_NAME"
 check Release INFOPLIST_KEY_CFBundleDisplayName "Apl" "nama di Finder/Dock salah"
 check Release INFOPLIST_KEY_ITSAppUsesNonExemptEncryption "NO" "App Store Connect akan menanyakan ekspor enkripsi tiap submit"

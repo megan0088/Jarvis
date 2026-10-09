@@ -61,7 +61,10 @@ targets:
         # — menjaga Jarvis.xcodeproj lama tetap bisa mengompilasi test sebagai
         # jalan mundur — sudah gugur sejak project itu dipensiunkan di Task 8.
         PRODUCT_MODULE_NAME: Apl
-        PRODUCT_BUNDLE_IDENTIFIER: com.ega.apl
+        # Identitas warisan era "Jarvis". Record App Store Connect (AppleMind,
+        # Apple ID 6820788573) sudah memakainya, dan bundle id tidak bisa
+        # diganti setelah rilis pertama — jadi ini permanen.
+        PRODUCT_BUNDLE_IDENTIFIER: com.Jarvis.Ega
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Aksen merek (spec B §7). Toggle, focus ring, dan tombol default ikut
