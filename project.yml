@@ -20,7 +20,9 @@ settings:
     DEVELOPMENT_TEAM: R93K2HFM78
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    # Dinaikkan setiap unggahan: App Store Connect menolak nomor build yang
+    # sudah pernah dipakai pada versi yang sama.
+    CURRENT_PROJECT_VERSION: "2"
     ENABLE_PREVIEWS: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
 
