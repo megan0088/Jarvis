@@ -53,7 +53,40 @@ eganugrahaworkspace@gmail.com
 
 ## Privacy Policy URL
 
-Isi dengan URL tempat `docs/appstore/2026-10-09-privacy-policy.md` dipublikasikan.
+```
+https://github.com/megan0088/Jarvis/blob/main/docs/appstore/2026-10-09-privacy-policy.md
+```
+
+## Beta App Review Information
+
+Blok ini **wajib** untuk penguji eksternal dan letaknya di bawah pada halaman Test
+Information — paling sering terlewat.
+
+- **Sign-in required:** No. App ini tidak punya akun sama sekali.
+- **Contact:** nama depan, nama belakang, nomor telepon, dan email pemilik akun. Nomor
+  telepon diisi sendiri; tidak ada di repo ini.
+- **Notes:** teks di bawah. Reviewer Apple kemungkinan menjalankannya di Mac tanpa Apple
+  Intelligence; tanpa catatan ini, app yang menjawab "Apple Intelligence isn't available"
+  akan terbaca sebagai app rusak.
+
+```
+AppleMind runs entirely on device. There is no account and no sign-in.
+
+Please note two hardware requirements:
+• macOS 26 or later.
+• Chat answers come from Apple Intelligence, which needs an Apple silicon Mac with
+  Apple Intelligence enabled in System Settings. On a Mac without it, the app still
+  launches and reminders still work, but every question is answered with
+  "Apple Intelligence isn't available yet". That message is the intended behaviour,
+  not a failure.
+
+Features that work without Apple Intelligence:
+• Creating reminders from plain language, e.g. "Remind me to stretch at 3 PM",
+  including the notification.
+• The desktop companion, the keyboard shortcut, and Settings.
+
+The app has no network entitlement and cannot make network connections.
+```
 
 ---
 
