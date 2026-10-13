@@ -20,6 +20,9 @@ access at all — answers come from Apple Intelligence running on device.
 
 ## What to Test
 
+Ringkas dengan sengaja: penguji tidak membaca dinding teks, dan manual lengkapnya ada di
+`docs/guide.md`. Yang di sini hanya syarat perangkat dan hal yang perlu dicoba.
+
 ```
 BEFORE YOU START — two requirements:
 • macOS 26 or later. Earlier versions cannot install this build.
@@ -27,22 +30,23 @@ BEFORE YOU START — two requirements:
   still runs and reminders still work, but every question answers "Apple Intelligence
   isn't available". That is expected, not a bug.
 
-What we'd like you to try:
-1. Say hi. Ask anything and watch the answer stream in.
-2. Type "Remind me to stretch at 3 PM" — a reminder should be created, with a chip you can
-   undo. Check that the notification actually fires.
-3. Press ⌥Space from any app. A small bubble should appear next to the robot; ask one
-   question there and close it with Esc.
+Please try, roughly in this order:
+1. Ask anything. The answer should stream in while the robot looks like it's thinking.
+2. Type "Remind me to stretch in 2 minutes". A chip appears under the reply — check that
+   the notification actually fires, and that Undo works on another one.
+3. Press ⌥Space from a different app. A bubble opens next to the robot. Esc closes it.
 4. Click the robot on your desktop.
-5. Open the Code tab, choose a folder, attach a file, and ask about it.
-6. Type "draw a small robot" to open Image Playground, and keep an image.
-7. Settings → Erase All Data, and confirm everything is gone.
+5. Open the Code tab, choose a folder, attach a small file, ask about it.
+6. Type "draw a small robot" and keep an image.
+7. Settings → Privacy → Erase All Data, and check everything is really gone.
 
-What we most want to hear:
-• Anything that felt slow, confusing, or surprising.
-• Answers that were wrong or cut off.
-• Reminders that did not fire, or fired at the wrong time.
-• Anything that looked broken in light mode, dark mode, or at large text sizes.
+Full guide: https://github.com/megan0088/Jarvis/blob/main/docs/guide.md
+
+Most useful feedback:
+• Anything slow, confusing, or surprising.
+• Answers that were wrong, cut off, or never arrived.
+• Reminders that didn't fire, or fired at the wrong time.
+• Anything broken in light mode, dark mode, or at large text sizes.
 ```
 
 ## Feedback Email
