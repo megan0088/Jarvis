@@ -75,7 +75,6 @@ struct PhoneHomeView: View {
             topBar(upcoming: upcoming)
 
             PhoneHomeHeader(mode: headerMode, behavior: resolution.behavior, statusText: statusText,
-                            isIntelligenceAvailable: isIntelligenceAvailable,
                             // Mitigasi baterai (spec H §5).
                             isAnimationPaused: scenePhase != .active
                                 || ProcessInfo.processInfo.isLowPowerModeEnabled,

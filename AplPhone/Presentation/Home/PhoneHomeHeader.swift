@@ -16,7 +16,6 @@ struct PhoneHomeHeader: View {
     let mode: HomeHeaderMode
     let behavior: CharacterBehavior
     let statusText: String
-    let isIntelligenceAvailable: Bool
     let isAnimationPaused: Bool
     let cache: CharacterExpressionCache
 
@@ -49,7 +48,13 @@ struct PhoneHomeHeader: View {
                     .font(.system(isFull ? .title2 : .headline, design: .rounded, weight: .semibold))
                 HStack(spacing: Spacing.xs) {
                     Circle()
-                        .fill(isIntelligenceAvailable ? PhoneColor.statusOK : PhoneColor.statusWarning)
+                        // Ikut EKSPRESI, bukan ketersediaan Apple Intelligence —
+                        // sama dengan StatusLine di Mac. `.sleepy` mencakup dua
+                        // keadaan yang keduanya perlu peringatan: Apple Intelligence
+                        // mati, DAN jawaban yang gagal. Versi lama memakai
+                        // `isIntelligenceAvailable` saja, sehingga titiknya tetap
+                        // hijau sementara tulisannya berbunyi "Something went wrong".
+                        .fill(behavior == .sleepy ? PhoneColor.statusWarning : PhoneColor.statusOK)
                         .frame(width: 8, height: 8)
                         .accessibilityHidden(true)
                     Text(statusText)
@@ -69,13 +74,13 @@ struct PhoneHomeHeader: View {
 
 #Preview("Header · Full") {
     PhoneHomeHeader(mode: .full, behavior: .greet, statusText: "Good afternoon!",
-                    isIntelligenceAvailable: true, isAnimationPaused: false,
+                     isAnimationPaused: false,
                     cache: CharacterExpressionCache())
 }
 
 #Preview("Header · Compact · Dark") {
     PhoneHomeHeader(mode: .compact, behavior: .thinking, statusText: "Thinking…",
-                    isIntelligenceAvailable: true, isAnimationPaused: false,
+                     isAnimationPaused: false,
                     cache: CharacterExpressionCache())
         .preferredColorScheme(.dark)
 }
