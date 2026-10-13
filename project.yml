@@ -122,7 +122,10 @@ targets:
         # Sama dengan modul Mac: salinan test memakai `@testable import Apl`
         # dan harus lulus tanpa diubah (spec H §7).
         PRODUCT_MODULE_NAME: Apl
-        PRODUCT_BUNDLE_IDENTIFIER: com.ega.apl.ios
+        # Sama persis dengan target Mac: satu record App Store Connect
+        # (AppleMind) memuat iOS dan macOS, dan universal purchase menuntut
+        # bundle id yang identik di kedua platform.
+        PRODUCT_BUNDLE_IDENTIFIER: com.Jarvis.Ega
         GENERATE_INFOPLIST_FILE: YES
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

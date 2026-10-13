@@ -13,4 +13,4 @@ xcodebuild build -project DinoPocket.xcodeproj -scheme AplPhone \
 
 xcrun devicectl device install app --device "$DEVICE" \
   "$DERIVED/Build/Products/Debug-iphoneos/Apl.app"
-xcrun devicectl device process launch --device "$DEVICE" --terminate-existing com.ega.apl.ios
+xcrun devicectl device process launch --device "$DEVICE" --terminate-existing com.Jarvis.Ega
